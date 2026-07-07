@@ -192,6 +192,44 @@ table img{width:60px;height:40px;object-fit:cover;border-radius:4px;}
 .feature-item input[type="text"]{flex:1;padding:6px 10px;border:1px solid #d9d9d9;border-radius:4px;font-size:13px;}
 .feature-item .remove-feature{color:#E63946;cursor:pointer;font-size:16px;border:none;background:none;}
 .add-feature-btn{margin-top:8px;color:#1890ff;cursor:pointer;font-size:13px;border:none;background:none;text-decoration:underline;}
+
+/* Card List Editor */
+.card-list-editor{border:1px solid #e8e8e8;border-radius:8px;padding:16px;margin-bottom:12px;background:#fafafa;}
+.card-list-editor .card-item{border:1px solid #ddd;border-radius:8px;padding:16px;margin-bottom:12px;background:#fff;position:relative;}
+.card-list-editor .card-item:last-child{margin-bottom:0;}
+.card-list-editor .card-item .card-item-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.card-list-editor .card-item .card-item-header h5{font-size:14px;color:#333;margin:0;}
+.card-list-editor .card-item .remove-card-item{padding:4px 10px;background:#fff1f0;color:#E63946;border:1px solid #ffa39e;border-radius:4px;cursor:pointer;font-size:12px;}
+.card-list-editor .card-item .remove-card-item:hover{background:#E63946;color:#fff;}
+.card-list-editor .mini-form-row{margin-bottom:10px;}
+.card-list-editor .mini-form-row label{display:block;margin-bottom:4px;color:#666;font-size:12px;}
+.card-list-editor .mini-form-row input[type="text"],.card-list-editor .mini-form-row textarea{width:100%;padding:8px 10px;border:1px solid #d9d9d9;border-radius:4px;font-size:13px;}
+.card-list-editor .mini-img-upload{width:60px;height:60px;border:1px dashed #d9d9d9;border-radius:6px;display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:hidden;position:relative;}
+.card-list-editor .mini-img-upload img{width:100%;height:100%;object-fit:cover;}
+.card-list-editor .mini-img-upload input[type="file"]{position:absolute;top:0;left:0;width:100%;height:100%;opacity:0;cursor:pointer;}
+.add-card-btn{padding:8px 16px;background:#f6ffed;color:#52c41a;border:1px solid #b7eb8f;border-radius:6px;cursor:pointer;font-size:13px;}
+.add-card-btn:hover{background:#52c41a;color:#fff;}
+
+/* Accordion Editor */
+.accordion-editor{border:1px solid #e8e8e8;border-radius:8px;overflow:hidden;}
+.accordion-item{border-bottom:1px solid #e8e8e8;}
+.accordion-item:last-child{border-bottom:none;}
+.accordion-item .acc-header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:#fafafa;cursor:pointer;}
+.accordion-item .acc-header span{font-size:14px;color:#333;}
+.accordion-item .acc-header .acc-actions{display:flex;gap:6px;align-items:center;}
+.accordion-item .acc-body{padding:0 16px 16px;display:none;}
+.accordion-item .acc-body.open{display:block;}
+.accordion-item .acc-header .acc-toggle{font-size:16px;color:#999;transition:transform 0.2s;display:inline-block;width:20px;text-align:center;}
+.accordion-item .acc-header .acc-toggle.open{transform:rotate(180deg);}
+
+/* Message Avatar */
+.msg-avatar{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:14px;font-weight:600;flex-shrink:0;}
+.msg-pin-badge{color:#f59e0b;font-size:12px;margin-left:4px;}
+
+/* Comment Management */
+.comment-section{margin-bottom:16px;}
+.comment-section h5{margin-bottom:8px;font-size:14px;color:#555;}
+.comment-section select{padding:6px 10px;border:1px solid #d9d9d9;border-radius:4px;font-size:13px;margin-bottom:12px;}
 </style>
 <script data-preview-injected src="https://lf3-static.bytednsdoc.com/obj/eden-cn/8011eh7nupenuvonuhd/previewer-tools.de3cd6a1.umd.js"></script></head>
 <body>
@@ -245,8 +283,17 @@ table img{width:60px;height:40px;object-fit:cover;border-radius:4px;}
       <div class="nav-item" data-page="settings" onclick="switchPage('settings',this)">
         <span class="nav-icon">&#9881;</span>页面设置
       </div>
+      <div class="nav-item" data-page="profile" onclick="switchPage('profile',this)">
+        <span class="nav-icon">&#127968;</span>平台资料
+      </div>
       <div class="nav-item" data-page="messages" onclick="switchPage('messages',this)">
         <span class="nav-icon">&#9997;</span>留言管理
+      </div>
+      <div class="nav-item" data-page="articlecomments" onclick="switchPage('articlecomments',this)">
+        <span class="nav-icon">&#128172;</span>文章留言
+      </div>
+      <div class="nav-item" data-page="resourcecomments" onclick="switchPage('resourcecomments',this)">
+        <span class="nav-icon">&#128172;</span>资源留言
       </div>
       <div class="nav-item" data-page="datamgmt" onclick="switchPage('datamgmt',this)">
         <span class="nav-icon">&#9881;</span>数据管理
@@ -413,7 +460,10 @@ table img{width:60px;height:40px;object-fit:cover;border-radius:4px;}
           <div class="card-header"><h4>权益展示</h4></div>
           <div class="card-body" style="padding:24px;">
             <div class="form-row"><label>权益标题</label><input type="text" id="benefitsTitle" placeholder="权益展示标题"></div>
-            <div class="form-row"><label>权益列表 (JSON)</label><textarea id="benefitsJSON" style="min-height:200px;font-family:monospace;" placeholder='[{"title":"权益名称","icon":"图标","desc":"权益描述"}]'></textarea></div>
+            <div class="form-row"><label>权益列表</label>
+              <div class="card-list-editor" id="benefitsCardsList"></div>
+              <input type="button" class="add-card-btn" value="&#43; 添加权益" onclick="addBenefitCard()">
+            </div>
             <input type="button" class="btn-primary" value="保存权益展示" onclick="saveBenefits()">
           </div>
         </div>
@@ -435,9 +485,18 @@ table img{width:60px;height:40px;object-fit:cover;border-radius:4px;}
           <div class="card-header"><h4>关于我们</h4></div>
           <div class="card-body" style="padding:24px;">
             <div class="form-row"><label>品牌名称</label><input type="text" id="aboutBrand" placeholder="品牌名称"></div>
-            <div class="form-row"><label>品牌故事 (JSON)</label><textarea id="aboutStories" style="min-height:150px;font-family:monospace;" placeholder='[{"title":"故事标题","img":"图片URL","desc":"故事描述"}]'></textarea></div>
-            <div class="form-row"><label>品牌价值观 (JSON)</label><textarea id="aboutValues" style="min-height:150px;font-family:monospace;" placeholder='[{"title":"标题","icon":"图标","desc":"描述"}]'></textarea></div>
-            <div class="form-row"><label>常见问题 (JSON)</label><textarea id="aboutFaq" style="min-height:150px;font-family:monospace;" placeholder='[{"q":"问题","a":"答案"}]'></textarea></div>
+            <div class="form-row"><label>品牌故事</label>
+              <div class="card-list-editor" id="storiesCardsList"></div>
+              <input type="button" class="add-card-btn" value="&#43; 添加故事" onclick="addStoryCard()">
+            </div>
+            <div class="form-row"><label>品牌价值观</label>
+              <div class="card-list-editor" id="valuesCardsList"></div>
+              <input type="button" class="add-card-btn" value="&#43; 添加价值观" onclick="addValueCard()">
+            </div>
+            <div class="form-row"><label>常见问题 (FAQ)</label>
+              <div class="accordion-editor" id="faqAccordionList"></div>
+              <input type="button" class="add-card-btn" value="&#43; 添加问题" onclick="addFaqItem()" style="margin-top:12px;">
+            </div>
             <input type="button" class="btn-primary" value="保存关于我们" onclick="saveAboutData()">
           </div>
         </div>
@@ -483,7 +542,7 @@ table img{width:60px;height:40px;object-fit:cover;border-radius:4px;}
           <div class="card-header"><h4>留言列表</h4></div>
           <div class="card-body">
             <table>
-              <thead><tr><th>姓名</th><th>内容</th><th>时间</th><th>操作</th></tr></thead>
+              <thead><tr><th>用户</th><th>内容</th><th>时间</th><th>操作</th></tr></thead>
               <tbody id="messagesList"></tbody>
             </table>
           </div>
@@ -508,6 +567,47 @@ table img{width:60px;height:40px;object-fit:cover;border-radius:4px;}
               <input type="file" id="restoreInput" accept=".json" style="display:none" onchange="restoreData(this)">
               <input type="button" class="btn-del" value="&#10006; 清空所有数据" onclick="confirmClearAll()">
             </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Article Comments -->
+      <div class="page-section" id="page-articlecomments">
+        <div class="card">
+          <div class="card-header"><h4>文章留言管理</h4></div>
+          <div class="card-body" style="padding:24px;">
+            <div class="form-row"><label>选择文章</label><select id="articleCommentSelect" onchange="loadArticleComments()"></select></div>
+            <div id="articleCommentsList"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Resource Comments -->
+      <div class="page-section" id="page-resourcecomments">
+        <div class="card">
+          <div class="card-header"><h4>资源留言管理</h4></div>
+          <div class="card-body" style="padding:24px;">
+            <div class="form-row"><label>选择资源</label><select id="resourceCommentSelect" onchange="loadResourceComments()"></select></div>
+            <div id="resourceCommentsList"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Platform Profile -->
+      <div class="page-section" id="page-profile">
+        <div class="card">
+          <div class="card-header"><h4>平台资料</h4></div>
+          <div class="card-body" style="padding:24px;">
+            <div class="form-row"><label>平台名称</label><input type="text" id="profileName" placeholder="艾优社" value="艾优社"></div>
+            <div class="form-row"><label>平台副标题</label><input type="text" id="profileSubtitle" placeholder="资源馆" value="资源馆"></div>
+            <div class="form-row"><label>平台头像</label>
+              <div class="img-upload-area" id="profileAvatarUpload">
+                <p>点击或拖拽上传头像</p>
+                <input type="file" accept="image/*" onchange="handleImageUpload(this,'profileAvatarPreview','profileAvatarData')">
+              </div>
+              <div class="img-preview" id="profileAvatarPreview"></div>
+            </div>
+            <input type="button" class="btn-primary" value="保存平台资料" onclick="saveProfileData()">
           </div>
         </div>
       </div>
@@ -706,7 +806,8 @@ function switchPage(page, navEl) {
   var titles = {
     dashboard:'仪表盘', articles:'文章管理', resources:'资源管理', albums:'相册管理',
     carousel:'轮播图管理', announcements:'公告管理', pricing:'会员套餐', settings:'页面设置',
-    messages:'留言管理', datamgmt:'数据管理'
+    messages:'留言管理', datamgmt:'数据管理', articlecomments:'文章留言管理', resourcecomments:'资源留言管理',
+    profile:'平台资料'
   };
   document.getElementById('pageTitle').textContent = titles[page] || page;
   refreshCurrentPage();
@@ -724,6 +825,9 @@ function refreshCurrentPage() {
     case 'settings': loadSettings(); break;
     case 'messages': loadMessages(); break;
     case 'datamgmt': loadDataMgmt(); break;
+    case 'articlecomments': loadArticleCommentsPage(); break;
+    case 'resourcecomments': loadResourceCommentsPage(); break;
+    case 'profile': loadProfilePage(); break;
   }
 }
 
@@ -774,14 +878,144 @@ function checkAuth() {
 }
 
 // ==================== Image Upload ====================
-function handleImageUpload(input, previewId, dataField) {
+function cropImage(file, ratio, callback) {
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    var base64 = e.target.result;
+    var overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:99999;display:flex;align-items:center;justify-content:center;';
+
+    var modal = document.createElement('div');
+    modal.style.cssText = 'background:#fff;border-radius:12px;padding:24px;max-width:600px;width:90%;';
+
+    var canvas = document.createElement('canvas');
+    canvas.style.cssText = 'width:100%;max-height:400px;display:block;cursor:move;';
+    var ctx = canvas.getContext('2d');
+
+    var img = new Image();
+    img.onload = function() {
+      var containerW = 500, containerH = 400;
+      canvas.width = containerW;
+      canvas.height = containerH;
+
+      var scale = Math.min(containerW / img.width, containerH / img.height);
+      var drawW = img.width * scale;
+      var drawH = img.height * scale;
+      var offsetX = (containerW - drawW) / 2;
+      var offsetY = (containerH - drawH) / 2;
+
+      var cropW, cropH;
+      if (ratio >= 1) { cropW = Math.min(drawW, drawH * ratio); cropH = cropW / ratio; }
+      else { cropH = Math.min(drawH, drawW / ratio); cropW = cropH * ratio; }
+      var cropX = (containerW - cropW) / 2;
+      var cropY = (containerH - cropH) / 2;
+
+      function drawScene() {
+        ctx.clearRect(0, 0, containerW, containerH);
+        ctx.drawImage(img, offsetX, offsetY, drawW, drawH);
+        ctx.fillStyle = 'rgba(0,0,0,0.5)';
+        ctx.fillRect(0, 0, containerW, cropY);
+        ctx.fillRect(0, cropY + cropH, containerW, containerH - cropY - cropH);
+        ctx.fillRect(0, cropY, cropX, cropH);
+        ctx.fillRect(cropX + cropW, cropY, containerW - cropX - cropW, cropH);
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(cropX, cropY, cropW, cropH);
+        ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(cropX, cropY + cropH / 3); ctx.lineTo(cropX + cropW, cropY + cropH / 3);
+        ctx.moveTo(cropX, cropY + cropH * 2 / 3); ctx.lineTo(cropX + cropW, cropY + cropH * 2 / 3);
+        ctx.moveTo(cropX + cropW / 3, cropY); ctx.lineTo(cropX + cropW / 3, cropY + cropH);
+        ctx.moveTo(cropX + cropW * 2 / 3, cropY); ctx.lineTo(cropX + cropW * 2 / 3, cropY + cropH);
+        ctx.stroke();
+      }
+      drawScene();
+
+      var dragging = false, dragStartX, dragStartY, origCropX, origCropY;
+      canvas.addEventListener('mousedown', function(e) {
+        var rect = canvas.getBoundingClientRect();
+        var mx = (e.clientX - rect.left) * (containerW / rect.width);
+        var my = (e.clientY - rect.top) * (containerH / rect.height);
+        if (mx >= cropX && mx <= cropX + cropW && my >= cropY && my <= cropY + cropH) {
+          dragging = true;
+          dragStartX = mx; dragStartY = my;
+          origCropX = cropX; origCropY = cropY;
+          e.preventDefault();
+        }
+      });
+      canvas.addEventListener('mousemove', function(e) {
+        if (!dragging) return;
+        var rect = canvas.getBoundingClientRect();
+        var mx = (e.clientX - rect.left) * (containerW / rect.width);
+        var my = (e.clientY - rect.top) * (containerH / rect.height);
+        cropX = Math.max(offsetX, Math.min(offsetX + drawW - cropW, origCropX + (mx - dragStartX)));
+        cropY = Math.max(offsetY, Math.min(offsetY + drawH - cropH, origCropY + (my - dragStartY)));
+        drawScene();
+      });
+      function stopDrag() { dragging = false; }
+      canvas.addEventListener('mouseup', stopDrag);
+      document.addEventListener('mouseup', stopDrag);
+    };
+    img.src = base64;
+
+    var btnArea = document.createElement('div');
+    btnArea.style.cssText = 'text-align:center;margin-top:16px;display:flex;justify-content:center;gap:8px;';
+    var confirmBtn = document.createElement('input');
+    confirmBtn.type = 'button'; confirmBtn.value = '确认裁切';
+    confirmBtn.style.cssText = 'padding:8px 20px;background:#E63946;color:#fff;border:none;border-radius:6px;cursor:pointer;';
+    confirmBtn.addEventListener('click', function() {
+      var cropCanvas = document.createElement('canvas');
+      var cCtx = cropCanvas.getContext('2d');
+      var scX = img.width / drawW;
+      var scY = img.height / drawH;
+      var sx = (cropX - offsetX) * scX;
+      var sy = (cropY - offsetY) * scY;
+      var sw = cropW * scX;
+      var sh = cropH * scY;
+      cropCanvas.width = Math.round(sw);
+      cropCanvas.height = Math.round(sh);
+      cCtx.drawImage(img, sx, sy, sw, sh, 0, 0, cropCanvas.width, cropCanvas.height);
+      var croppedBase64 = cropCanvas.toDataURL('image/jpeg', 0.9);
+      document.body.removeChild(overlay);
+      callback(croppedBase64);
+    });
+    var skipBtn = document.createElement('input');
+    skipBtn.type = 'button'; skipBtn.value = '跳过裁切';
+    skipBtn.style.cssText = 'padding:8px 20px;background:#f5f5f5;color:#333;border:1px solid #ddd;border-radius:6px;cursor:pointer;';
+    skipBtn.addEventListener('click', function() {
+      document.body.removeChild(overlay);
+      callback(base64);
+    });
+    btnArea.appendChild(confirmBtn);
+    btnArea.appendChild(skipBtn);
+
+    modal.innerHTML = '<h4 style="margin:0 0 16px;text-align:center;">裁切图片</h4>';
+    modal.appendChild(canvas);
+    modal.appendChild(btnArea);
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+    overlay.addEventListener('mousedown', function(e) { if (e.target === overlay) { document.body.removeChild(overlay); } });
+  };
+  reader.readAsDataURL(file);
+}
+
+function handleImageUpload(input, previewId, dataField, cropRatio) {
   if (!input.files || !input.files[0]) return;
   var file = input.files[0];
-  compressAndRead(file, function(base64) {
-    window[dataField] = base64;
-    var preview = document.getElementById(previewId);
-    preview.innerHTML = '<img src="' + base64 + '" alt="preview"><span class="remove-img" onclick="clearImage(\'' + previewId + '\',\'' + dataField + '\')">移除</span>';
-  });
+  if (cropRatio) {
+    cropImage(file, cropRatio, function(base64) {
+      window[dataField] = base64;
+      var preview = document.getElementById(previewId);
+      preview.innerHTML = '<img src="' + base64 + '" alt="preview"><span class="remove-img" onclick="clearImage(\'' + previewId + '\',\'' + dataField + '\')">移除</span>';
+    });
+  } else {
+    compressAndRead(file, function(base64) {
+      window[dataField] = base64;
+      var preview = document.getElementById(previewId);
+      preview.innerHTML = '<img src="' + base64 + '" alt="preview"><span class="remove-img" onclick="clearImage(\'' + previewId + '\',\'' + dataField + '\')">移除</span>';
+    });
+  }
 }
 
 function clearImage(previewId, dataField) {
@@ -839,6 +1073,7 @@ function createRichEditorHtml(id, value) {
     '</div>' +
     '<div class="editor-content" contenteditable="true" id="' + id + '">' + val + '</div>' +
   '</div>';
+  setTimeout(function() { setupEditorPaste(id); }, 100);
 }
 
 function execCmd(cmd, val) {
@@ -862,6 +1097,27 @@ function insertEditorImage(editorId) {
     }
   };
   input.click();
+}
+
+function setupEditorPaste(editorId) {
+  var editor = document.getElementById(editorId);
+  if (!editor) return;
+  editor.addEventListener('paste', function(e) {
+    var items = e.clipboardData && e.clipboardData.items;
+    if (!items) return;
+    for (var i = 0; i < items.length; i++) {
+      if (items[i].type.indexOf('image') !== -1) {
+        e.preventDefault();
+        var file = items[i].getAsFile();
+        if (file) {
+          compressAndRead(file, function(base64) {
+            document.execCommand('insertImage', false, base64);
+          });
+        }
+        break;
+      }
+    }
+  });
 }
 
 function getEditorContent(id) {
@@ -1010,7 +1266,7 @@ function openArticleModal(articleId) {
 
   var bodyHtml =
     '<div class="form-row"><label>标题<span class="req">*</span></label><input type="text" id="artTitle" value="' + escapeHtml(article ? article.title : '') + '"></div>' +
-    '<div class="form-row"><label>封面图</label><div class="img-upload-area"><p>点击上传封面图</p><input type="file" accept="image/*" onchange="handleImageUpload(this,\'artCoverPreview\',\'artCoverData\')"></div><div class="img-preview" id="artCoverPreview">' + (article && article.cover ? '<img src="' + article.cover + '"><span class="remove-img" onclick="clearImage(\'artCoverPreview\',\'artCoverData\')">移除</span>' : '') + '</div></div>' +
+    '<div class="form-row"><label>封面图</label><div class="img-upload-area"><p>点击上传封面图</p><input type="file" accept="image/*" onchange="handleImageUpload(this,\'artCoverPreview\',\'artCoverData\',16/9)"></div><div class="img-preview" id="artCoverPreview">' + (article && article.cover ? '<img src="' + article.cover + '"><span class="remove-img" onclick="clearImage(\'artCoverPreview\',\'artCoverData\')">移除</span>' : '') + '</div></div>' +
     '<div class="form-row"><label>摘要</label><textarea id="artDesc">' + escapeHtml(article ? article.desc || '' : '') + '</textarea></div>' +
     '<div class="form-row"><label>正文</label>' + createRichEditorHtml('artContent', article ? article.content || '' : '') + '</div>' +
     '<div class="form-row-half">' +
@@ -1193,7 +1449,7 @@ function openResourceModal(resId) {
 
   var bodyHtml =
     '<div class="form-row"><label>标题<span class="req">*</span></label><input type="text" id="resTitle" value="' + escapeHtml(res ? res.title : '') + '"></div>' +
-    '<div class="form-row"><label>封面图</label><div class="img-upload-area"><p>点击上传封面图</p><input type="file" accept="image/*" onchange="handleImageUpload(this,\'resCoverPreview\',\'resCoverData\')"></div><div class="img-preview" id="resCoverPreview">' + (res && res.cover ? '<img src="' + res.cover + '"><span class="remove-img" onclick="clearImage(\'resCoverPreview\',\'resCoverData\')">移除</span>' : '') + '</div></div>' +
+    '<div class="form-row"><label>封面图</label><div class="img-upload-area"><p>点击上传封面图</p><input type="file" accept="image/*" onchange="handleImageUpload(this,\'resCoverPreview\',\'resCoverData\',1)"></div><div class="img-preview" id="resCoverPreview">' + (res && res.cover ? '<img src="' + res.cover + '"><span class="remove-img" onclick="clearImage(\'resCoverPreview\',\'resCoverData\')">移除</span>' : '') + '</div></div>' +
     '<div class="form-row"><label>描述</label><textarea id="resDesc">' + escapeHtml(res ? res.desc || '' : '') + '</textarea></div>' +
     '<div class="form-row"><label>分类</label><select id="resCat">' + catOpts + '</select></div>' +
     '<div class="form-row"><label>标签</label><div style="display:flex;gap:8px;margin-bottom:8px;"><select id="resTagSelect"><option value="">选择标签添加</option>' + allTagOpts + '</select><input type="button" class="btn-sm btn-primary" value="添加" onclick="addResTag()"></div><div class="tags-display" id="resTagChips">' + tagChips + '</div></div>';
@@ -1317,7 +1573,7 @@ function openAlbumGroupModal(groupId) {
 
   var bodyHtml =
     '<div class="form-row"><label>分组名称<span class="req">*</span></label><input type="text" id="grpName" value="' + escapeHtml(group ? group.name : '') + '"></div>' +
-    '<div class="form-row"><label>封面图</label><div class="img-upload-area"><p>点击上传封面图</p><input type="file" accept="image/*" onchange="handleImageUpload(this,\'grpCoverPreview\',\'grpCoverData\')"></div><div class="img-preview" id="grpCoverPreview">' + (group && group.cover ? '<img src="' + group.cover + '"><span class="remove-img" onclick="clearImage(\'grpCoverPreview\',\'grpCoverData\')">移除</span>' : '') + '</div></div>';
+    '<div class="form-row"><label>封面图</label><div class="img-upload-area"><p>点击上传封面图</p><input type="file" accept="image/*" onchange="handleImageUpload(this,\'grpCoverPreview\',\'grpCoverData\',9/16)"></div><div class="img-preview" id="grpCoverPreview">' + (group && group.cover ? '<img src="' + group.cover + '"><span class="remove-img" onclick="clearImage(\'grpCoverPreview\',\'grpCoverData\')">移除</span>' : '') + '</div></div>';
 
   if (isEdit) { window.grpCoverData = group.cover || ''; }
 
@@ -1426,7 +1682,7 @@ function openSubAlbumModal(subId) {
 
   var bodyHtml =
     '<div class="form-row"><label>子相册名称<span class="req">*</span></label><input type="text" id="subName" value="' + escapeHtml(sub ? sub.name : '') + '"></div>' +
-    '<div class="form-row"><label>封面图</label><div class="img-upload-area"><p>点击上传封面图</p><input type="file" accept="image/*" onchange="handleImageUpload(this,\'subCoverPreview\',\'subCoverData\')"></div><div class="img-preview" id="subCoverPreview">' + (sub && sub.cover ? '<img src="' + sub.cover + '"><span class="remove-img" onclick="clearImage(\'subCoverPreview\',\'subCoverData\')">移除</span>' : '') + '</div></div>';
+    '<div class="form-row"><label>封面图</label><div class="img-upload-area"><p>点击上传封面图</p><input type="file" accept="image/*" onchange="handleImageUpload(this,\'subCoverPreview\',\'subCoverData\',9/16)"></div><div class="img-preview" id="subCoverPreview">' + (sub && sub.cover ? '<img src="' + sub.cover + '"><span class="remove-img" onclick="clearImage(\'subCoverPreview\',\'subCoverData\')">移除</span>' : '') + '</div></div>';
 
   if (isEdit) { window.subCoverData = sub.cover || ''; }
 
@@ -1653,7 +1909,7 @@ function openCarouselModal(itemId) {
   }
 
   var bodyHtml =
-    '<div class="form-row"><label>轮播图片<span class="req">*</span></label><div class="img-upload-area"><p>点击上传轮播图</p><input type="file" accept="image/*" onchange="handleImageUpload(this,\'carouselImgPreview\',\'carouselImgData\')"></div><div class="img-preview" id="carouselImgPreview">' + (item && item.img ? '<img src="' + item.img + '"><span class="remove-img" onclick="clearImage(\'carouselImgPreview\',\'carouselImgData\')">移除</span>' : '') + '</div></div>' +
+    '<div class="form-row"><label>轮播图片<span class="req">*</span></label><div class="img-upload-area"><p>点击上传轮播图</p><input type="file" accept="image/*" onchange="handleImageUpload(this,\'carouselImgPreview\',\'carouselImgData\',16/9)"></div><div class="img-preview" id="carouselImgPreview">' + (item && item.img ? '<img src="' + item.img + '"><span class="remove-img" onclick="clearImage(\'carouselImgPreview\',\'carouselImgData\')">移除</span>' : '') + '</div></div>' +
     '<div class="form-row"><label>标题</label><input type="text" id="carouselTitle" value="' + escapeHtml(item ? item.title : '') + '"></div>' +
     '<div class="form-row"><label>链接</label><input type="url" id="carouselLink" value="' + escapeHtml(item ? item.link || '' : '') + '" placeholder="https://"></div>' +
     '<div class="form-row"><div class="form-switch"><input type="checkbox" id="carouselHidden"' + (item && item.hidden ? ' checked' : '') + '><label for="carouselHidden">隐藏</label></div></div>';
@@ -1817,9 +2073,9 @@ function loadPricing() {
   }
   if (!plans.length) {
     plans = [
-      { name: '月度会员', price: '29.9/月', features: ['功能1', '功能2'] },
-      { name: '季度会员', price: '69.9/季', features: ['功能1', '功能2', '功能3'] },
-      { name: '年度会员', price: '199/年', features: ['全部功能', '专属客服', '优先更新'] }
+      { name: '月度会员', price: '29.9/月', desc: '', features: ['功能1', '功能2'] },
+      { name: '季度会员', price: '69.9/季', desc: '', features: ['功能1', '功能2', '功能3'] },
+      { name: '年度会员', price: '199/年', desc: '', features: ['全部功能', '专属客服', '优先更新'] }
     ];
   }
 
@@ -1835,6 +2091,7 @@ function loadPricing() {
     html += '<div class="pricing-card">' +
       '<div class="form-row"><label>套餐名称</label><input type="text" class="plan-name" value="' + escapeHtml(p.name || '') + '"></div>' +
       '<div class="form-row"><label>价格</label><input type="text" class="plan-price" value="' + escapeHtml(p.price || '') + '"></div>' +
+      '<div class="form-row"><label>描述</label><input type="text" class="plan-desc" value="' + escapeHtml(p.desc || '') + '"></div>' +
       '<div class="form-row"><label>功能列表</label><div class="feature-list-editor" id="planFeatures' + i + '">' + featureItems + '</div><input type="button" class="add-feature-btn" value="+ 添加功能" onclick="addPlanFeature(\'planFeatures' + i + '\')"></div>' +
     '</div>';
   }
@@ -1856,17 +2113,21 @@ function loadPricing() {
     document.getElementById('qrCodePreview').innerHTML = '<img src="' + qr + '" style="max-width:200px;"><span class="remove-img" onclick="clearImage(\'qrCodePreview\',\'qrCodeData\')">移除</span>';
   }
 
-  // Benefits
+  // Benefits - visual card editor
   var benefitsHtml = allData.benefits_html;
+  var benefitItems = [];
+  var benefitTitle = '';
   if (benefitsHtml) {
     try {
       var bObj = JSON.parse(benefitsHtml);
-      document.getElementById('benefitsTitle').value = bObj.title || '';
-      document.getElementById('benefitsJSON').value = JSON.stringify(bObj.items || [], null, 2);
+      benefitTitle = bObj.title || '';
+      benefitItems = bObj.items || [];
     } catch(e) {
-      document.getElementById('benefitsJSON').value = benefitsHtml;
+      try { benefitItems = JSON.parse(benefitsHtml); } catch(e2) {}
     }
   }
+  document.getElementById('benefitsTitle').value = benefitTitle;
+  renderBenefitCards(benefitItems);
 }
 
 function addPlanFeature(containerId) {
@@ -1880,6 +2141,7 @@ function addPlanFeature(containerId) {
 function savePricing() {
   var names = document.querySelectorAll('.plan-name');
   var prices = document.querySelectorAll('.plan-price');
+  var descs = document.querySelectorAll('.plan-desc');
   var plans = [];
   for (var i = 0; i < names.length; i++) {
     var features = [];
@@ -1891,7 +2153,7 @@ function savePricing() {
         if (v) features.push(v);
       }
     }
-    plans.push({ name: names[i].value.trim(), price: prices[i].value.trim(), features: features });
+    plans.push({ name: names[i].value.trim(), price: prices[i].value.trim(), desc: descs[i] ? descs[i].value.trim() : '', features: features });
   }
   saveData('pricing_html', JSON.stringify(plans), function() {
     showToast('套餐设置已保存', 'success');
@@ -1920,16 +2182,90 @@ function saveQRCode() {
 
 function saveBenefits() {
   var title = document.getElementById('benefitsTitle').value.trim();
-  var jsonStr = document.getElementById('benefitsJSON').value.trim();
-  try {
-    var items = JSON.parse(jsonStr);
-    saveData('benefits_html', JSON.stringify({ title: title, items: items }), function() {
-      showToast('权益展示已保存', 'success');
-      loadAllData();
-    });
-  } catch(e) {
-    showToast('JSON 格式错误', 'error');
+  var items = collectBenefitCards();
+  saveData('benefits_html', JSON.stringify({ title: title, items: items }), function() {
+    showToast('权益展示已保存', 'success');
+    loadAllData();
+  });
+}
+
+function renderBenefitCards(items) {
+  var container = document.getElementById('benefitsCardsList');
+  var html = '';
+  for (var i = 0; i < items.length; i++) {
+    var item = items[i];
+    html += '<div class="card-item">' +
+      '<div class="card-item-header"><h5>权益 #' + (i + 1) + '</h5><input type="button" class="remove-card-item" value="删除" onclick="this.closest(\'.card-item\').remove()"></div>' +
+      '<div style="display:flex;gap:12px;align-items:flex-start;">' +
+        '<div class="mini-img-upload">' +
+          (item.icon ? '<img src="' + item.icon + '">' : '<span style="color:#999;font-size:11px;">图标</span>') +
+          '<input type="file" accept="image/*" onchange="handleMiniUpload(this)">' +
+          '<input type="hidden" class="card-icon-data" value="' + (item.icon || '') + '">' +
+        '</div>' +
+        '<div style="flex:1;">' +
+          '<div class="mini-form-row"><label>标题</label><input type="text" class="card-title" value="' + escapeHtml(item.title || '') + '"></div>' +
+          '<div class="mini-form-row"><label>描述</label><input type="text" class="card-desc" value="' + escapeHtml(item.desc || '') + '"></div>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
   }
+  container.innerHTML = html;
+}
+
+function addBenefitCard() {
+  var container = document.getElementById('benefitsCardsList');
+  var idx = container.querySelectorAll('.card-item').length + 1;
+  var div = document.createElement('div');
+  div.className = 'card-item';
+  div.innerHTML =
+    '<div class="card-item-header"><h5>权益 #' + idx + '</h5><input type="button" class="remove-card-item" value="删除" onclick="this.closest(\'.card-item\').remove()"></div>' +
+    '<div style="display:flex;gap:12px;align-items:flex-start;">' +
+      '<div class="mini-img-upload">' +
+        '<span style="color:#999;font-size:11px;">图标</span>' +
+        '<input type="file" accept="image/*" onchange="handleMiniUpload(this)">' +
+        '<input type="hidden" class="card-icon-data" value="">' +
+      '</div>' +
+      '<div style="flex:1;">' +
+        '<div class="mini-form-row"><label>标题</label><input type="text" class="card-title" value=""></div>' +
+        '<div class="mini-form-row"><label>描述</label><input type="text" class="card-desc" value=""></div>' +
+      '</div>' +
+    '</div>';
+  container.appendChild(div);
+}
+
+function collectBenefitCards() {
+  var container = document.getElementById('benefitsCardsList');
+  var cards = container.querySelectorAll('.card-item');
+  var items = [];
+  for (var i = 0; i < cards.length; i++) {
+    var title = cards[i].querySelector('.card-title');
+    var desc = cards[i].querySelector('.card-desc');
+    var iconData = cards[i].querySelector('.card-icon-data');
+    items.push({
+      title: title ? title.value.trim() : '',
+      icon: iconData ? iconData.value : '',
+      desc: desc ? desc.value.trim() : ''
+    });
+  }
+  return items;
+}
+
+function handleMiniUpload(input) {
+  if (!input.files || !input.files[0]) return;
+  var file = input.files[0];
+  compressAndRead(file, function(base64) {
+    var container = input.parentElement;
+    var hidden = container.querySelector('input[type="hidden"]');
+    var img = container.querySelector('img');
+    if (hidden) hidden.value = base64;
+    if (img) { img.src = base64; } else {
+      var newImg = document.createElement('img');
+      newImg.src = base64;
+      container.insertBefore(newImg, input);
+      var span = container.querySelector('span');
+      if (span) span.style.display = 'none';
+    }
+  });
 }
 
 // ==================== Settings ====================
@@ -1941,12 +2277,12 @@ function loadSettings() {
   document.getElementById('siteDescInput').value = profile.desc || '';
   document.getElementById('siteAvatarInput').value = profile.avatar || '';
 
-  // About
+  // About - visual editors
   var about = allData.about_data || {};
   document.getElementById('aboutBrand').value = about.brand || '';
-  document.getElementById('aboutStories').value = JSON.stringify(about.stories || [], null, 2);
-  document.getElementById('aboutValues').value = JSON.stringify(about.values || [], null, 2);
-  document.getElementById('aboutFaq').value = JSON.stringify(about.faq || [], null, 2);
+  renderStoryCards(about.stories || []);
+  renderValueCards(about.values || []);
+  renderFaqAccordion(about.faq || []);
 
   // Contact
   document.getElementById('contactHTML').value = allData.contact_html || '';
@@ -1991,10 +2327,9 @@ function saveSiteSettings() {
 
 function saveAboutData() {
   var brand = document.getElementById('aboutBrand').value.trim();
-  var stories = [], values = [], faq = [];
-  try { stories = JSON.parse(document.getElementById('aboutStories').value); } catch(e) {}
-  try { values = JSON.parse(document.getElementById('aboutValues').value); } catch(e) {}
-  try { faq = JSON.parse(document.getElementById('aboutFaq').value); } catch(e) {}
+  var stories = collectStoryCards();
+  var values = collectValueCards();
+  var faq = collectFaqItems();
   saveData('about_data', { brand: brand, stories: stories, values: values, faq: faq }, function() {
     showToast('关于我们已保存', 'success');
     loadAllData();
@@ -2120,6 +2455,14 @@ function deleteFeaturedCat(val) {
 // ==================== Messages ====================
 function loadMessages() {
   var list = toArray(allData.messages || []);
+  // Sort: pinned first
+  var pinned = [];
+  var unpinned = [];
+  for (var i = 0; i < list.length; i++) {
+    if (list[i].pinned) { pinned.push(list[i]); } else { unpinned.push(list[i]); }
+  }
+  list = pinned.concat(unpinned);
+
   var tbody = document.getElementById('messagesList');
   if (!list.length) {
     tbody.innerHTML = '<tr><td colspan="4" class="empty-state"><div class="empty-icon">&#9997;</div><p>暂无留言</p></td></tr>';
@@ -2128,13 +2471,34 @@ function loadMessages() {
   var html = '';
   for (var i = 0; i < list.length; i++) {
     var m = list[i];
+    var nickname = m.nickname || m.name || '匿名用户';
+    var avatarColor = m.avatarColor || '#999';
+    var firstChar = nickname.charAt(0);
+    var pinBadge = m.pinned ? '<span class="msg-pin-badge">&#128204; 已置顶</span>' : '';
     html += '<tr>' +
-      '<td>' + escapeHtml(m.name || '-') + '</td>' +
+      '<td><div style="display:flex;align-items:center;gap:8px;"><div class="msg-avatar" style="background:' + avatarColor + ';">' + escapeHtml(firstChar) + '</div><div><div>' + escapeHtml(nickname) + pinBadge + '</div></div></div></td>' +
       '<td>' + escapeHtml(truncate(m.text || '-', 50)) + '</td>' +
       '<td>' + (m.time ? formatDate(m.time) : '-') + '</td>' +
-      '<td class="td-actions"><input type="button" class="btn-sm btn-del" value="删除" onclick="deleteMessage(\'' + (m.id || m._key || i) + '\')"></td></tr>';
+      '<td class="td-actions">' +
+        '<input type="button" class="btn-sm ' + (m.pinned ? 'btn-warning' : 'btn-success') + '" value="' + (m.pinned ? '取消置顶' : '置顶') + '" onclick="toggleMessagePin(\'' + (m.id || m._key || i) + '\')">' +
+        '<input type="button" class="btn-sm btn-del" value="删除" onclick="deleteMessage(\'' + (m.id || m._key || i) + '\')">' +
+      '</td></tr>';
   }
   tbody.innerHTML = html;
+}
+
+function toggleMessagePin(id) {
+  var list = toArray(allData.messages || []);
+  for (var i = 0; i < list.length; i++) {
+    if ((list[i].id || list[i]._key || i) === id) {
+      list[i].pinned = !list[i].pinned;
+      break;
+    }
+  }
+  saveData('messages', rebuildArray(list), function() {
+    showToast('置顶状态已更新', 'success');
+    loadAllData();
+  });
 }
 
 function deleteMessage(id) {
@@ -2234,6 +2598,400 @@ function confirmClearAll() {
       }
     });
   });
+}
+
+// ==================== Story Cards ====================
+function renderStoryCards(items) {
+  var container = document.getElementById('storiesCardsList');
+  if (!items.length) { container.innerHTML = '<div style="color:#999;text-align:center;padding:20px;">暂无品牌故事，点击下方按钮添加</div>'; return; }
+  var html = '';
+  for (var i = 0; i < items.length; i++) {
+    var item = items[i];
+    html += '<div class="card-item">' +
+      '<div class="card-item-header"><h5>故事 #' + (i + 1) + '</h5><input type="button" class="remove-card-item" value="删除" onclick="this.closest(\'.card-item\').remove()"></div>' +
+      '<div style="display:flex;gap:12px;align-items:flex-start;">' +
+        '<div class="mini-img-upload">' +
+          (item.img ? '<img src="' + item.img + '">' : '<span style="color:#999;font-size:11px;">图片</span>') +
+          '<input type="file" accept="image/*" onchange="handleMiniUpload(this)">' +
+          '<input type="hidden" class="card-icon-data" value="' + (item.img || '') + '">' +
+        '</div>' +
+        '<div style="flex:1;">' +
+          '<div class="mini-form-row"><label>标题</label><input type="text" class="card-title" value="' + escapeHtml(item.title || '') + '"></div>' +
+          '<div class="mini-form-row"><label>描述</label><textarea class="card-desc" style="width:100%;padding:8px 10px;border:1px solid #d9d9d9;border-radius:4px;font-size:13px;min-height:60px;">' + escapeHtml(item.desc || '') + '</textarea></div>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  }
+  container.innerHTML = html;
+}
+
+function addStoryCard() {
+  var container = document.getElementById('storiesCardsList');
+  if (container.querySelector('.empty-state,div[style*="color:#999"]')) container.innerHTML = '';
+  var idx = container.querySelectorAll('.card-item').length + 1;
+  var div = document.createElement('div');
+  div.className = 'card-item';
+  div.innerHTML =
+    '<div class="card-item-header"><h5>故事 #' + idx + '</h5><input type="button" class="remove-card-item" value="删除" onclick="this.closest(\'.card-item\').remove()"></div>' +
+    '<div style="display:flex;gap:12px;align-items:flex-start;">' +
+      '<div class="mini-img-upload"><span style="color:#999;font-size:11px;">图片</span><input type="file" accept="image/*" onchange="handleMiniUpload(this)"><input type="hidden" class="card-icon-data" value=""></div>' +
+      '<div style="flex:1;"><div class="mini-form-row"><label>标题</label><input type="text" class="card-title" value=""></div><div class="mini-form-row"><label>描述</label><textarea class="card-desc" style="width:100%;padding:8px 10px;border:1px solid #d9d9d9;border-radius:4px;font-size:13px;min-height:60px;"></textarea></div></div>' +
+    '</div>';
+  container.appendChild(div);
+}
+
+function collectStoryCards() {
+  var container = document.getElementById('storiesCardsList');
+  var cards = container.querySelectorAll('.card-item');
+  var items = [];
+  for (var i = 0; i < cards.length; i++) {
+    var title = cards[i].querySelector('.card-title');
+    var desc = cards[i].querySelector('.card-desc');
+    var imgData = cards[i].querySelector('.card-icon-data');
+    items.push({
+      title: title ? title.value.trim() : '',
+      img: imgData ? imgData.value : '',
+      desc: desc ? desc.value.trim() : ''
+    });
+  }
+  return items;
+}
+
+// ==================== Value Cards ====================
+function renderValueCards(items) {
+  var container = document.getElementById('valuesCardsList');
+  if (!items.length) { container.innerHTML = '<div style="color:#999;text-align:center;padding:20px;">暂无品牌价值观，点击下方按钮添加</div>'; return; }
+  var html = '';
+  for (var i = 0; i < items.length; i++) {
+    var item = items[i];
+    html += '<div class="card-item">' +
+      '<div class="card-item-header"><h5>价值观 #' + (i + 1) + '</h5><input type="button" class="remove-card-item" value="删除" onclick="this.closest(\'.card-item\').remove()"></div>' +
+      '<div style="display:flex;gap:12px;align-items:flex-start;">' +
+        '<div class="mini-img-upload">' +
+          (item.icon ? '<img src="' + item.icon + '">' : '<span style="color:#999;font-size:11px;">图标</span>') +
+          '<input type="file" accept="image/*" onchange="handleMiniUpload(this)">' +
+          '<input type="hidden" class="card-icon-data" value="' + (item.icon || '') + '">' +
+        '</div>' +
+        '<div style="flex:1;">' +
+          '<div class="mini-form-row"><label>标题</label><input type="text" class="card-title" value="' + escapeHtml(item.title || '') + '"></div>' +
+          '<div class="mini-form-row"><label>描述</label><input type="text" class="card-desc" value="' + escapeHtml(item.desc || '') + '"></div>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  }
+  container.innerHTML = html;
+}
+
+function addValueCard() {
+  var container = document.getElementById('valuesCardsList');
+  if (container.querySelector('div[style*="color:#999"]')) container.innerHTML = '';
+  var idx = container.querySelectorAll('.card-item').length + 1;
+  var div = document.createElement('div');
+  div.className = 'card-item';
+  div.innerHTML =
+    '<div class="card-item-header"><h5>价值观 #' + idx + '</h5><input type="button" class="remove-card-item" value="删除" onclick="this.closest(\'.card-item\').remove()"></div>' +
+    '<div style="display:flex;gap:12px;align-items:flex-start;">' +
+      '<div class="mini-img-upload"><span style="color:#999;font-size:11px;">图标</span><input type="file" accept="image/*" onchange="handleMiniUpload(this)"><input type="hidden" class="card-icon-data" value=""></div>' +
+      '<div style="flex:1;"><div class="mini-form-row"><label>标题</label><input type="text" class="card-title" value=""></div><div class="mini-form-row"><label>描述</label><input type="text" class="card-desc" value=""></div></div>' +
+    '</div>';
+  container.appendChild(div);
+}
+
+function collectValueCards() {
+  var container = document.getElementById('valuesCardsList');
+  var cards = container.querySelectorAll('.card-item');
+  var items = [];
+  for (var i = 0; i < cards.length; i++) {
+    var title = cards[i].querySelector('.card-title');
+    var desc = cards[i].querySelector('.card-desc');
+    var iconData = cards[i].querySelector('.card-icon-data');
+    items.push({
+      title: title ? title.value.trim() : '',
+      icon: iconData ? iconData.value : '',
+      desc: desc ? desc.value.trim() : ''
+    });
+  }
+  return items;
+}
+
+// ==================== FAQ Accordion ====================
+function renderFaqAccordion(items) {
+  var container = document.getElementById('faqAccordionList');
+  if (!items.length) { container.innerHTML = '<div style="color:#999;text-align:center;padding:20px;">暂无常见问题，点击下方按钮添加</div>'; return; }
+  var html = '';
+  for (var i = 0; i < items.length; i++) {
+    var item = items[i];
+    html += '<div class="accordion-item" data-idx="' + i + '">' +
+      '<div class="acc-header" onclick="toggleFaqAccordion(this)">' +
+        '<span>' + escapeHtml(item.q || '未填写问题') + '</span>' +
+        '<div class="acc-actions">' +
+          '<input type="button" class="btn-sm btn-del" value="删除" onclick="event.stopPropagation();this.closest(\'.accordion-item\').remove()">' +
+          '<span class="acc-toggle">&#9660;</span>' +
+        '</div>' +
+      '</div>' +
+      '<div class="acc-body">' +
+        '<div class="mini-form-row"><label>问题</label><input type="text" class="faq-q" value="' + escapeHtml(item.q || '') + '" oninput="this.closest(\'.accordion-item\').querySelector(\'.acc-header span\').textContent=this.value||\'未填写问题\'"></div>' +
+        '<div class="mini-form-row"><label>答案</label><textarea class="faq-a" style="width:100%;padding:8px 10px;border:1px solid #d9d9d9;border-radius:4px;font-size:13px;min-height:60px;">' + escapeHtml(item.a || '') + '</textarea></div>' +
+      '</div>' +
+    '</div>';
+  }
+  container.innerHTML = html;
+}
+
+function addFaqItem() {
+  var container = document.getElementById('faqAccordionList');
+  if (container.querySelector('div[style*="color:#999"]')) container.innerHTML = '';
+  var div = document.createElement('div');
+  div.className = 'accordion-item';
+  div.innerHTML =
+    '<div class="acc-header" onclick="toggleFaqAccordion(this)">' +
+      '<span>未填写问题</span>' +
+      '<div class="acc-actions">' +
+        '<input type="button" class="btn-sm btn-del" value="删除" onclick="event.stopPropagation();this.closest(\'.accordion-item\').remove()">' +
+        '<span class="acc-toggle">&#9660;</span>' +
+      '</div>' +
+    '</div>' +
+    '<div class="acc-body">' +
+      '<div class="mini-form-row"><label>问题</label><input type="text" class="faq-q" value="" oninput="this.closest(\'.accordion-item\').querySelector(\'.acc-header span\').textContent=this.value||\'未填写问题\'"></div>' +
+      '<div class="mini-form-row"><label>答案</label><textarea class="faq-a" style="width:100%;padding:8px 10px;border:1px solid #d9d9d9;border-radius:4px;font-size:13px;min-height:60px;"></textarea></div>' +
+    '</div>';
+  container.appendChild(div);
+}
+
+function toggleFaqAccordion(headerEl) {
+  var body = headerEl.nextElementSibling;
+  var toggle = headerEl.querySelector('.acc-toggle');
+  if (body.classList.contains('open')) {
+    body.classList.remove('open');
+    toggle.classList.remove('open');
+  } else {
+    body.classList.add('open');
+    toggle.classList.add('open');
+  }
+}
+
+function collectFaqItems() {
+  var container = document.getElementById('faqAccordionList');
+  var items = container.querySelectorAll('.accordion-item');
+  var result = [];
+  for (var i = 0; i < items.length; i++) {
+    var q = items[i].querySelector('.faq-q');
+    var a = items[i].querySelector('.faq-a');
+    result.push({
+      q: q ? q.value.trim() : '',
+      a: a ? a.value.trim() : ''
+    });
+  }
+  return result;
+}
+
+// ==================== Article Comments Management ====================
+function loadArticleCommentsPage() {
+  var articles = toArray(allData.articles || []);
+  var sel = document.getElementById('articleCommentSelect');
+  var html = '<option value="">-- 选择文章 --</option>';
+  for (var i = 0; i < articles.length; i++) {
+    html += '<option value="' + (articles[i].id || articles[i]._key || '') + '">' + escapeHtml(truncate(articles[i].title || '未命名', 40)) + '</option>';
+  }
+  sel.innerHTML = html;
+  document.getElementById('articleCommentsList').innerHTML = '<div class="empty-state"><p>请选择一篇文章查看留言</p></div>';
+}
+
+function loadArticleComments() {
+  var articleId = document.getElementById('articleCommentSelect').value;
+  if (!articleId) {
+    document.getElementById('articleCommentsList').innerHTML = '<div class="empty-state"><p>请选择一篇文章查看留言</p></div>';
+    return;
+  }
+  if (!db) { showToast('Firebase 未连接', 'error'); return; }
+  db.ref('site/comments/article/' + articleId).once('value', function(snap) {
+    var list = toArray(snap.val() || []);
+    // Sort: pinned first
+    var pinned = [], unpinned = [];
+    for (var i = 0; i < list.length; i++) {
+      if (list[i].pinned) pinned.push(list[i]); else unpinned.push(list[i]);
+    }
+    list = pinned.concat(unpinned);
+
+    var container = document.getElementById('articleCommentsList');
+    if (!list.length) {
+      container.innerHTML = '<div class="empty-state"><p>暂无留言</p></div>';
+      return;
+    }
+    var html = '<table><thead><tr><th>用户</th><th>内容</th><th>时间</th><th>操作</th></tr></thead><tbody>';
+    for (var i = 0; i < list.length; i++) {
+      var c = list[i];
+      var nickname = c.nickname || '匿名用户';
+      var avatarColor = c.avatarColor || '#999';
+      var firstChar = nickname.charAt(0);
+      var pinBadge = c.pinned ? ' <span style="color:#f59e0b;">&#128204;</span>' : '';
+      html += '<tr>' +
+        '<td><div style="display:flex;align-items:center;gap:8px;"><div class="msg-avatar" style="background:' + avatarColor + ';">' + escapeHtml(firstChar) + '</div>' + escapeHtml(nickname) + pinBadge + '</div></td>' +
+        '<td>' + escapeHtml(truncate(c.text || '-', 50)) + '</td>' +
+        '<td>' + (c.time ? formatDate(c.time) : '-') + '</td>' +
+        '<td class="td-actions">' +
+          '<input type="button" class="btn-sm ' + (c.pinned ? 'btn-warning' : 'btn-success') + '" value="' + (c.pinned ? '取消置顶' : '置顶') + '" onclick="toggleArticleCommentPin(\'' + articleId + '\',\'' + (c.id || c._key || i) + '\')">' +
+          '<input type="button" class="btn-sm btn-del" value="删除" onclick="deleteArticleComment(\'' + articleId + '\',\'' + (c.id || c._key || i) + '\')">' +
+        '</td></tr>';
+    }
+    html += '</tbody></table>';
+    container.innerHTML = html;
+  });
+}
+
+function toggleArticleCommentPin(articleId, commentId) {
+  if (!db) return;
+  db.ref('site/comments/article/' + articleId).once('value', function(snap) {
+    var list = toArray(snap.val() || []);
+    for (var i = 0; i < list.length; i++) {
+      if ((list[i].id || list[i]._key || i) === commentId) {
+        list[i].pinned = !list[i].pinned;
+        break;
+      }
+    }
+    db.ref('site/comments/article/' + articleId).set(rebuildArray(list), function(err) {
+      if (!err) { showToast('置顶状态已更新', 'success'); loadArticleComments(); }
+    });
+  });
+}
+
+function deleteArticleComment(articleId, commentId) {
+  showConfirm('&#9888;', '删除留言', '确定要删除该留言吗？', function() {
+    if (!db) return;
+    db.ref('site/comments/article/' + articleId).once('value', function(snap) {
+      var list = toArray(snap.val() || []);
+      var filtered = [];
+      for (var i = 0; i < list.length; i++) {
+        if ((list[i].id || list[i]._key || i) !== commentId) filtered.push(list[i]);
+      }
+      db.ref('site/comments/article/' + articleId).set(rebuildArray(filtered), function(err) {
+        if (!err) { showToast('留言已删除', 'success'); loadArticleComments(); }
+      });
+    });
+  });
+}
+
+// ==================== Resource Comments Management ====================
+function loadResourceCommentsPage() {
+  var resources = toArray(allData.resources || []);
+  var sel = document.getElementById('resourceCommentSelect');
+  var html = '<option value="">-- 选择资源 --</option>';
+  for (var i = 0; i < resources.length; i++) {
+    html += '<option value="' + (resources[i].id || resources[i]._key || '') + '">' + escapeHtml(truncate(resources[i].title || '未命名', 40)) + '</option>';
+  }
+  sel.innerHTML = html;
+  document.getElementById('resourceCommentsList').innerHTML = '<div class="empty-state"><p>请选择一个资源查看留言</p></div>';
+}
+
+function loadResourceComments() {
+  var resId = document.getElementById('resourceCommentSelect').value;
+  if (!resId) {
+    document.getElementById('resourceCommentsList').innerHTML = '<div class="empty-state"><p>请选择一个资源查看留言</p></div>';
+    return;
+  }
+  if (!db) { showToast('Firebase 未连接', 'error'); return; }
+  db.ref('site/comments/resource/' + resId).once('value', function(snap) {
+    var list = toArray(snap.val() || []);
+    var pinned = [], unpinned = [];
+    for (var i = 0; i < list.length; i++) {
+      if (list[i].pinned) pinned.push(list[i]); else unpinned.push(list[i]);
+    }
+    list = pinned.concat(unpinned);
+
+    var container = document.getElementById('resourceCommentsList');
+    if (!list.length) {
+      container.innerHTML = '<div class="empty-state"><p>暂无留言</p></div>';
+      return;
+    }
+    var html = '<table><thead><tr><th>用户</th><th>内容</th><th>时间</th><th>操作</th></tr></thead><tbody>';
+    for (var i = 0; i < list.length; i++) {
+      var c = list[i];
+      var nickname = c.nickname || '匿名用户';
+      var avatarColor = c.avatarColor || '#999';
+      var firstChar = nickname.charAt(0);
+      var pinBadge = c.pinned ? ' <span style="color:#f59e0b;">&#128204;</span>' : '';
+      html += '<tr>' +
+        '<td><div style="display:flex;align-items:center;gap:8px;"><div class="msg-avatar" style="background:' + avatarColor + ';">' + escapeHtml(firstChar) + '</div>' + escapeHtml(nickname) + pinBadge + '</div></td>' +
+        '<td>' + escapeHtml(truncate(c.text || '-', 50)) + '</td>' +
+        '<td>' + (c.time ? formatDate(c.time) : '-') + '</td>' +
+        '<td class="td-actions">' +
+          '<input type="button" class="btn-sm ' + (c.pinned ? 'btn-warning' : 'btn-success') + '" value="' + (c.pinned ? '取消置顶' : '置顶') + '" onclick="toggleResourceCommentPin(\'' + resId + '\',\'' + (c.id || c._key || i) + '\')">' +
+          '<input type="button" class="btn-sm btn-del" value="删除" onclick="deleteResourceComment(\'' + resId + '\',\'' + (c.id || c._key || i) + '\')">' +
+        '</td></tr>';
+    }
+    html += '</tbody></table>';
+    container.innerHTML = html;
+  });
+}
+
+function toggleResourceCommentPin(resId, commentId) {
+  if (!db) return;
+  db.ref('site/comments/resource/' + resId).once('value', function(snap) {
+    var list = toArray(snap.val() || []);
+    for (var i = 0; i < list.length; i++) {
+      if ((list[i].id || list[i]._key || i) === commentId) {
+        list[i].pinned = !list[i].pinned;
+        break;
+      }
+    }
+    db.ref('site/comments/resource/' + resId).set(rebuildArray(list), function(err) {
+      if (!err) { showToast('置顶状态已更新', 'success'); loadResourceComments(); }
+    });
+  });
+}
+
+function deleteResourceComment(resId, commentId) {
+  showConfirm('&#9888;', '删除留言', '确定要删除该留言吗？', function() {
+    if (!db) return;
+    db.ref('site/comments/resource/' + resId).once('value', function(snap) {
+      var list = toArray(snap.val() || []);
+      var filtered = [];
+      for (var i = 0; i < list.length; i++) {
+        if ((list[i].id || list[i]._key || i) !== commentId) filtered.push(list[i]);
+      }
+      db.ref('site/comments/resource/' + resId).set(rebuildArray(filtered), function(err) {
+        if (!err) { showToast('留言已删除', 'success'); loadResourceComments(); }
+      });
+    });
+  });
+}
+
+// ==================== Platform Profile ====================
+function loadProfilePage() {
+  var profile = allData.profile_data || {};
+  document.getElementById('profileName').value = profile.title || '艾优社';
+  document.getElementById('profileSubtitle').value = profile.subtitle || profile.desc || '资源馆';
+  if (profile.avatar) {
+    window.profileAvatarData = profile.avatar;
+    document.getElementById('profileAvatarPreview').innerHTML = '<img src="' + profile.avatar + '"><span class="remove-img" onclick="clearImage(\'profileAvatarPreview\',\'profileAvatarData\')">移除</span>';
+  }
+}
+
+function saveProfileData() {
+  var name = document.getElementById('profileName').value.trim() || '艾优社';
+  var subtitle = document.getElementById('profileSubtitle').value.trim() || '资源馆';
+  var avatar = window.profileAvatarData || '';
+  saveData('profile_data', { title: name, subtitle: subtitle, desc: subtitle, avatar: avatar }, function() {
+    showToast('平台资料已保存', 'success');
+    loadAllData();
+  });
+}
+
+// ==================== Random Nickname Generator (for anonymous messages) ====================
+var _randomNicknames = [
+  '快乐的小星星', '勇敢的探险家', '温柔的海风', '聪明的熊猫', '活泼的小鹿',
+  '善良的彩虹', '快乐的小熊', '自由的小鸟', '可爱的小猫', '帅气的小龙',
+  '梦幻的云朵', '热情的小太阳', '安静的小树', '快乐的小兔子', '勇敢的小狮子',
+  '聪明的小狐狸', '温暖的小火炉', '调皮的小猴子', '优雅的天鹅', '快乐的小蜜蜂',
+  '神奇的小精灵', '可爱的小企鹅', '快乐的小海豚', '活泼的小松鼠', '勇敢的小鹰'
+];
+var _avatarColors = ['#E63946','#3b82f6','#10b981','#f59e0b','#8b5cf6','#ec4899','#14b8a6','#f97316','#6366f1','#84cc16'];
+
+function generateRandomNickname() {
+  return _randomNicknames[Math.floor(Math.random() * _randomNicknames.length)];
+}
+function generateRandomColor() {
+  return _avatarColors[Math.floor(Math.random() * _avatarColors.length)];
 }
 
 // ==================== Init ====================

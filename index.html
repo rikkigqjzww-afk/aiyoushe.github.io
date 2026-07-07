@@ -183,14 +183,13 @@ input,textarea,select{font-family:inherit}
 
 /* ===== FAQ Accordion ===== */
 .faq-list{margin-bottom:32px}
-.faq-item{background:var(--card-bg);border-radius:var(--radius);margin-bottom:12px;box-shadow:var(--shadow);overflow:hidden}
-.faq-question{padding:16px 20px;font-size:14px;font-weight:500;cursor:pointer;display:flex;justify-content:space-between;align-items:center;transition:var(--transition)}
-.faq-question:hover{background:var(--bg)}
-.faq-question::after{content:'+';font-size:18px;font-weight:300;color:var(--text-lighter);transition:transform .3s}
-.faq-question.active::after{transform:rotate(45deg)}
-.faq-answer{max-height:0;overflow:hidden;transition:max-height .3s ease}
-.faq-answer-inner{padding:0 20px 16px;font-size:13px;color:var(--text-light);line-height:1.8}
-.faq-item.open .faq-answer{max-height:300px}
+.faq-item{border-radius:8px;margin-bottom:8px;overflow:hidden}
+.faq-question{padding:14px 16px;background:#F8F9FA;font-weight:600;cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-size:14px;color:var(--text);transition:var(--transition)}
+.faq-question:hover{background:#f0f0f0}
+.faq-arrow{transition:transform .3s;font-size:12px;color:var(--text-lighter)}
+.faq-item.active .faq-arrow{transform:rotate(180deg)}
+.faq-answer{padding:14px 16px;background:#fff;font-weight:400;color:#666;display:none;border:1px solid #f0f0f0;border-top:none;font-size:13px;line-height:1.8}
+.faq-item.active .faq-answer{display:block}
 
 /* ===== Benefits ===== */
 .benefits-section{margin-bottom:32px}
@@ -274,6 +273,45 @@ input,textarea,select{font-family:inherit}
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:rgba(0,0,0,.15);border-radius:3px}
 
+
+
+
+/* ===== Contact Grid (3 cols) ===== */
+.contact-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.contact-grid-item{background:var(--card-bg);border-radius:var(--radius);padding:20px;text-align:center;box-shadow:var(--shadow)}
+.contact-grid-item .contact-icon{font-size:28px;margin-bottom:8px}
+.contact-grid-item .contact-label{font-size:12px;color:var(--text-lighter);margin-bottom:4px}
+.contact-grid-item .contact-value{font-size:14px;font-weight:600;color:var(--text)}
+/* ===== Album Grid (4 cols, 9:16) ===== */
+.album-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.album-card{cursor:pointer;transition:var(--transition)}
+.album-card:hover{transform:translateY(-4px)}
+.album-card .album-cover{aspect-ratio:9/16;object-fit:cover;border-radius:8px;width:100%}
+.album-card .album-name{margin-top:8px;font-size:13px;font-weight:600;color:var(--text);text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* ===== Comment Section ===== */
+.comment-section{margin-top:40px;padding-top:24px;border-top:1px solid var(--border)}
+.comment-section h3{font-size:18px;font-weight:600;color:var(--secondary);margin-bottom:16px}
+.comment-input-area{margin-bottom:24px}
+.comment-input-area textarea{width:100%;padding:12px 16px;border:1px solid var(--border);border-radius:var(--radius);font-size:14px;height:100px;resize:vertical;outline:none;transition:var(--transition)}
+.comment-input-area textarea:focus{border-color:var(--primary)}
+.comment-input-area input[type="button"]{margin-top:10px;padding:8px 24px;background:var(--primary);color:#fff;border:none;border-radius:20px;font-size:13px;cursor:pointer;transition:var(--transition)}
+.comment-input-area input[type="button"]:hover{background:var(--primary-light)}
+.comment-list .comment-item{display:flex;gap:12px;padding:16px 0;border-bottom:1px solid var(--border)}
+.comment-list .comment-item:last-child{border-bottom:none}
+.comment-avatar{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:bold;font-size:14px;flex-shrink:0}
+.comment-body{flex:1}
+.comment-meta{display:flex;align-items:center;gap:8px;margin-bottom:4px}
+.comment-nickname{font-size:14px;font-weight:600;color:var(--secondary)}
+.comment-time{font-size:12px;color:var(--text-lighter)}
+.comment-pinned{font-size:11px;background:var(--primary);color:#fff;padding:1px 6px;border-radius:4px}
+.comment-text{font-size:14px;color:var(--text);line-height:1.6}
+/* ===== Announcement Bar ===== */
+.announcement-bar{background:#FFF1F0;overflow:hidden;white-space:nowrap;padding:8px 0;border-bottom:1px solid #FFE8E5}
+.announcement-bar .scroll-wrap{display:inline-block;animation:scroll-left 20s linear infinite}
+.announcement-bar .scroll-wrap span{margin-right:60px;font-size:13px;color:#E63946}
+@keyframes scroll-left{0%{transform:translateX(100%)}100%{transform:translateX(-100%)}}
+
 /* ===== Responsive ===== */
 @media(max-width:1024px){
   .card-grid{grid-template-columns:repeat(2,1fr)}
@@ -308,6 +346,12 @@ input,textarea,select{font-family:inherit}
   .photo-item{margin-bottom:10px}
   .about-hero{padding:32px 24px}
   .about-hero h1{font-size:22px}
+  .album-grid{grid-template-columns:repeat(2,1fr);gap:12px}
+  .contact-grid{grid-template-columns:repeat(3,1fr);gap:8px}
+  .contact-grid-item{padding:14px 8px}
+  .contact-grid-item .contact-icon{font-size:22px}
+  .contact-grid-item .contact-value{font-size:12px}
+  .qr-modal-content{max-width:300px;padding:24px 16px}
 }
 @media(max-width:480px){
   .card-grid{grid-template-columns:1fr}
@@ -316,6 +360,11 @@ input,textarea,select{font-family:inherit}
   .carousel{height:180px}
   .carousel-content h2{font-size:17px}
   .tag-cloud .tag{padding:5px 12px;font-size:12px}
+  .album-grid{grid-template-columns:repeat(2,1fr);gap:10px}
+  .contact-grid{grid-template-columns:repeat(3,1fr);gap:6px}
+  .contact-grid-item{padding:10px 4px}
+  .comment-section{padding-top:16px}
+  .comment-input-area textarea{height:80px}
 }
 </style>
 <script data-preview-injected src="https://lf3-static.bytednsdoc.com/obj/eden-cn/8011eh7nupenuvonuhd/previewer-tools.de3cd6a1.umd.js"></script></head>
@@ -323,7 +372,7 @@ input,textarea,select{font-family:inherit}
 <div id="app">
   <!-- Sidebar -->
   <div id="sidebar">
-    <div class="sidebar-logo"><h2>艾优社</h2><p>资源馆</p></div>
+    <div class="sidebar-logo" id="sidebarLogo"><h2>艾优社</h2><p>资源馆</p></div>
     <nav class="sidebar-nav" id="sidebar-nav">
       <a class="nav-link active" data-page="home" onclick="navigateTo('home')">
         <span class="nav-icon">&#9750;</span>我的主页
@@ -362,6 +411,9 @@ input,textarea,select{font-family:inherit}
       <div class="top-bar-right">
         <span id="mobile-search-btn" onclick="navigateTo('search')">&#128269;</span>
       </div>
+    </div>
+    <div id="announcementBar" class="announcement-bar" style="display:none;">
+      <div class="scroll-wrap" id="announcementScroll"></div>
     </div>
     <div id="page-container"></div>
   </div>
@@ -591,6 +643,17 @@ var appState = {
   carouselIndex: 0
 };
 
+
+var NICKNAMES = ['快乐的小星星', '勇敢的探险家', '温柔的海风', '聪明的熊猫', '活泼的小兔子', '善良的天使', '可爱的小猫咪', '勤劳的小蜜蜂', '自由的小鸟', '乐观的向日葵', '神秘的黑猫', '快乐的小青蛙', '温暖的小太阳', '机智的小狐狸', '善良的小白兔'];
+var AVATAR_COLORS = ['#E63946', '#457B9D', '#2A9D8F', '#E9C46A', '#F4A261', '#264653', '#E76F51', '#606C38', '#283618', '#DDA15E', '#BC6C25', '#023047', '#219EBC', '#8ECAE6', '#FB8500'];
+
+function getRandomNickname() {
+  return NICKNAMES[Math.floor(Math.random() * NICKNAMES.length)];
+}
+
+function getRandomColor() {
+  return AVATAR_COLORS[Math.floor(Math.random() * AVATAR_COLORS.length)];
+}
 /* ========================================
    Firebase 配置（请替换为你的配置）
    ======================================== */
@@ -711,6 +774,8 @@ function listenFirebase() {
             appState.firebaseReady = true;
           }
           renderCurrentPage();
+          if (path === 'announcements') loadAnnouncements();
+          if (path === 'profile_data') loadProfile();
         }
       }, function(err) {
         console.log('Firebase 监听 ' + path + ' 失败:', err.message);
@@ -795,6 +860,8 @@ function renderCurrentPage() {
   }
   container.innerHTML = html;
   if (appState.currentPage === 'home') startCarousel();
+  if (appState.currentPage === 'article-detail' && appState.currentArticleId) loadComments('article', appState.currentArticleId);
+  if (appState.currentPage === 'resource-detail' && appState.currentResourceId) loadComments('resource', appState.currentResourceId);
 }
 
 /* ---------- 首页 ---------- */
@@ -1010,7 +1077,7 @@ function renderArticleDetail() {
   if (tagsHtml) html += '<div style="margin-top:12px">' + tagsHtml + '</div>';
   html += '</div>';
   html += '<div class="article-detail-content">' + (article.content || '<p>暂无内容</p>') + '</div>';
-
+  html += renderComments('article', article.id);
   return html;
 }
 
@@ -1093,7 +1160,7 @@ function renderResourceDetail() {
   html += '</div>';
   html += '<input type="button" class="get-resource-btn" value="获取资源" onclick="showQRModal()">';
   html += '</div>';
-
+  html += renderComments('resource', resource.id);
   return html;
 }
 
@@ -1101,7 +1168,7 @@ function renderResourceDetail() {
 function renderAlbums() {
   var albums = getData('albums');
   var html = '<div class="section-title"><span>相册分组</span></div>';
-  html += '<div class="card-grid card-grid-2">';
+  html += '<div class="album-grid">';
 
   for (var i = 0; i < albums.length; i++) {
     var g = albums[i];
@@ -1110,12 +1177,10 @@ function renderAlbums() {
     for (var j = 0; j < (g.subAlbums || []).length; j++) {
       photoCount += (g.subAlbums[j].photos || []).length;
     }
-    html += '<div class="album-group-card" onclick="navigateTo(\'album-detail\',{currentAlbumGroupId:\'' + g.id + '\'})">' +
-      '<img src="' + g.cover + '" alt="' + g.name + '" loading="lazy">' +
-      '<div class="album-group-overlay">' +
-      '<h3>' + g.name + '</h3>' +
-      '<p>' + count + '个子相册 &middot; ' + photoCount + '张照片</p>' +
-      '</div></div>';
+    html += '<div class="album-card" onclick="navigateTo(\'album-detail\',{currentAlbumGroupId:\'' + g.id + '\'})">' +
+      '<img class="album-cover" src="' + g.cover + '" alt="' + g.name + '" loading="lazy">' +
+      '<div class="album-name">' + g.name + '</div>' +
+      '</div>';
   }
   html += '</div>';
   return html;
@@ -1127,17 +1192,15 @@ function renderAlbumDetail() {
 
   var html = '<span class="back-btn" onclick="navigateTo(\'albums\')">&laquo; 返回相册中心</span>';
   html += '<div class="section-title"><span>' + group.name + '</span></div>';
-  html += '<div class="card-grid card-grid-2">';
+  html += '<div class="album-grid">';
 
   for (var i = 0; i < (group.subAlbums || []).length; i++) {
     var sa = group.subAlbums[i];
     var photoCount = (sa.photos || []).length;
-    html += '<div class="album-group-card" onclick="navigateTo(\'sub-album\',{currentAlbumGroupId:\'' + group.id + '\',currentSubAlbumId:\'' + sa.id + '\'})">' +
-      '<img src="' + sa.cover + '" alt="' + sa.name + '" loading="lazy">' +
-      '<div class="album-group-overlay">' +
-      '<h3>' + sa.name + '</h3>' +
-      '<p>' + photoCount + '张照片</p>' +
-      '</div></div>';
+    html += '<div class="album-card" onclick="navigateTo(\'sub-album\',{currentAlbumGroupId:\'' + group.id + '\',currentSubAlbumId:\'' + sa.id + '\'})">' +
+      '<img class="album-cover" src="' + sa.cover + '" alt="' + sa.name + '" loading="lazy">' +
+      '<div class="album-name">' + sa.name + '</div>' +
+      '</div>';
   }
   html += '</div>';
   return html;
@@ -1205,6 +1268,7 @@ function renderMember() {
   html += '<div class="vip-banner">';
   html += '<h2>' + (vipData.title || '开通会员，畅享全站资源') + '</h2>';
   html += '<p>' + (vipData.desc || '海量设计素材、模板资源、课程教程，VIP会员无限下载') + '</p>';
+  html += '<div style="margin-top:16px"><input type="button" class="btn btn-primary" style="padding:12px 40px;font-size:16px;border-radius:28px;background:rgba(255,255,255,.2);border:2px solid #fff;color:#fff" value="立即开通" onclick="showVIPQRModal()"></div>';
   html += '</div>';
 
   /* 定价卡片 */
@@ -1261,8 +1325,8 @@ function renderMember() {
   html += '<div class="faq-list">';
   for (var f = 0; f < faqs.length; f++) {
     html += '<div class="faq-item">' +
-      '<div class="faq-question" onclick="toggleFAQ(this)">' + faqs[f].q + '</div>' +
-      '<div class="faq-answer"><div class="faq-answer-inner">' + faqs[f].a + '</div></div>' +
+      '<div class="faq-question" onclick="toggleFAQ(this)">' + faqs[f].q + '<span class="faq-arrow">&#9660;</span></div>' +
+      '<div class="faq-answer">' + faqs[f].a + '</div>' +
       '</div>';
   }
   html += '</div>';
@@ -1272,13 +1336,10 @@ function renderMember() {
 
 function toggleFAQ(el) {
   var item = el.parentElement;
-  var answer = el.nextElementSibling;
-  if (item.className.indexOf('open') >= 0) {
+  if (item.className.indexOf('active') >= 0) {
     item.className = 'faq-item';
-    el.className = 'faq-question';
   } else {
-    item.className = 'faq-item open';
-    el.className = 'faq-question active';
+    item.className = 'faq-item active';
   }
 }
 
@@ -1317,24 +1378,26 @@ function renderAbout() {
   /* 联系方式 */
   html += '<div class="contact-info-box">';
   html += '<h3>联系方式</h3>';
-  html += '<div class="contact-row"><span class="contact-label">微信</span><span>' + (contact.wechat || 'aiyoushe_vip') + '</span></div>';
-  html += '<div class="contact-row"><span class="contact-label">邮箱</span><span>' + (contact.email || 'hello@aiyoushe.com') + '</span></div>';
-  html += '<div class="contact-row"><span class="contact-label">QQ</span><span>' + (contact.qq || '123456789') + '</span></div>';
-  html += '</div>';
+  html += '<div class="contact-grid">';
+  html += '<div class="contact-grid-item"><div class="contact-icon">&#128172;</div><div class="contact-label">微信</div><div class="contact-value">' + (contact.wechat || 'aiyoushe_vip') + '</div></div>';
+  html += '<div class="contact-grid-item"><div class="contact-icon">&#9993;</div><div class="contact-label">邮箱</div><div class="contact-value">' + (contact.email || 'hello@aiyoushe.com') + '</div></div>';
+  html += '<div class="contact-grid-item"><div class="contact-icon">&#128101;</div><div class="contact-label">QQ</div><div class="contact-value">' + (contact.qq || '123456789') + '</div></div>';
+  html += '</div></div>';
 
   /* 留言板 */
   var messages = getData('messages') || [];
   html += '<div class="message-board">';
   html += '<h3>留言板</h3>';
   html += '<div class="msg-form">';
-  html += '<input type="text" id="msg-name" placeholder="您的昵称" maxlength="20">';
   html += '<textarea id="msg-content" placeholder="写下您的留言..." maxlength="500"></textarea>';
   html += '<input type="button" class="btn btn-primary" value="发送留言" onclick="sendMessage()" style="width:100%">';
   html += '</div>';
   html += '<div class="msg-list">';
   for (var k = messages.length - 1; k >= 0; k--) {
     var m = messages[k];
-    html += '<div class="msg-item"><span class="msg-name">' + escapeHtml(m.name) + '</span><span class="msg-time">' + (m.time || '') + '</span><div class="msg-text">' + escapeHtml(m.text) + '</div></div>';
+    var color = m.avatarColor || getRandomColor();
+    var initial = (m.nickname || m.name || '?').charAt(0);
+    html += '<div class="msg-item" style="display:flex;gap:10px;align-items:flex-start"><div style="width:36px;height:36px;border-radius:50%;background:' + color + ';display:flex;align-items:center;justify-content:center;color:#fff;font-weight:bold;font-size:14px;flex-shrink:0">' + initial + '</div><div style="flex:1"><div><span class="msg-name">' + escapeHtml(m.nickname || m.name || '匿名') + '</span><span class="msg-time">' + (m.time || '') + '</span></div><div class="msg-text">' + escapeHtml(m.text) + '</div></div></div>';
   }
   html += '</div></div>';
 
@@ -1347,12 +1410,9 @@ function escapeHtml(str) {
 }
 
 function sendMessage() {
-  var nameEl = $('msg-name');
   var contentEl = $('msg-content');
-  if (!nameEl || !contentEl) return;
-  var name = nameEl.value.trim();
+  if (!contentEl) return;
   var text = contentEl.value.trim();
-  if (!name) { showToast('请输入您的昵称'); return; }
   if (!text) { showToast('请输入留言内容'); return; }
 
   var now = new Date();
@@ -1360,7 +1420,7 @@ function sendMessage() {
     padZero(now.getMonth() + 1) + '-' + padZero(now.getDate()) + ' ' +
     padZero(now.getHours()) + ':' + padZero(now.getMinutes());
 
-  var msg = { id: 'msg_' + Date.now(), name: name, text: text, time: timeStr };
+  var msg = { id: 'msg_' + Date.now(), nickname: getRandomNickname(), avatarColor: getRandomColor(), text: text, time: timeStr };
 
   if (!DEFAULT_DATA.messages) DEFAULT_DATA.messages = [];
   DEFAULT_DATA.messages.push(msg);
@@ -1369,7 +1429,6 @@ function sendMessage() {
     db.ref('site/messages').push(msg);
   }
 
-  nameEl.value = '';
   contentEl.value = '';
   showToast('留言发送成功！');
   renderCurrentPage();
@@ -1453,6 +1512,28 @@ function doTopSearch() {
   }
 }
 
+
+function showVIPQRModal() {
+  var modal = $('qr-modal');
+  var imgContainer = $('qr-modal-img');
+  var qrData = getData('qr_code');
+
+  if (qrData) {
+    imgContainer.innerHTML = '<img src="' + qrData + '" alt="客服二维码">';
+  } else {
+    imgContainer.innerHTML = '<div style="width:180px;height:180px;background:linear-gradient(135deg,#f0f0f0,#ddd);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-direction:column;color:var(--text-lighter)"><div style="font-size:48px;margin-bottom:8px">&#9638;</div><div style="font-size:12px">二维码加载中</div></div>';
+  }
+
+  // Update modal title to "立即开通"
+  var titleEl = modal.querySelector('.qr-modal-content h3');
+  if (titleEl) titleEl.textContent = '立即开通';
+
+  var descEl = modal.querySelector('.qr-modal-desc');
+  if (descEl) descEl.textContent = '扫描二维码，联系客服立即开通VIP会员';
+
+  modal.className = 'qr-modal show';
+  document.body.style.overflow = 'hidden';
+}
 /* ========================================
    二维码弹窗
    ======================================== */
@@ -1476,6 +1557,145 @@ function hideQRModal() {
   document.body.style.overflow = '';
 }
 
+
+/* ========================================
+   公告栏
+   ======================================== */
+function loadAnnouncements() {
+  var announcements = getData('announcements');
+  var bar = $('announcementBar');
+  var scrollWrap = $('announcementScroll');
+  if (!bar || !scrollWrap) return;
+  if (!announcements || !announcements.length) {
+    bar.style.display = 'none';
+    return;
+  }
+  var html = '';
+  for (var i = 0; i < announcements.length; i++) {
+    var ann = announcements[i];
+    html += '<span>' + escapeHtml(ann.content || ann.title || '') + '</span>';
+  }
+  scrollWrap.innerHTML = html;
+  bar.style.display = 'block';
+}
+
+/* ========================================
+   评论功能
+   ======================================== */
+function renderComments(type, id) {
+  var comments = DEFAULT_DATA['comments_' + type] || [];
+  if (!comments.length) comments = [];
+  var html = '<div class="comment-section" id="' + type + 'Comments">';
+  html += '<h3>评论</h3>';
+  html += '<div class="comment-input-area">';
+  html += '<textarea id="' + type + 'CommentInput" placeholder="写下你的评论..."></textarea>';
+  html += '<input type="button" value="发表评论" onclick="submitComment(\'' + type + '\',\'' + id + '\')">';
+  html += '</div>';
+  html += '<div class="comment-list" id="' + type + 'CommentList">';
+
+  // Sort: pinned first, then by time desc
+  var sorted = comments.slice().sort(function(a, b) {
+    if (a.pinned && !b.pinned) return -1;
+    if (!a.pinned && b.pinned) return 1;
+    return (b.time || '').localeCompare(a.time || '');
+  });
+
+  for (var i = 0; i < sorted.length; i++) {
+    var c = sorted[i];
+    var color = c.avatarColor || '#E63946';
+    var initial = (c.nickname || '?').charAt(0);
+    var pinnedTag = c.pinned ? '<span class="comment-pinned">置顶</span>' : '';
+    html += '<div class="comment-item">';
+    html += '<div class="comment-avatar" style="background:' + color + '">' + initial + '</div>';
+    html += '<div class="comment-body">';
+    html += '<div class="comment-meta"><span class="comment-nickname">' + escapeHtml(c.nickname || '匿名') + '</span><span class="comment-time">' + (c.time || '') + '</span>' + pinnedTag + '</div>';
+    html += '<div class="comment-text">' + escapeHtml(c.text) + '</div>';
+    html += '</div></div>';
+  }
+  html += '</div></div>';
+  return html;
+}
+
+function loadComments(type, id) {
+  if (!db) return;
+  var ref = db.ref('site/comments/' + type + '/' + id);
+  ref.on('value', function(snap) {
+    var val = snap.val();
+    if (val !== null) {
+      var arr = [];
+      if (Array.isArray(val)) {
+        arr = val;
+      } else if (typeof val === 'object') {
+        for (var k in val) { if (val.hasOwnProperty(k)) { arr.push(val[k]); } }
+      }
+      DEFAULT_DATA['comments_' + type] = arr;
+      // Re-render comment section only
+      var listEl = $(type + 'CommentList');
+      if (listEl) {
+        var section = listEl.closest('.comment-section');
+        if (section) {
+          section.outerHTML = renderComments(type, id);
+        }
+      }
+    }
+  });
+}
+
+function submitComment(type, id) {
+  var inputEl = $(type + 'CommentInput');
+  if (!inputEl) return;
+  var text = inputEl.value.trim();
+  if (!text) { showToast('请输入评论内容'); return; }
+
+  var now = new Date();
+  var timeStr = now.getFullYear() + '-' +
+    padZero(now.getMonth() + 1) + '-' + padZero(now.getDate()) + ' ' +
+    padZero(now.getHours()) + ':' + padZero(now.getMinutes());
+
+  var comment = {
+    id: 'c_' + Date.now(),
+    nickname: getRandomNickname(),
+    avatarColor: getRandomColor(),
+    text: text,
+    time: timeStr,
+    pinned: false
+  };
+
+  if (!DEFAULT_DATA['comments_' + type]) DEFAULT_DATA['comments_' + type] = [];
+  DEFAULT_DATA['comments_' + type].push(comment);
+
+  if (db) {
+    db.ref('site/comments/' + type + '/' + id).push(comment);
+  }
+
+  inputEl.value = '';
+  showToast('评论发表成功！');
+  renderCurrentPage();
+}
+
+/* ========================================
+   平台头像和名称
+   ======================================== */
+function loadProfile() {
+  var data = getData('profile_data') || {};
+  var name = data.title || '艾优社';
+  var subtitle = data.subtitle || '资源馆';
+  var avatar = data.avatar || '';
+  var sidebarLogo = document.getElementById('sidebarLogo');
+  if (sidebarLogo) {
+    if (avatar) {
+      sidebarLogo.innerHTML = '<div style="display:flex;align-items:center;gap:10px">' +
+        '<img src="' + avatar + '" style="width:36px;height:36px;border-radius:50%;object-fit:cover;">' +
+        '<div><div style="font-size:18px;font-weight:700;letter-spacing:1px">' + name + '</div>' +
+        '<div style="font-size:12px;color:rgba(255,255,255,.5);margin-top:2px">' + subtitle + '</div></div></div>';
+    } else {
+      sidebarLogo.innerHTML = '<div style="display:flex;align-items:center;gap:10px">' +
+        '<div style="width:36px;height:36px;border-radius:50%;background:#E63946;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:bold;font-size:16px;flex-shrink:0">' + name.charAt(0) + '</div>' +
+        '<div><div style="font-size:18px;font-weight:700;letter-spacing:1px">' + name + '</div>' +
+        '<div style="font-size:12px;color:rgba(255,255,255,.5);margin-top:2px">' + subtitle + '</div></div></div>';
+    }
+  }
+}
 /* ========================================
    全局事件
    ======================================== */
@@ -1507,6 +1727,8 @@ function initApp() {
   initFirebase();
   setupGlobalEvents();
   renderCurrentPage();
+  loadAnnouncements();
+  loadProfile();
 }
 
 /* 页面加载完成后初始化 */
