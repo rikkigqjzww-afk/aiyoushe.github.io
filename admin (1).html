@@ -1,0 +1,3547 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="referrer" content="no-referrer">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>艾优社资源馆 - 管理后台</title>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;background:#f0f2f5;color:#333;font-size:14px;}
+a{color:#E63946;text-decoration:none;}
+
+/* Login */
+.login-wrap{display:flex;align-items:center;justify-content:center;min-height:100vh;background:linear-gradient(135deg,#1a1a2e 0%,#16213e 50%,#0f3460 100%);}
+.login-box{background:#fff;border-radius:12px;padding:48px 40px;width:400px;box-shadow:0 20px 60px rgba(0,0,0,0.3);}
+.login-box h1{text-align:center;color:#E63946;font-size:24px;margin-bottom:8px;}
+.login-box p{text-align:center;color:#999;margin-bottom:32px;font-size:14px;}
+.login-box .form-group{margin-bottom:20px;}
+.login-box label{display:block;margin-bottom:6px;color:#555;font-weight:500;}
+.login-box input[type="password"],.login-box input[type="text"]{width:100%;padding:12px 16px;border:1px solid #ddd;border-radius:8px;font-size:14px;transition:border-color 0.3s;}
+.login-box input[type="password"]:focus,.login-box input[type="text"]:focus{border-color:#E63946;outline:none;box-shadow:0 0 0 3px rgba(230,57,70,0.1);}
+.login-box .login-btn{width:100%;padding:14px;background:#E63946;color:#fff;border:none;border-radius:8px;font-size:16px;cursor:pointer;font-weight:500;transition:background 0.3s;}
+.login-box .login-btn:hover{background:#c62d39;}
+.login-error{color:#E63946;font-size:13px;margin-top:8px;text-align:center;display:none;}
+
+/* Layout */
+.app{display:none;height:100vh;overflow:hidden;}
+.sidebar{width:240px;background:#1a1a2e;height:100vh;position:fixed;left:0;top:0;overflow-y:auto;z-index:100;transition:transform 0.3s;}
+.sidebar-header{padding:24px 20px;border-bottom:1px solid rgba(255,255,255,0.08);}
+.sidebar-header h2{color:#fff;font-size:16px;font-weight:600;}
+.sidebar-header span{color:rgba(255,255,255,0.4);font-size:12px;}
+.sidebar-nav{padding:12px 0;}
+.nav-item{display:flex;align-items:center;padding:12px 24px;color:rgba(255,255,255,0.65);cursor:pointer;transition:all 0.2s;border-left:3px solid transparent;font-size:14px;}
+.nav-item:hover{background:rgba(255,255,255,0.05);color:#fff;}
+.nav-item.active{background:rgba(230,57,70,0.15);color:#E63946;border-left-color:#E63946;}
+.nav-icon{width:20px;margin-right:12px;text-align:center;font-size:16px;}
+
+.main{margin-left:240px;height:100vh;overflow-y:auto;background:#f0f2f5;}
+.topbar{background:#fff;padding:16px 32px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 1px 4px rgba(0,0,0,0.06);position:sticky;top:0;z-index:50;}
+.topbar h3{font-size:18px;color:#333;}
+.topbar-right{display:flex;align-items:center;gap:16px;}
+.logout-btn{padding:8px 16px;background:#fff;color:#E63946;border:1px solid #E63946;border-radius:6px;cursor:pointer;font-size:13px;transition:all 0.2s;}
+.logout-btn:hover{background:#E63946;color:#fff;}
+.content{padding:24px 32px;}
+
+/* Cards & Stats */
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;margin-bottom:24px;}
+.stat-card{background:#fff;border-radius:10px;padding:24px;box-shadow:0 2px 8px rgba(0,0,0,0.04);}
+.stat-card .stat-icon{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;margin-bottom:16px;}
+.stat-card .stat-icon.articles{background:rgba(230,57,70,0.1);color:#E63946;}
+.stat-card .stat-icon.resources{background:rgba(59,130,246,0.1);color:#3b82f6;}
+.stat-card .stat-icon.albums{background:rgba(16,185,129,0.1);color:#10b981;}
+.stat-card .stat-icon.messages{background:rgba(245,158,11,0.1);color:#f59e0b;}
+.stat-card .stat-num{font-size:32px;font-weight:700;color:#333;}
+.stat-card .stat-label{font-size:13px;color:#999;margin-top:4px;}
+
+.quick-actions{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px;}
+.quick-btn{display:flex;align-items:center;gap:10px;padding:16px 20px;background:#fff;border:1px solid #e8e8e8;border-radius:10px;cursor:pointer;transition:all 0.2s;font-size:14px;color:#555;}
+.quick-btn:hover{border-color:#E63946;color:#E63946;box-shadow:0 4px 12px rgba(230,57,70,0.1);}
+
+/* Table */
+.card{background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.04);margin-bottom:24px;}
+.card-header{padding:20px 24px;border-bottom:1px solid #f0f0f0;display:flex;align-items:center;justify-content:space-between;}
+.card-header h4{font-size:16px;color:#333;}
+.card-body{padding:0;}
+.btn-primary{padding:8px 20px;background:#E63946;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;transition:background 0.2s;}
+.btn-primary:hover{background:#c62d39;}
+.btn-sm{padding:4px 12px;font-size:12px;border-radius:4px;cursor:pointer;border:none;transition:all 0.2s;}
+.btn-edit{background:#e8f4fd;color:#1890ff;}
+.btn-edit:hover{background:#1890ff;color:#fff;}
+.btn-del{background:#fff1f0;color:#E63946;border:1px solid #ffa39e;}
+.btn-del:hover{background:#E63946;color:#fff;}
+.btn-success{background:#f6ffed;color:#52c41a;border:1px solid #b7eb8f;}
+.btn-success:hover{background:#52c41a;color:#fff;}
+.btn-warning{background:#fffbe6;color:#faad14;border:1px solid #ffe58f;}
+.btn-warning:hover{background:#faad14;color:#fff;}
+.btn-default{background:#fff;color:#666;border:1px solid #d9d9d9;}
+.btn-default:hover{border-color:#E63946;color:#E63946;}
+
+table{width:100%;border-collapse:collapse;}
+table th{background:#fafafa;padding:14px 16px;text-align:left;font-weight:600;color:#555;font-size:13px;border-bottom:1px solid #f0f0f0;}
+table td{padding:12px 16px;border-bottom:1px solid #f5f5f5;font-size:13px;}
+table tr:hover{background:#fafafa;}
+table img{width:60px;height:40px;object-fit:cover;border-radius:4px;}
+.td-actions{display:flex;gap:6px;align-items:center;}
+
+/* Modal */
+.modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.45);z-index:1000;display:none;align-items:center;justify-content:center;}
+.modal-overlay.show{display:flex;}
+.modal{background:#fff;border-radius:12px;width:720px;max-width:90vw;max-height:85vh;display:flex;flex-direction:box-shadow:0 12px 40px rgba(0,0,0,0.15);overflow:hidden;}
+.modal.wide{width:900px;}
+.modal-header{padding:20px 24px;border-bottom:1px solid #f0f0f0;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.modal-header h4{font-size:16px;}
+.modal-close{width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:6px;cursor:pointer;color:#999;font-size:20px;border:none;background:none;}
+.modal-close:hover{background:#f5f5f5;color:#333;}
+.modal-body{padding:24px;overflow-y:auto;flex:1;}
+.modal-footer{padding:16px 24px;border-top:1px solid #f0f0f0;display:flex;justify-content:flex-end;gap:12px;flex-shrink:0;}
+.modal-footer .btn-primary{min-width:80px;}
+
+/* Form */
+.form-row{margin-bottom:18px;}
+.form-row label{display:block;margin-bottom:6px;color:#555;font-weight:500;font-size:13px;}
+.form-row label .req{color:#E63946;margin-left:2px;}
+.form-row input[type="text"],.form-row input[type="number"],.form-row input[type="date"],.form-row input[type="url"],.form-row textarea,.form-row select{width:100%;padding:10px 14px;border:1px solid #d9d9d9;border-radius:6px;font-size:14px;transition:border-color 0.2s;font-family:inherit;}
+.form-row input:focus,.form-row textarea:focus,.form-row select:focus{border-color:#E63946;outline:none;box-shadow:0 0 0 3px rgba(230,57,70,0.08);}
+.form-row textarea{min-height:100px;resize:vertical;}
+.form-row-half{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.form-switch{display:flex;align-items:center;gap:10px;}
+.form-switch input[type="checkbox"]{width:18px;height:18px;accent-color:#E63946;}
+.form-switch label{margin:0;cursor:pointer;}
+
+/* Image Upload */
+.img-upload-area{border:2px dashed #d9d9d9;border-radius:8px;padding:20px;text-align:center;cursor:pointer;transition:border-color 0.2s;position:relative;overflow:hidden;}
+.img-upload-area:hover{border-color:#E63946;}
+.img-upload-area p{color:#999;font-size:13px;}
+.img-upload-area input[type="file"]{position:absolute;top:0;left:0;width:100%;height:100%;opacity:0;cursor:pointer;}
+.img-preview{margin-top:12px;display:flex;align-items:center;gap:12px;}
+.img-preview img{max-width:200px;max-height:120px;border-radius:6px;border:1px solid #eee;}
+.img-preview .remove-img{color:#E63946;cursor:pointer;font-size:12px;text-decoration:underline;}
+
+/* Rich Text Editor */
+.rich-editor{border:1px solid #d9d9d9;border-radius:6px;overflow:hidden;}
+.rich-editor .toolbar{background:#fafafa;padding:6px 10px;display:flex;gap:4px;flex-wrap:wrap;border-bottom:1px solid #eee;}
+.rich-editor .toolbar input[type="button"]{padding:4px 10px;background:#fff;border:1px solid #d9d9d9;border-radius:4px;cursor:pointer;font-size:12px;transition:all 0.2s;}
+.rich-editor .toolbar input[type="button"]:hover{background:#E63946;color:#fff;border-color:#E63946;}
+.rich-editor .editor-content{min-height:300px;padding:16px;outline:none;font-size:14px;line-height:1.8;}
+.rich-editor .editor-content img{max-width:100%;}
+
+/* Toast */
+.toast-container{position:fixed;top:24px;right:24px;z-index:9999;}
+.toast{padding:14px 24px;border-radius:8px;color:#fff;font-size:14px;margin-bottom:8px;animation:slideIn 0.3s;box-shadow:0 4px 16px rgba(0,0,0,0.15);}
+.toast.success{background:#52c41a;}
+.toast.error{background:#E63946;}
+.toast.info{background:#1890ff;}
+@keyframes slideIn{from{transform:translateX(100%);opacity:0;}to{transform:translateX(0);opacity:1;}}
+
+/* Photo Grid */
+.photo-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-top:16px;}
+.photo-grid .photo-item{position:relative;border-radius:8px;overflow:hidden;aspect-ratio:1;cursor:grab;}
+.photo-grid .photo-item img{width:100%;height:100%;object-fit:cover;}
+.photo-grid .photo-item .photo-del{position:absolute;top:4px;right:4px;width:24px;height:24px;background:rgba(230,57,70,0.9);color:#fff;border:none;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;opacity:0;transition:opacity 0.2s;}
+.photo-grid .photo-item:hover .photo-del{opacity:1;}
+
+/* Move Buttons */
+.btn-move{padding:2px 8px;font-size:14px;font-weight:bold;background:#f0f0f0;border:1px solid #ddd;border-radius:4px;cursor:pointer;color:#666;line-height:1;}
+.btn-move:hover{background:#e0e0e0;color:#333;}
+.photo-grid .photo-item .photo-move-btns{position:absolute;bottom:4px;left:50%;transform:translateX(-50%);display:flex;gap:4px;opacity:0;transition:opacity 0.2s;}
+.photo-grid .photo-item:hover .photo-move-btns{opacity:1;}
+.photo-move-btn{padding:2px 8px;font-size:14px;font-weight:bold;background:rgba(0,0,0,0.6);border:none;border-radius:4px;cursor:pointer;color:#fff;line-height:1;}
+.photo-move-btn:hover{background:rgba(0,0,0,0.8);}
+
+
+/* Tags Input */
+.tags-display{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;}
+.tag-chip{display:inline-flex;align-items:center;gap:4px;padding:4px 12px;background:#f5f5f5;border-radius:16px;font-size:12px;color:#666;}
+.tag-chip .tag-remove{cursor:pointer;color:#999;font-size:14px;line-height:1;}
+.tag-chip .tag-remove:hover{color:#E63946;}
+
+/* Confirm Dialog */
+.confirm-content{text-align:center;padding:20px 0;}
+.confirm-content .confirm-icon{font-size:48px;margin-bottom:16px;}
+.confirm-content h4{font-size:18px;margin-bottom:8px;}
+.confirm-content p{color:#999;font-size:14px;}
+.confirm-footer{display:flex;justify-content:center;gap:16px;padding:16px 24px;border-top:1px solid #f0f0f0;}
+
+/* Pricing Cards */
+.pricing-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;}
+.pricing-card{background:#fff;border:1px solid #e8e8e8;border-radius:12px;padding:24px;}
+.pricing-card h5{font-size:15px;color:#333;margin-bottom:12px;}
+.pricing-card .price{font-size:28px;color:#E63946;font-weight:700;margin-bottom:16px;}
+
+/* Empty State */
+.empty-state{text-align:center;padding:60px 20px;color:#999;}
+.empty-state .empty-icon{font-size:48px;margin-bottom:16px;}
+.empty-state p{font-size:14px;}
+
+/* Loading */
+.loading{text-align:center;padding:40px;color:#999;}
+.loading::after{content:'';display:inline-block;width:20px;height:20px;border:2px solid #E63946;border-top-color:transparent;border-radius:50%;animation:spin 0.6s linear infinite;margin-left:8px;vertical-align:middle;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* Page Sections */
+.page-section{display:none;}
+.page-section.active{display:block;}
+
+/* Scrollbar */
+::-webkit-scrollbar{width:6px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:#d9d9d9;border-radius:3px;}
+::-webkit-scrollbar-thumb:hover{background:#bbb;}
+
+/* Album Group */
+.album-group-item{background:#fff;border:1px solid #e8e8e8;border-radius:8px;padding:16px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;}
+.album-group-item .group-name{font-weight:500;font-size:14px;}
+
+/* Feature list editor */
+.feature-list-editor{border:1px solid #d9d9d9;border-radius:6px;padding:12px;max-height:300px;overflow-y:auto;}
+.feature-item{display:flex;gap:8px;align-items:center;margin-bottom:8px;}
+.feature-item input[type="text"]{flex:1;padding:6px 10px;border:1px solid #d9d9d9;border-radius:4px;font-size:13px;}
+.feature-item .remove-feature{color:#E63946;cursor:pointer;font-size:16px;border:none;background:none;}
+.add-feature-btn{margin-top:8px;color:#1890ff;cursor:pointer;font-size:13px;border:none;background:none;text-decoration:underline;}
+
+/* Card List Editor */
+.card-list-editor{border:1px solid #e8e8e8;border-radius:8px;padding:16px;margin-bottom:12px;background:#fafafa;}
+.card-list-editor .card-item{border:1px solid #ddd;border-radius:8px;padding:16px;margin-bottom:12px;background:#fff;position:relative;}
+.card-list-editor .card-item:last-child{margin-bottom:0;}
+.card-list-editor .card-item .card-item-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.card-list-editor .card-item .card-item-header h5{font-size:14px;color:#333;margin:0;}
+.card-list-editor .card-item .remove-card-item{padding:4px 10px;background:#fff1f0;color:#E63946;border:1px solid #ffa39e;border-radius:4px;cursor:pointer;font-size:12px;}
+.card-list-editor .card-item .remove-card-item:hover{background:#E63946;color:#fff;}
+.card-list-editor .mini-form-row{margin-bottom:10px;}
+.card-list-editor .mini-form-row label{display:block;margin-bottom:4px;color:#666;font-size:12px;}
+.card-list-editor .mini-form-row input[type="text"],.card-list-editor .mini-form-row textarea{width:100%;padding:8px 10px;border:1px solid #d9d9d9;border-radius:4px;font-size:13px;}
+.card-list-editor .mini-img-upload{width:60px;height:60px;border:1px dashed #d9d9d9;border-radius:6px;display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:hidden;position:relative;}
+.card-list-editor .mini-img-upload img{width:100%;height:100%;object-fit:cover;}
+.card-list-editor .mini-img-upload input[type="file"]{position:absolute;top:0;left:0;width:100%;height:100%;opacity:0;cursor:pointer;}
+.add-card-btn{padding:8px 16px;background:#f6ffed;color:#52c41a;border:1px solid #b7eb8f;border-radius:6px;cursor:pointer;font-size:13px;}
+.add-card-btn:hover{background:#52c41a;color:#fff;}
+
+/* Accordion Editor */
+.accordion-editor{border:1px solid #e8e8e8;border-radius:8px;overflow:hidden;}
+.accordion-item{border-bottom:1px solid #e8e8e8;}
+.accordion-item:last-child{border-bottom:none;}
+.accordion-item .acc-header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:#fafafa;cursor:pointer;}
+.accordion-item .acc-header span{font-size:14px;color:#333;}
+.accordion-item .acc-header .acc-actions{display:flex;gap:6px;align-items:center;}
+.accordion-item .acc-body{padding:0 16px 16px;display:none;}
+.accordion-item .acc-body.open{display:block;}
+.accordion-item .acc-header .acc-toggle{font-size:16px;color:#999;transition:transform 0.2s;display:inline-block;width:20px;text-align:center;}
+.accordion-item .acc-header .acc-toggle.open{transform:rotate(180deg);}
+
+/* Message Avatar */
+.msg-avatar{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:14px;font-weight:600;flex-shrink:0;}
+.msg-pin-badge{color:#f59e0b;font-size:12px;margin-left:4px;}
+
+/* Comment Management */
+.comment-section{margin-bottom:16px;}
+.comment-section h5{margin-bottom:8px;font-size:14px;color:#555;}
+.comment-section select{padding:6px 10px;border:1px solid #d9d9d9;border-radius:4px;font-size:13px;margin-bottom:12px;}
+
+/* Resource Form Steps */
+.res-form-steps{display:flex;border-bottom:1px solid #f0f0f0;margin-bottom:20px;}
+.res-form-step{padding:12px 24px;cursor:pointer;font-size:14px;color:#999;border-bottom:2px solid transparent;transition:all 0.2s;}
+.res-form-step.active{color:#E63946;border-bottom-color:#E63946;font-weight:500;}
+.res-form-page{display:none;}
+.res-form-page.active{display:block;}
+
+/* Resource Card Grid */
+.res-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px;padding:20px 24px;}
+.res-card{background:#fff;border:1px solid #e8e8e8;border-radius:10px;overflow:hidden;transition:box-shadow 0.2s;}
+.res-card:hover{box-shadow:0 4px 16px rgba(0,0,0,0.1);}
+.res-card-cover{position:relative;width:100%;aspect-ratio:1;overflow:hidden;background:#f5f5f5;}
+.res-card-cover img{width:100%;height:100%;object-fit:cover;}
+.res-card-cover .res-discount-badge{position:absolute;top:8px;right:8px;background:#E63946;color:#fff;font-size:11px;font-weight:600;padding:2px 8px;border-radius:4px;}
+.res-card-cover .res-access-badge{position:absolute;top:8px;left:8px;font-size:11px;font-weight:500;padding:2px 8px;border-radius:4px;color:#fff;}
+.res-card-cover .res-access-badge.v0{background:#52c41a;}
+.res-card-cover .res-access-badge.v1{background:#1890ff;}
+.res-card-cover .res-access-badge.v2{background:#722ed1;}
+.res-card-cover .res-access-badge.v3{background:#f59e0b;}
+.res-card-cover .res-hidden-badge{position:absolute;bottom:8px;left:8px;background:rgba(0,0,0,0.6);color:#fff;font-size:11px;padding:2px 8px;border-radius:4px;}
+.res-card-info{padding:12px;}
+.res-card-title{font-size:14px;font-weight:500;color:#333;margin-bottom:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.res-card-meta{display:flex;align-items:center;gap:8px;font-size:12px;color:#999;margin-bottom:8px;}
+.res-card-meta .res-stars{color:#f59e0b;}
+.res-card-price{display:flex;align-items:baseline;gap:6px;margin-bottom:10px;}
+.res-card-price .res-now-price{font-size:18px;font-weight:700;color:#E63946;}
+.res-card-price .res-orig-price{font-size:12px;color:#bbb;text-decoration:line-through;}
+.res-card-actions{display:flex;gap:6px;}
+.res-card-actions .btn-sm{flex:1;text-align:center;}
+</style>
+<script data-preview-injected src="https://lf3-static.bytednsdoc.com/obj/eden-cn/8011eh7nupenuvonuhd/previewer-tools.de3cd6a1.umd.js"></script></head>
+<body>
+
+<!-- Login Page -->
+<div class="login-wrap" id="loginPage">
+  <div class="login-box">
+    <h1>艾优社资源馆</h1>
+    <p>管理后台登录</p>
+    <div class="form-group">
+      <label>管理密码</label>
+      <input type="password" id="loginPassword" placeholder="请输入管理密码" onkeydown="if(event.keyCode===13)doLogin()">
+    </div>
+    <div class="form-row">
+      <input type="button" class="login-btn" value="登 录" onclick="doLogin()">
+    </div>
+    <div class="login-error" id="loginError">密码错误，请重试</div>
+  </div>
+</div>
+
+<!-- Main App -->
+<div class="app" id="appPage">
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <h2>艾优社资源馆</h2>
+      <span>管理后台 v1.0</span>
+    </div>
+    <div class="sidebar-nav">
+      <div class="nav-item active" data-page="dashboard" onclick="switchPage('dashboard',this)">
+        <span class="nav-icon">&#9634;</span>仪表盘
+      </div>
+      <div class="nav-item" data-page="articles" onclick="switchPage('articles',this)">
+        <span class="nav-icon">&#9998;</span>文章管理
+      </div>
+      <div class="nav-item" data-page="resources" onclick="switchPage('resources',this)">
+        <span class="nav-icon">&#9733;</span>资源管理
+      </div>
+      <div class="nav-item" data-page="albums" onclick="switchPage('albums',this)">
+        <span class="nav-icon">&#9788;</span>相册管理
+      </div>
+      <div class="nav-item" data-page="carousel" onclick="switchPage('carousel',this)">
+        <span class="nav-icon">&#9654;</span>轮播图管理
+      </div>
+      <div class="nav-item" data-page="announcements" onclick="switchPage('announcements',this)">
+        <span class="nav-icon">&#9993;</span>公告管理
+      </div>
+      <div class="nav-item" data-page="pricing" onclick="switchPage('pricing',this)">
+        <span class="nav-icon">&#9830;</span>会员套餐
+      </div>
+      <div class="nav-item" data-page="settings" onclick="switchPage('settings',this)">
+        <span class="nav-icon">&#9881;</span>页面设置
+      </div>
+      <div class="nav-item" data-page="profile" onclick="switchPage('profile',this)">
+        <span class="nav-icon">&#127968;</span>平台资料
+      </div>
+      <div class="nav-item" data-page="messages" onclick="switchPage('messages',this)">
+        <span class="nav-icon">&#9997;</span>留言管理
+      </div>
+      <div class="nav-item" data-page="articlecomments" onclick="switchPage('articlecomments',this)">
+        <span class="nav-icon">&#128172;</span>文章留言
+      </div>
+      <div class="nav-item" data-page="resourcecomments" onclick="switchPage('resourcecomments',this)">
+        <span class="nav-icon">&#128172;</span>资源留言
+      </div>
+      <div class="nav-item" data-page="datamgmt" onclick="switchPage('datamgmt',this)">
+        <span class="nav-icon">&#9881;</span>数据管理
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="main">
+    <div class="topbar">
+      <h3 id="pageTitle">仪表盘</h3>
+      <div class="topbar-right">
+        <input type="button" class="logout-btn" value="退出登录" onclick="doLogout()">
+      </div>
+    </div>
+    <div class="content">
+
+      <!-- Dashboard -->
+      <div class="page-section active" id="page-dashboard">
+        <div class="stats-grid" id="statsGrid"></div>
+        <div class="card">
+          <div class="card-header"><h4>快捷操作</h4></div>
+          <div class="card-body" style="padding:20px 24px;">
+            <div class="quick-actions">
+              <input type="button" class="quick-btn" value="&#43; 发布文章" onclick="switchPage('articles',null);setTimeout(function(){openArticleModal()},100)">
+              <input type="button" class="quick-btn" value="&#43; 添加资源" onclick="switchPage('resources',null);setTimeout(function(){openResourceModal()},100)">
+              <input type="button" class="quick-btn" value="&#43; 上传照片" onclick="switchPage('albums',null)">
+              <input type="button" class="quick-btn" value="&#9881; 页面设置" onclick="switchPage('settings',null)">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Articles -->
+      <div class="page-section" id="page-articles">
+        <div class="card">
+          <div class="card-header">
+            <h4>文章列表</h4>
+            <input type="button" class="btn-primary" value="&#43; 添加文章" onclick="openArticleModal()">
+          </div>
+          <div class="card-body">
+            <table>
+              <thead><tr><th>封面</th><th>标题</th><th>分类</th><th>日期</th><th>阅读</th><th>点赞</th><th>操作</th></tr></thead>
+              <tbody id="articlesList"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Resources -->
+      <div class="page-section" id="page-resources">
+        <div class="card">
+          <div class="card-header">
+            <h4>资源列表</h4>
+            <input type="button" class="btn-primary" value="&#43; 添加资源" onclick="openResourceModal()">
+          </div>
+          <div class="card-body">
+            <div class="res-grid" id="resourcesList"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Albums -->
+      <div class="page-section" id="page-albums">
+        <div class="card">
+          <div class="card-header">
+            <h4>相册分组管理</h4>
+            <input type="button" class="btn-primary" value="&#43; 添加分组" onclick="openAlbumGroupModal()">
+          </div>
+          <div class="card-body" style="padding:20px 24px;">
+            <div id="albumGroupsList"></div>
+            <div id="subAlbumsArea" style="margin-top:20px;display:none;">
+              <h4 id="subAlbumTitle" style="margin-bottom:12px;color:#333;"></h4>
+              <input type="button" class="btn-primary" value="&#43; 添加子相册" onclick="openSubAlbumModal()" style="margin-bottom:12px;">
+              <div id="subAlbumsList"></div>
+            </div>
+            <div id="photosArea" style="margin-top:20px;display:none;">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+                <h4 id="photosTitle" style="color:#333;"></h4>
+                <input type="button" class="btn-primary" value="&#43; 上传照片" onclick="document.getElementById('photoUploadInput').click()">
+                <input type="file" id="photoUploadInput" multiple accept="image/*" style="display:none" onchange="uploadPhotos(this)">
+              </div>
+              <div class="photo-grid" id="photosGrid"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Carousel -->
+      <div class="page-section" id="page-carousel">
+        <div class="card">
+          <div class="card-header">
+            <h4>轮播图列表</h4>
+            <input type="button" class="btn-primary" value="&#43; 添加轮播图" onclick="openCarouselModal()">
+          </div>
+          <div class="card-body">
+            <table>
+              <thead><tr><th>图片</th><th>标题</th><th>链接</th><th>状态</th><th>操作</th></tr></thead>
+              <tbody id="carouselList"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Announcements -->
+      <div class="page-section" id="page-announcements">
+        <div class="card">
+          <div class="card-header">
+            <h4>公告列表</h4>
+            <input type="button" class="btn-primary" value="&#43; 添加公告" onclick="openAnnouncementModal()">
+          </div>
+          <div class="card-body">
+            <table>
+              <thead><tr><th>标题</th><th>内容</th><th>日期</th><th>操作</th></tr></thead>
+              <tbody id="announcementsList"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pricing -->
+      <div class="page-section" id="page-pricing">
+        <div class="card">
+          <div class="card-header"><h4>VIP 套餐设置</h4></div>
+          <div class="card-body" style="padding:24px;">
+            <div class="pricing-grid" id="pricingGrid"></div>
+            <div style="text-align:center;margin-top:20px;">
+              <input type="button" class="btn-primary" value="保存套餐设置" onclick="savePricing()">
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><h4>VIP Banner 设置</h4></div>
+          <div class="card-body" style="padding:24px;">
+            <div class="form-row"><label>Banner 标题</label><input type="text" id="vipBannerTitle" placeholder="VIP Banner 标题"></div>
+            <div class="form-row"><label>Banner 描述</label><textarea id="vipBannerDesc" placeholder="VIP Banner 描述"></textarea></div>
+            <div class="form-row"><label>Banner 背景图</label>
+              <div class="img-upload-area" id="vipBannerImgUpload">
+                <p>点击或拖拽上传图片</p>
+                <input type="file" accept="image/*" onchange="handleImageUpload(this,'vipBannerImgPreview','vipBannerImgData')">
+              </div>
+              <div class="img-preview" id="vipBannerImgPreview"></div>
+            </div>
+            <input type="button" class="btn-primary" value="保存 VIP Banner" onclick="saveVipBanner()">
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><h4>客服二维码</h4></div>
+          <div class="card-body" style="padding:24px;">
+            <div class="form-row"><label>上传二维码图片</label>
+              <div class="img-upload-area" id="qrCodeUpload">
+                <p>点击或拖拽上传二维码图片</p>
+                <input type="file" accept="image/*" onchange="handleImageUpload(this,'qrCodePreview','qrCodeData')">
+              </div>
+              <div class="img-preview" id="qrCodePreview"></div>
+            </div>
+            <input type="button" class="btn-primary" value="保存二维码" onclick="saveQRCode()">
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><h4>权益展示</h4></div>
+          <div class="card-body" style="padding:24px;">
+            <div class="form-row"><label>权益标题</label><input type="text" id="benefitsTitle" placeholder="权益展示标题"></div>
+            <div class="form-row"><label>权益列表</label>
+              <div class="card-list-editor" id="benefitsCardsList"></div>
+              <input type="button" class="add-card-btn" value="&#43; 添加权益" onclick="addBenefitCard()">
+            </div>
+            <input type="button" class="btn-primary" value="保存权益展示" onclick="saveBenefits()">
+          </div>
+        </div>
+      </div>
+
+      <!-- Settings -->
+      <div class="page-section" id="page-settings">
+        <div class="card">
+          <div class="card-header"><h4>基本设置</h4></div>
+          <div class="card-body" style="padding:24px;">
+            <div class="form-row"><label>网站标题</label><input type="text" id="siteTitleInput" placeholder="网站标题"></div>
+            <div class="form-row"><label>网站副标题</label><input type="text" id="siteSubtitleInput" placeholder="网站副标题"></div>
+            <div class="form-row"><label>网站描述</label><textarea id="siteDescInput" placeholder="网站描述"></textarea></div>
+            <div class="form-row"><label>头像URL</label><input type="text" id="siteAvatarInput" placeholder="头像URL"></div>
+            <input type="button" class="btn-primary" value="保存基本设置" onclick="saveSiteSettings()">
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><h4>关于我们</h4></div>
+          <div class="card-body" style="padding:24px;">
+            <div class="form-row"><label>品牌名称</label><input type="text" id="aboutBrand" placeholder="品牌名称"></div>
+            <div class="form-row"><label>品牌故事</label>
+              <div class="card-list-editor" id="storiesCardsList"></div>
+              <input type="button" class="add-card-btn" value="&#43; 添加故事" onclick="addStoryCard()">
+            </div>
+            <div class="form-row"><label>品牌价值观</label>
+              <div class="card-list-editor" id="valuesCardsList"></div>
+              <input type="button" class="add-card-btn" value="&#43; 添加价值观" onclick="addValueCard()">
+            </div>
+            <div class="form-row"><label>常见问题 (FAQ)</label>
+              <div class="accordion-editor" id="faqAccordionList"></div>
+              <input type="button" class="add-card-btn" value="&#43; 添加问题" onclick="addFaqItem()" style="margin-top:12px;">
+            </div>
+            <input type="button" class="btn-primary" value="保存关于我们" onclick="saveAboutData()">
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <h4>联系方式</h4>
+            <input type="button" class="btn-primary" value="&#43; 添加联系方式" onclick="openContactModal()">
+          </div>
+          <div class="card-body" style="padding:24px;">
+            <div id="contactListContainer"></div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Messages -->
+      <div class="page-section" id="page-messages">
+        <div class="card">
+          <div class="card-header"><h4>留言列表</h4></div>
+          <div class="card-body">
+            <table>
+              <thead><tr><th>用户</th><th>内容</th><th>时间</th><th>操作</th></tr></thead>
+              <tbody id="messagesList"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Data Management -->
+      <div class="page-section" id="page-datamgmt">
+        <div class="card">
+          <div class="card-header"><h4>Firebase 配置</h4></div>
+          <div class="card-body" style="padding:24px;">
+            <div class="form-row"><label>Database URL</label><input type="text" id="cfgDbUrl" value="https://aiyoushe2-default-rtdb.asia-southeast1.firebasedatabase.app" placeholder="https://xxxxx.firebaseio.com"></div>
+            <input type="button" class="btn-primary" value="保存并连接" onclick="saveFirebaseConfig()">
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><h4>数据操作</h4></div>
+          <div class="card-body" style="padding:24px;">
+            <div style="display:flex;gap:16px;flex-wrap:wrap;">
+              <input type="button" class="btn-primary" value="&#11015; 备份数据" onclick="backupData()">
+              <input type="button" class="btn-success" value="&#11014; 恢复数据" onclick="document.getElementById('restoreInput').click()">
+              <input type="file" id="restoreInput" accept=".json" style="display:none" onchange="restoreData(this)">
+              <input type="button" class="btn-del" value="&#10006; 清空所有数据" onclick="confirmClearAll()">
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <h4>指令码管理</h4>
+            <input type="button" class="btn-primary" value="&#43; 生成指令码" onclick="openCodeGenModal()">
+          </div>
+          <div class="card-body">
+            <table>
+              <thead><tr><th>指令码</th><th>权限等级</th><th>绑定IP</th><th>状态</th><th>使用时间</th><th>操作</th></tr></thead>
+              <tbody id="codesList"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Article Comments -->
+      <div class="page-section" id="page-articlecomments">
+        <div class="card">
+          <div class="card-header"><h4>文章留言管理</h4></div>
+          <div class="card-body" style="padding:24px;">
+            <div class="form-row"><label>选择文章</label><select id="articleCommentSelect" onchange="loadArticleComments()"></select></div>
+            <div id="articleCommentsList"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Resource Comments -->
+      <div class="page-section" id="page-resourcecomments">
+        <div class="card">
+          <div class="card-header"><h4>资源留言管理</h4></div>
+          <div class="card-body" style="padding:24px;">
+            <div class="form-row"><label>选择资源</label><select id="resourceCommentSelect" onchange="loadResourceComments()"></select></div>
+            <div id="resourceCommentsList"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Platform Profile -->
+      <div class="page-section" id="page-profile">
+        <div class="card">
+          <div class="card-header"><h4>平台资料</h4></div>
+          <div class="card-body" style="padding:24px;">
+            <div class="form-row"><label>平台名称</label><input type="text" id="profileName" placeholder="艾优社" value="艾优社"></div>
+            <div class="form-row"><label>平台副标题</label><input type="text" id="profileSubtitle" placeholder="资源馆" value="资源馆"></div>
+            <div class="form-row"><label>平台头像</label>
+              <div class="img-upload-area" id="profileAvatarUpload">
+                <p>点击或拖拽上传头像</p>
+                <input type="file" accept="image/*" onchange="handleImageUpload(this,'profileAvatarPreview','profileAvatarData')">
+              </div>
+              <div class="img-preview" id="profileAvatarPreview"></div>
+            </div>
+            <input type="button" class="btn-primary" value="保存平台资料" onclick="saveProfileData()">
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Modal Container -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal" id="modalBox">
+    <div class="modal-header">
+      <h4 id="modalTitle">弹窗标题</h4>
+      <input type="button" class="modal-close" value="&times;" onclick="closeModal()">
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-footer" id="modalFooter">
+      <input type="button" class="btn-default" value="取消" onclick="closeModal()">
+      <input type="button" class="btn-primary" value="确定" id="modalConfirmBtn">
+    </div>
+  </div>
+</div>
+
+<!-- Confirm Dialog -->
+<div class="modal-overlay" id="confirmOverlay">
+  <div class="modal" style="width:420px;">
+    <div class="confirm-content" id="confirmContent"></div>
+    <div class="confirm-footer">
+      <input type="button" class="btn-default" value="取消" onclick="closeConfirm()">
+      <input type="button" class="btn-primary" value="确定" id="confirmBtn">
+    </div>
+  </div>
+</div>
+
+<!-- Toast Container -->
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+// ==================== Global State ====================
+var db = null;
+var app = null;
+var currentPage = 'dashboard';
+var allData = {};
+var editingItemId = null;
+var currentAlbumGroup = null;
+var currentSubAlbum = null;
+var currentAlbumIndex = -1;
+var currentSubAlbumIndex = -1;
+
+// ==================== Firebase Init ====================
+function initFirebase(callback) {
+  var savedConfig = localStorage.getItem('firebase_config');
+  if (savedConfig) {
+    try {
+      var config = JSON.parse(savedConfig);
+      if (config.databaseURL) {
+        connectFirebase(config, callback);
+        return;
+      }
+    } catch(e) {}
+  }
+  // Try built-in default config
+  var defaultConfig = {
+    apiKey: "AIzaSyCHsEjQ5bSvjBWsCU6JsKvzYSyr1Mz3JuM",
+    authDomain: "aiyoushe2.firebaseapp.com",
+    databaseURL: "https://aiyoushe2-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "aiyoushe2",
+    storageBucket: "aiyoushe2.firebasestorage.app",
+    messagingSenderId: "1023331806331",
+    appId: "1:1023331806331:web:839e730bc52e93b6bc46de"
+  };
+  localStorage.setItem('firebase_config', JSON.stringify(defaultConfig));
+  connectFirebase(defaultConfig, callback);
+  return;
+}
+
+function connectFirebase(config, callback) {
+  try {
+    if (app) {
+      app.delete().then(function() {
+        doConnect(config, callback);
+      }).catch(function() {
+        doConnect(config, callback);
+      });
+    } else {
+      doConnect(config, callback);
+    }
+  } catch(e) {
+    doConnect(config, callback);
+  }
+}
+
+function doConnect(config, callback) {
+  try {
+    app = firebase.initializeApp(config);
+  } catch(e) {
+    app = firebase.apps[0] || firebase.initializeApp(config);
+  }
+  db = firebase.database();
+  loadAllData(callback);
+}
+
+function loadAllData(callback) {
+  var ref = db.ref('site');
+  ref.once('value', function(snapshot) {
+    allData = snapshot.val() || {};
+    if (callback) callback();
+    refreshCurrentPage();
+  }, function(err) {
+    showToast('数据加载失败: ' + err.message, 'error');
+    if (callback) callback();
+  });
+}
+
+function saveData(path, value, callback) {
+  if (!db) { showToast('Firebase 未连接', 'error'); return; }
+  db.ref('site/' + path).set(value, function(err) {
+    if (err) {
+      showToast('保存失败: ' + err.message, 'error');
+    } else {
+      if (callback) callback();
+    }
+  });
+}
+
+function removeData(path, callback) {
+  if (!db) { showToast('Firebase 未连接', 'error'); return; }
+  db.ref('site/' + path).remove(function(err) {
+    if (err) {
+      showToast('删除失败: ' + err.message, 'error');
+    } else {
+      if (callback) callback();
+    }
+  });
+}
+
+// ==================== Toast ====================
+function showToast(msg, type) {
+  var container = document.getElementById('toastContainer');
+  var toast = document.createElement('div');
+  toast.className = 'toast ' + (type || 'info');
+  toast.textContent = msg;
+  container.appendChild(toast);
+  setTimeout(function() {
+    if (toast.parentNode) toast.parentNode.removeChild(toast);
+  }, 3000);
+}
+
+// ==================== Modal ====================
+function openModal(title, bodyHtml, footerHtml, wide) {
+  document.getElementById('modalTitle').textContent = title;
+  document.getElementById('modalBody').innerHTML = bodyHtml;
+  if (footerHtml) {
+    document.getElementById('modalFooter').innerHTML = footerHtml;
+  } else {
+    document.getElementById('modalFooter').innerHTML = '<input type="button" class="btn-default" value="取消" onclick="closeModal()"><input type="button" class="btn-primary" value="确定" id="modalConfirmBtn">';
+  }
+  var box = document.getElementById('modalBox');
+  if (wide) { box.className = 'modal wide'; } else { box.className = 'modal'; }
+  document.getElementById('modalOverlay').classList.add('show');
+}
+
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('show');
+  editingItemId = null;
+}
+
+// ==================== Confirm ====================
+function showConfirm(icon, title, msg, onConfirm) {
+  document.getElementById('confirmContent').innerHTML =
+    '<div class="confirm-icon">' + icon + '</div>' +
+    '<h4>' + title + '</h4>' +
+    '<p>' + msg + '</p>';
+  document.getElementById('confirmBtn').onclick = function() {
+    closeConfirm();
+    onConfirm();
+  };
+  document.getElementById('confirmOverlay').classList.add('show');
+}
+
+function closeConfirm() {
+  document.getElementById('confirmOverlay').classList.remove('show');
+}
+
+// ==================== Navigation ====================
+function switchPage(page, navEl) {
+  currentPage = page;
+  document.querySelectorAll('.page-section').forEach(function(s) { s.classList.remove('active'); });
+  var el = document.getElementById('page-' + page);
+  if (el) el.classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(function(n) { n.classList.remove('active'); });
+  if (navEl) {
+    navEl.classList.add('active');
+  } else {
+    var nav = document.querySelector('.nav-item[data-page="' + page + '"]');
+    if (nav) nav.classList.add('active');
+  }
+  var titles = {
+    dashboard:'仪表盘', articles:'文章管理', resources:'资源管理', albums:'相册管理',
+    carousel:'轮播图管理', announcements:'公告管理', pricing:'会员套餐', settings:'页面设置',
+    messages:'留言管理', datamgmt:'数据管理', articlecomments:'文章留言管理', resourcecomments:'资源留言管理',
+    profile:'平台资料'
+  };
+  document.getElementById('pageTitle').textContent = titles[page] || page;
+  refreshCurrentPage();
+}
+
+function refreshCurrentPage() {
+  switch(currentPage) {
+    case 'dashboard': loadDashboard(); break;
+    case 'articles': loadArticles(); break;
+    case 'resources': loadResources(); break;
+    case 'albums': loadAlbumGroups(); break;
+    case 'carousel': loadCarousel(); break;
+    case 'announcements': loadAnnouncements(); break;
+    case 'pricing': loadPricing(); break;
+    case 'settings': loadSettings(); break;
+    case 'messages': loadMessages(); break;
+    case 'datamgmt': loadDataMgmt(); break;
+    case 'articlecomments': loadArticleCommentsPage(); break;
+    case 'resourcecomments': loadResourceCommentsPage(); break;
+    case 'profile': loadProfilePage(); break;
+  }
+}
+
+// ==================== Login ====================
+function doLogin() {
+  var pwd = document.getElementById('loginPassword').value.trim();
+  if (!pwd) { showToast('请输入密码', 'error'); return; }
+  if (!db) { showToast('Firebase 未连接，请先配置', 'error'); return; }
+  db.ref('site/admin_password').once('value', function(snap) {
+    var storedPwd = snap.val() || 'aiyoushe2024';
+    if (pwd === storedPwd) {
+      localStorage.setItem('admin_logged', '1');
+      document.getElementById('loginPage').style.display = 'none';
+      document.getElementById('appPage').style.display = 'block';
+      document.getElementById('loginError').style.display = 'none';
+      loadAllData();
+      showToast('登录成功', 'success');
+    } else {
+      document.getElementById('loginError').style.display = 'block';
+    }
+  }, function(err) {
+    if (pwd === 'aiyoushe2024') {
+      localStorage.setItem('admin_logged', '1');
+      document.getElementById('loginPage').style.display = 'none';
+      document.getElementById('appPage').style.display = 'block';
+      loadAllData();
+      showToast('登录成功', 'success');
+    } else {
+      document.getElementById('loginError').style.display = 'block';
+    }
+  });
+}
+
+function doLogout() {
+  localStorage.removeItem('admin_logged');
+  document.getElementById('appPage').style.display = 'none';
+  document.getElementById('loginPage').style.display = 'flex';
+  document.getElementById('loginPassword').value = '';
+}
+
+function checkAuth() {
+  if (localStorage.getItem('admin_logged') === '1') {
+    document.getElementById('loginPage').style.display = 'none';
+    document.getElementById('appPage').style.display = 'block';
+    return true;
+  }
+  return false;
+}
+
+// ==================== Image Upload ====================
+function cropImage(file, ratio, callback) {
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    var imgSrc = e.target.result;
+    var img = new Image();
+    img.onload = function() {
+      // Create modal
+      var overlay = document.createElement('div');
+      overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:99999;display:flex;align-items:center;justify-content:center;';
+
+      var modal = document.createElement('div');
+      modal.style.cssText = 'background:#fff;border-radius:12px;padding:20px;max-width:560px;width:95%;max-height:90vh;overflow:auto;';
+
+      var title = document.createElement('h4');
+      title.textContent = '裁切图片';
+      title.style.cssText = 'margin:0 0 16px;text-align:center;font-size:16px;';
+
+      // Canvas for image display
+      var canvas = document.createElement('canvas');
+      var ctx = canvas.getContext('2d');
+      var displayW = 500, displayH = 500;
+      canvas.width = displayW;
+      canvas.height = displayH;
+      canvas.style.cssText = 'width:100%;cursor:move;display:block;border:1px solid #ddd;';
+
+      // Calculate image fit
+      var imgRatio = img.width / img.height;
+      var canvasRatio = displayW / displayH;
+      var drawW, drawH, offsetX, offsetY;
+      if (imgRatio > canvasRatio) {
+        drawW = displayW;
+        drawH = displayW / imgRatio;
+        offsetX = 0;
+        offsetY = (displayH - drawH) / 2;
+      } else {
+        drawH = displayH;
+        drawW = displayH * imgRatio;
+        offsetX = (displayW - drawW) / 2;
+        offsetY = 0;
+      }
+
+      // Crop box (aspect ratio locked)
+      var cropW, cropH;
+      if (ratio >= 1) {
+        cropH = Math.min(drawH, 200);
+        cropW = cropH * ratio;
+        if (cropW > drawW) { cropW = drawW; cropH = cropW / ratio; }
+      } else {
+        cropW = Math.min(drawW, 200);
+        cropH = cropW / ratio;
+        if (cropH > drawH) { cropH = drawH; cropW = cropH * ratio; }
+      }
+      var cropX = offsetX + (drawW - cropW) / 2;
+      var cropY = offsetY + (drawH - cropH) / 2;
+
+      function redraw() {
+        ctx.clearRect(0, 0, displayW, displayH);
+        // Draw full image
+        ctx.save();
+        ctx.drawImage(img, 0, 0, img.width, img.height, offsetX, offsetY, drawW, drawH);
+        ctx.restore();
+
+        // Draw dark overlay outside crop
+        ctx.fillStyle = 'rgba(0,0,0,0.5)';
+        // Top
+        ctx.fillRect(0, 0, displayW, cropY);
+        // Bottom
+        ctx.fillRect(0, cropY + cropH, displayW, displayH - cropY - cropH);
+        // Left
+        ctx.fillRect(0, cropY, cropX, cropH);
+        // Right
+        ctx.fillRect(cropX + cropW, cropY, displayW - cropX - cropW, cropH);
+
+        // Crop border
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(cropX, cropY, cropW, cropH);
+
+        // Rule of thirds grid
+        ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+        ctx.lineWidth = 1;
+        for (var gi = 1; gi < 3; gi++) {
+          ctx.beginPath();
+          ctx.moveTo(cropX + cropW * gi / 3, cropY);
+          ctx.lineTo(cropX + cropW * gi / 3, cropY + cropH);
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.moveTo(cropX, cropY + cropH * gi / 3);
+          ctx.lineTo(cropX + cropW, cropY + cropH * gi / 3);
+          ctx.stroke();
+        }
+      }
+
+      redraw();
+
+      // Drag
+      var dragging = false, lastX, lastY;
+      canvas.addEventListener('mousedown', function(e) {
+        dragging = true;
+        lastX = e.clientX;
+        lastY = e.clientY;
+      });
+      canvas.addEventListener('mousemove', function(e) {
+        if (!dragging) return;
+        var rect = canvas.getBoundingClientRect();
+        var scaleFactorX = displayW / rect.width;
+        var scaleFactorY = displayH / rect.height;
+        var dx = (e.clientX - lastX) * scaleFactorX;
+        var dy = (e.clientY - lastY) * scaleFactorY;
+        lastX = e.clientX;
+        lastY = e.clientY;
+        cropX += dx;
+        cropY += dy;
+        // Constrain crop box within image bounds
+        cropX = Math.max(offsetX, Math.min(offsetX + drawW - cropW, cropX));
+        cropY = Math.max(offsetY, Math.min(offsetY + drawH - cropH, cropY));
+        redraw();
+      });
+      document.addEventListener('mouseup', function() { dragging = false; });
+
+      // Touch support
+      canvas.addEventListener('touchstart', function(e) {
+        e.preventDefault();
+        dragging = true;
+        lastX = e.touches[0].clientX;
+        lastY = e.touches[0].clientY;
+      });
+      canvas.addEventListener('touchmove', function(e) {
+        e.preventDefault();
+        if (!dragging) return;
+        var rect = canvas.getBoundingClientRect();
+        var scaleFactorX = displayW / rect.width;
+        var scaleFactorY = displayH / rect.height;
+        var dx = (e.touches[0].clientX - lastX) * scaleFactorX;
+        var dy = (e.touches[0].clientY - lastY) * scaleFactorY;
+        lastX = e.touches[0].clientX;
+        lastY = e.touches[0].clientY;
+        cropX += dx;
+        cropY += dy;
+        cropX = Math.max(offsetX, Math.min(offsetX + drawW - cropW, cropX));
+        cropY = Math.max(offsetY, Math.min(offsetY + drawH - cropH, cropY));
+        redraw();
+      });
+      canvas.addEventListener('touchend', function() { dragging = false; });
+
+      // Zoom with mouse wheel
+      canvas.addEventListener('wheel', function(e) {
+        e.preventDefault();
+        var oldW = cropW, oldH = cropH;
+        if (e.deltaY < 0) {
+          cropW = Math.min(drawW, cropW * 1.1);
+          cropH = cropW / ratio;
+        } else {
+          cropW = Math.max(50, cropW * 0.9);
+          cropH = cropW / ratio;
+        }
+        if (cropH > drawH) { cropH = drawH; cropW = cropH * ratio; }
+        // Keep center
+        cropX = cropX + (oldW - cropW) / 2;
+        cropY = cropY + (oldH - cropH) / 2;
+        cropX = Math.max(offsetX, Math.min(offsetX + drawW - cropW, cropX));
+        cropY = Math.max(offsetY, Math.min(offsetY + drawH - cropH, cropY));
+        redraw();
+      });
+
+      // Buttons
+      var btnArea = document.createElement('div');
+      btnArea.style.cssText = 'text-align:center;margin-top:16px;display:flex;gap:8px;justify-content:center;';
+
+      var confirmBtn = document.createElement('input');
+      confirmBtn.type = 'button'; confirmBtn.value = '确认裁切';
+      confirmBtn.style.cssText = 'padding:8px 24px;background:#E63946;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:14px;';
+      confirmBtn.addEventListener('click', function() {
+        // Map crop coordinates to original image
+        var scaleX = img.width / drawW;
+        var scaleY = img.height / drawH;
+        var sx = Math.max(0, (cropX - offsetX) * scaleX);
+        var sy = Math.max(0, (cropY - offsetY) * scaleY);
+        var sw = Math.min(cropW * scaleX, img.width - sx);
+        var sh = Math.min(cropH * scaleY, img.height - sy);
+
+        var cropCanvas = document.createElement('canvas');
+        var cctx = cropCanvas.getContext('2d');
+        cropCanvas.width = Math.round(sw);
+        cropCanvas.height = Math.round(sh);
+        cctx.drawImage(img, sx, sy, sw, sh, 0, 0, cropCanvas.width, cropCanvas.height);
+        var result = cropCanvas.toDataURL('image/jpeg', 0.85);
+        document.body.removeChild(overlay);
+        callback(result);
+      });
+
+      var skipBtn = document.createElement('input');
+      skipBtn.type = 'button'; skipBtn.value = '跳过裁切';
+      skipBtn.style.cssText = 'padding:8px 24px;background:#f5f5f5;color:#333;border:1px solid #ddd;border-radius:6px;cursor:pointer;font-size:14px;';
+      skipBtn.addEventListener('click', function() {
+        document.body.removeChild(overlay);
+        callback(imgSrc);
+      });
+
+      btnArea.appendChild(confirmBtn);
+      btnArea.appendChild(skipBtn);
+
+      modal.appendChild(title);
+      modal.appendChild(canvas);
+      // Add hint text
+      var hint = document.createElement('p');
+      hint.style.cssText = 'text-align:center;font-size:12px;color:#999;margin:8px 0 0;';
+      hint.textContent = '拖动移动裁切框 | 滚轮缩放';
+      modal.appendChild(hint);
+      modal.appendChild(btnArea);
+      overlay.appendChild(modal);
+      document.body.appendChild(overlay);
+
+      // Click overlay to close
+      overlay.addEventListener('mousedown', function(e) {
+        if (e.target === overlay) { document.body.removeChild(overlay); }
+      });
+    };
+    img.src = imgSrc;
+  };
+  reader.readAsDataURL(file);
+}
+
+function handleImageUpload(input, previewId, dataField, cropRatio) {
+  if (!input.files || !input.files[0]) return;
+  var file = input.files[0];
+  if (cropRatio) {
+    cropImage(file, cropRatio, function(base64) {
+      window[dataField] = base64;
+      var preview = document.getElementById(previewId);
+      preview.innerHTML = '<img src="' + base64 + '" alt="preview"><span class="remove-img" onclick="clearImage(\'' + previewId + '\',\'' + dataField + '\')">移除</span>';
+    });
+  } else {
+    compressAndRead(file, function(base64) {
+      window[dataField] = base64;
+      var preview = document.getElementById(previewId);
+      preview.innerHTML = '<img src="' + base64 + '" alt="preview"><span class="remove-img" onclick="clearImage(\'' + previewId + '\',\'' + dataField + '\')">移除</span>';
+    });
+  }
+}
+
+function clearImage(previewId, dataField) {
+  window[dataField] = '';
+  document.getElementById(previewId).innerHTML = '';
+}
+
+function compressAndRead(file, callback) {
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    var dataUrl = e.target.result;
+    var img = new Image();
+    img.onload = function() {
+      var canvas = document.createElement('canvas');
+      var maxW = 1200, maxH = 1200;
+      var w = img.width, h = img.height;
+      if (w > maxW) { h = h * maxW / w; w = maxW; }
+      if (h > maxH) { w = w * maxH / h; h = maxH; }
+      canvas.width = w;
+      canvas.height = h;
+      var ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, w, h);
+      callback(canvas.toDataURL('image/jpeg', 0.8));
+    };
+    img.onerror = function() {
+      showToast('图片读取失败', 'error');
+    };
+    img.src = dataUrl;
+  };
+  reader.readAsDataURL(file);
+}
+
+// ==================== Rich Text Editor ====================
+function createRichEditorHtml(id, value) {
+  var val = value || '';
+  return '<div class="rich-editor">' +
+    '<div class="toolbar">' +
+      '<input type="button" value="B" onclick="execCmd(\'bold\')" style="font-weight:bold;width:32px;">' +
+      '<input type="button" value="I" onclick="execCmd(\'italic\')" style="font-style:italic;width:32px;">' +
+      '<input type="button" value="U" onclick="execCmd(\'underline\')" style="text-decoration:underline;width:32px;">' +
+      '<input type="button" value="S" onclick="execCmd(\'strikeThrough\')" style="text-decoration:line-through;width:32px;">' +
+      '<input type="button" value="H1" onclick="execCmd(\'formatBlock\',\'<h1>\')">' +
+      '<input type="button" value="H2" onclick="execCmd(\'formatBlock\',\'<h2>\')">' +
+      '<input type="button" value="H3" onclick="execCmd(\'formatBlock\',\'<h3>\')">' +
+      '<input type="button" value="P" onclick="execCmd(\'formatBlock\',\'<p>\')">' +
+      '<input type="button" value="&#8676;" onclick="execCmd(\'justifyLeft\')">' +
+      '<input type="button" value="&#8678;" onclick="execCmd(\'justifyCenter\')">' +
+      '<input type="button" value="&#8680;" onclick="execCmd(\'justifyRight\')">' +
+      '<input type="button" value="UL" onclick="execCmd(\'insertUnorderedList\')">' +
+      '<input type="button" value="OL" onclick="execCmd(\'insertOrderedList\')">' +
+      '<input type="button" value="&#128279;" onclick="insertEditorLink(\'' + id + '\')">' +
+      '<input type="button" value="&#128247;" onclick="insertEditorImage(\'' + id + '\')">' +
+      '<input type="button" value="上传图片" onclick="editorUploadImage(this)" style="margin-left:4px;padding:2px 6px;font-size:12px;">' +
+      '<input type="file" accept="image/*" style="display:none" onchange="handleEditorImageUpload(this)">' +
+      '<input type="button" value="清除格式" onclick="execCmd(\'removeFormat\')">' +
+    '</div>' +
+    '<div class="editor-content" contenteditable="true" id="' + id + '">' + val + '</div>' +
+  '</div>';
+  setTimeout(function() { setupEditorPaste(id); }, 100);
+}
+
+function execCmd(cmd, val) {
+  document.execCommand(cmd, false, val || null);
+}
+
+function insertEditorLink(editorId) {
+  var url = prompt('请输入链接地址:');
+  if (url) { document.execCommand('createLink', false, url); }
+}
+
+function insertEditorImage(editorId) {
+  var input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'image/*';
+  input.onchange = function() {
+    if (input.files && input.files[0]) {
+      compressAndRead(input.files[0], function(base64) {
+        document.execCommand('insertHTML', false, '<img src="' + base64 + '" style="max-width:100%;height:auto;">');
+      });
+    }
+  };
+  input.click();
+}
+
+function editorUploadImage(btn) {
+  var fileInput = btn.nextElementSibling;
+  if (fileInput) fileInput.click();
+}
+
+function handleEditorImageUpload(input) {
+  if (!input || !input.files || !input.files[0]) return;
+  var file = input.files[0];
+  compressAndRead(file, function(base64) {
+    var editor = input.closest('.modal-body') ?
+      input.closest('.modal-body').querySelector('[contenteditable="true"]') : null;
+    if (!editor) {
+      var toolbar = input.closest('.rich-editor') || input.closest('.toolbar');
+      if (toolbar) {
+        editor = toolbar.parentNode.querySelector('[contenteditable="true"]');
+      }
+    }
+    if (editor) {
+      editor.focus();
+      document.execCommand('insertHTML', false,
+        '<img src="' + base64 + '" style="max-width:100%;height:auto;">');
+      showToast('图片已上传');
+    }
+  });
+  input.value = '';
+}
+
+function setupEditorPaste(editorId) {
+  var editor = document.getElementById(editorId);
+  if (!editor) return;
+  editor.addEventListener('paste', function(e) {
+    var clipboardData = e.clipboardData || window.clipboardData;
+    var items = clipboardData && clipboardData.items;
+    var hasImage = false;
+
+    // First priority: check if clipboard has actual image file (e.g. screenshot paste)
+    if (items) {
+      for (var i = 0; i < items.length; i++) {
+        if (items[i].type.indexOf('image') !== -1) {
+          hasImage = true;
+          e.preventDefault();
+          var file = items[i].getAsFile();
+          if (file) {
+            var reader = new FileReader();
+            reader.onload = function(ev) {
+              var base64 = ev.target.result;
+              editor.focus();
+              document.execCommand('insertHTML', false,
+                '<img src="' + base64 + '" style="max-width:100%;height:auto;">');
+              showToast('图片已插入');
+            };
+            reader.readAsDataURL(file);
+          }
+          return;
+        }
+      }
+    }
+
+    // WeChat images will work because of <meta name="referrer" content="no-referrer">
+    // No need to intercept WeChat HTML content
+  });
+}
+
+function getEditorContent(id) {
+  var el = document.getElementById(id);
+  return el ? el.innerHTML : '';
+}
+
+// ==================== Move Item (Up/Down) ====================
+function moveItem(dataKey, index, direction) {
+  var pathMap = {
+    'articles': '/site/articles',
+    'resources': '/site/resources',
+    'albums': '/site/albums',
+    'subAlbums': '/site/albums/' + currentAlbumIndex + '/subAlbums',
+    'photos': '/site/albums/' + currentAlbumIndex + '/subAlbums/' + currentSubAlbumIndex + '/photos'
+  };
+  var path = pathMap[dataKey];
+  if (!path) return;
+  if (!db) { showToast('Firebase未连接'); return; }
+
+  db.ref(path).once('value').then(function(snap) {
+    var arr = toArray(snap.val());
+    var newIndex = index + direction;
+    if (newIndex < 0 || newIndex >= arr.length) { showToast('已在边界'); return; }
+
+    // Swap
+    var temp = arr[index];
+    arr[index] = arr[newIndex];
+    arr[newIndex] = temp;
+
+    return db.ref(path).set(arr);
+  }).then(function() {
+    showToast('顺序已更新');
+    // Update local allData cache
+    if (dataKey === 'articles') { allData.articles = toArray(allData.articles); loadArticles(); }
+    else if (dataKey === 'resources') { allData.resources = toArray(allData.resources); loadResources(); }
+    else if (dataKey === 'albums') { allData.albums = toArray(allData.albums); loadAlbumGroups(); }
+    else if (dataKey === 'subAlbums') { viewSubAlbums(); }
+    else if (dataKey === 'photos') { loadAlbumPhotos(); }
+  }).catch(function(err) {
+    console.log('[moveItem] Error:', err);
+    showToast('更新失败: ' + (err.message || '未知错误'));
+  });
+}
+
+// ==================== Helpers ====================
+function genId() {
+  return Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
+}
+
+function formatDate(ts) {
+  if (!ts) return '-';
+  var d = new Date(ts);
+  return d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate());
+}
+
+function pad(n) { return n < 10 ? '0'+n : n; }
+
+function escapeHtml(str) {
+  if (!str) return '';
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function truncate(s, len) {
+  if (!s) return '-';
+  return s.length > len ? s.substring(0, len) + '...' : s;
+}
+
+function toArray(obj) {
+  if (!obj) return [];
+  if (Array.isArray(obj)) return obj;
+  var arr = [];
+  for (var k in obj) {
+    if (obj.hasOwnProperty(k)) {
+      var item = obj[k];
+      if (typeof item === 'object' && item !== null) {
+        item._key = k;
+      }
+      arr.push(item);
+    }
+  }
+  return arr;
+}
+
+function rebuildArray(arr) {
+  var result = [];
+  for (var i = 0; i < arr.length; i++) {
+    var item = {};
+    for (var k in arr[i]) {
+      if (arr[i].hasOwnProperty(k) && k !== '_key') {
+        item[k] = arr[i][k];
+      }
+    }
+    result.push(item);
+  }
+  return result;
+}
+
+// ==================== Dashboard ====================
+function loadDashboard() {
+  var articles = toArray(allData.articles || []).length;
+  var resources = toArray(allData.resources || []).length;
+  var albums = toArray(allData.albums || []).length;
+  var messages = toArray(allData.messages || []).length;
+  document.getElementById('statsGrid').innerHTML =
+    '<div class="stat-card"><div class="stat-icon articles">&#9998;</div><div class="stat-num">' + articles + '</div><div class="stat-label">文章数</div></div>' +
+    '<div class="stat-card"><div class="stat-icon resources">&#9733;</div><div class="stat-num">' + resources + '</div><div class="stat-label">资源数</div></div>' +
+    '<div class="stat-card"><div class="stat-icon albums">&#9788;</div><div class="stat-num">' + albums + '</div><div class="stat-label">相册数</div></div>' +
+    '<div class="stat-card"><div class="stat-icon messages">&#9997;</div><div class="stat-num">' + messages + '</div><div class="stat-label">留言数</div></div>';
+}
+
+// ==================== Articles ====================
+function loadArticles() {
+  var list = toArray(allData.articles || []);
+  var tbody = document.getElementById('articlesList');
+  if (!list.length) {
+    tbody.innerHTML = '<tr><td colspan="7" class="empty-state"><div class="empty-icon">&#128221;</div><p>暂无文章</p></td></tr>';
+    return;
+  }
+  var html = '';
+  for (var i = 0; i < list.length; i++) {
+    var a = list[i];
+    var aKey = a.id || a._key || '';
+    var hidden = a.hidden ? '<span style="color:#999;">[已隐藏]</span>' : '';
+    var accessLevel = (a.accessLevel !== undefined) ? a.accessLevel : 0;
+    var accessLabel = ['免费V0','体验V1','普通V2','高级V3'][accessLevel] || '免费V0';
+    var upBtn = (i > 0) ? '<input type="button" class="btn-sm btn-move" value="\u2191" title="\u4e0a\u79fb" onclick="moveItem(\'articles\',' + i + ',-1)">' : '';
+    var downBtn = (i < list.length - 1) ? '<input type="button" class="btn-sm btn-move" value="\u2193" title="\u4e0b\u79fb" onclick="moveItem(\'articles\',' + i + ',1)">' : '';
+    html += '<tr data-key="' + aKey + '">' +
+      '<td>' + (a.cover ? '<img src="' + a.cover + '">' : '-') + '</td>' +
+      '<td>' + escapeHtml(a.title || '') + hidden + ' <span style="font-size:11px;color:#999;">[' + accessLabel + ']</span></td>' +
+      '<td>' + escapeHtml(a.category || a.articleCat || '-') + '</td>' +
+      '<td>' + formatDate(a.date) + '</td>' +
+      '<td>' + (a.views || 0) + '</td>' +
+      '<td>' + (a.likes || 0) + '</td>' +
+      '<td class="td-actions">' + upBtn + downBtn +
+        '<input type="button" class="btn-sm btn-edit" value="编辑" onclick="editArticle(\'' + aKey + '\')">' +
+        '<input type="button" class="btn-sm ' + (a.hidden ? 'btn-success' : 'btn-warning') + '" value="' + (a.hidden ? '显示' : '隐藏') + '" onclick="toggleArticleHidden(\'' + aKey + '\')">' +
+        '<input type="button" class="btn-sm btn-del" value="删除" onclick="deleteArticle(\'' + aKey + '\')">' +
+      '</td></tr>';
+  }
+  tbody.innerHTML = html;
+}
+
+function openArticleModal(articleId) {
+  var cats = toArray(allData.categories || []);
+  var article = null;
+  var isEdit = false;
+
+  if (articleId) {
+    var list = toArray(allData.articles || []);
+    for (var i = 0; i < list.length; i++) {
+      if ((list[i].id || list[i]._key) === articleId) {
+        article = list[i];
+        break;
+      }
+    }
+    if (article) {
+      isEdit = true;
+      editingItemId = articleId;
+    }
+  }
+
+  var catOpts = '<option value="">请选择合集</option>';
+  for (var i = 0; i < cats.length; i++) {
+    var sel = (article && (article.category === cats[i].val || article.articleCat === cats[i].val)) ? ' selected' : '';
+    catOpts += '<option value="' + escapeHtml(cats[i].val) + '"' + sel + '>' + escapeHtml(cats[i].label || cats[i].val) + '</option>';
+  }
+
+  var existingTags = article ? (article.tags || article.infoTags || []) : [];
+  var tagsStr = existingTags.length ? existingTags.join(', ') : '';
+
+  var bodyHtml =
+    '<div class="form-row"><label>标题<span class="req">*</span></label><input type="text" id="artTitle" value="' + escapeHtml(article ? article.title : '') + '"></div>' +
+    '<div class="form-row"><label>封面图</label><div class="img-upload-area"><p>点击上传封面图</p><input type="file" accept="image/*" onchange="handleImageUpload(this,\'artCoverPreview\',\'artCoverData\',16/9)"></div><div class="img-preview" id="artCoverPreview">' + (article && article.cover ? '<img src="' + article.cover + '"><span class="remove-img" onclick="clearImage(\'artCoverPreview\',\'artCoverData\')">移除</span>' : '') + '</div></div>' +
+    '<div class="form-row"><label>摘要</label><textarea id="artDesc">' + escapeHtml(article ? article.desc || '' : '') + '</textarea></div>' +
+    '<div class="form-row"><label>正文</label>' + createRichEditorHtml('artContent', article ? article.content || '' : '') + '</div>' +
+    '<div class="form-row"><label>合集分类</label><div style="display:flex;gap:8px;"><select id="artCat" style="flex:1;padding:8px;border:1px solid #ddd;border-radius:6px;">' + catOpts + '</select><input type="button" value="&#43; 新建" onclick="addNewCategory(\'article\')" style="padding:8px 12px;border:1px solid #E63946;color:#E63946;border-radius:6px;background:#fff;cursor:pointer;white-space:nowrap;"></div></div>' +
+    '<div class="form-row"><label>标签 (逗号分隔)</label><input type="text" id="artTags" value="' + escapeHtml(tagsStr) + '" placeholder="标签1, 标签2, 标签3" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:6px;"></div>' +
+    '<div class="form-row-half">' +
+      '<div class="form-row"><label>日期</label><input type="date" id="artDate" value="' + (article ? formatDate(article.date) : new Date().toISOString().slice(0,10)) + '"></div>' +
+      '<div class="form-row"><label>阅读量</label><input type="number" id="artViews" value="' + (article ? article.views || 0 : 0) + '"></div>' +
+    '</div>' +
+    '<div class="form-row-half">' +
+      '<div class="form-row"><label>点赞量</label><input type="number" id="artLikes" value="' + (article ? article.likes || 0 : 0) + '"></div>' +
+      '<div class="form-row"><div class="form-switch" style="margin-top:24px;"><input type="checkbox" id="artFeatured"' + (article && article.featured ? ' checked' : '') + '><label for="artFeatured">设为精选</label></div></div>' +
+    '</div>' +
+    '<div class="form-row"><label>文章权限</label>' +
+      '<div style="display:flex;gap:12px;margin-top:6px;">' +
+        '<label class="form-switch"><input type="radio" name="artAccess" value="0"' + (article && article.accessLevel === 1 ? '' : (article && article.accessLevel === 2 ? '' : (article && article.accessLevel === 3 ? '' : ' checked'))) + ' id="artAccess0"><label for="artAccess0">免费阅读 V0</label></label>' +
+        '<label class="form-switch"><input type="radio" name="artAccess" value="1"' + (article && article.accessLevel === 1 ? ' checked' : '') + ' id="artAccess1"><label for="artAccess1">体验会员 V1</label></label>' +
+        '<label class="form-switch"><input type="radio" name="artAccess" value="2"' + (article && article.accessLevel === 2 ? ' checked' : '') + ' id="artAccess2"><label for="artAccess2">普通会员 V2</label></label>' +
+        '<label class="form-switch"><input type="radio" name="artAccess" value="3"' + (article && article.accessLevel === 3 ? ' checked' : '') + ' id="artAccess3"><label for="artAccess3">高级会员 V3</label></label>' +
+      '</div>' +
+    '</div>';
+
+  if (isEdit) {
+    window.artCoverData = article.cover || '';
+  }
+
+  var footerHtml =
+    '<input type="button" class="btn-default" value="取消" onclick="closeModal()">' +
+    '<input type="button" class="btn-primary" value="保存" onclick="saveArticle(\'' + (isEdit ? articleId : '') + '\')">';
+
+  openModal(isEdit ? '编辑文章' : '添加文章', bodyHtml, footerHtml, true);
+  if (isEdit && article.cover) { window.artCoverData = article.cover; }
+}
+
+
+function saveArticle(editId) {
+  var title = document.getElementById('artTitle').value.trim();
+  if (!title) { showToast('请输入文章标题', 'error'); return; }
+  var cover = window.artCoverData || '';
+  var desc = document.getElementById('artDesc').value.trim();
+  var content = getEditorContent('artContent');
+  var category = document.getElementById('artCat').value;
+  var tagsStr = document.getElementById('artTags').value.trim();
+  var tags = [];
+  if (tagsStr) {
+    var parts = tagsStr.split(',');
+    for (var i = 0; i < parts.length; i++) {
+      var t = parts[i].trim();
+      if (t) tags.push(t);
+    }
+  }
+  var date = document.getElementById('artDate').value || new Date().toISOString().slice(0,10);
+  var views = parseInt(document.getElementById('artViews').value) || 0;
+  var likes = parseInt(document.getElementById('artLikes').value) || 0;
+  var featured = document.getElementById('artFeatured').checked;
+  var accessLevel = 0;
+  var artRadios = document.querySelectorAll('input[name="artAccess"]');
+  for (var i = 0; i < artRadios.length; i++) {
+    if (artRadios[i].checked) { accessLevel = parseInt(artRadios[i].value); break; }
+  }
+
+  var list = toArray(allData.articles || []);
+  if (editId) {
+    for (var i = 0; i < list.length; i++) {
+      if ((list[i].id || list[i]._key) === editId) {
+        list[i].title = title;
+        list[i].cover = cover;
+        list[i].desc = desc;
+        list[i].content = content;
+        list[i].category = category;
+        list[i].tags = tags;
+        list[i].date = date;
+        list[i].views = views;
+        list[i].likes = likes;
+        list[i].featured = featured;
+        list[i].accessLevel = accessLevel;
+        break;
+      }
+    }
+  } else {
+    list.push({
+      id: genId(), title: title, cover: cover, desc: desc, content: content,
+      category: category, tags: tags,
+      date: date, views: views, likes: likes, featured: featured, hidden: false,
+      accessLevel: accessLevel
+    });
+  }
+  saveData('articles', rebuildArray(list), function() {
+    showToast(editId ? '文章已更新' : '文章已添加', 'success');
+    closeModal();
+    window.artCoverData = '';
+    loadAllData();
+  });
+}
+
+function editArticle(id) {
+  openArticleModal(id);
+}
+
+function deleteArticle(id) {
+  showConfirm('&#9888;', '删除文章', '确定要删除这篇文章吗？此操作不可撤销。', function() {
+    var list = toArray(allData.articles || []);
+    var filtered = [];
+    for (var i = 0; i < list.length; i++) {
+      if ((list[i].id || list[i]._key) !== id) filtered.push(list[i]);
+    }
+    saveData('articles', rebuildArray(filtered), function() {
+      showToast('文章已删除', 'success');
+      loadAllData();
+    });
+  });
+}
+
+function toggleArticleHidden(id) {
+  var list = toArray(allData.articles || []);
+  for (var i = 0; i < list.length; i++) {
+    if ((list[i].id || list[i]._key) === id) {
+      list[i].hidden = !list[i].hidden;
+      break;
+    }
+  }
+  saveData('articles', rebuildArray(list), function() {
+    showToast('状态已更新', 'success');
+    loadAllData();
+  });
+}
+
+// ==================== Resources ====================
+function loadResources() {
+  var list = toArray(allData.resources || []);
+  var container = document.getElementById('resourcesList');
+  if (!list.length) {
+    container.innerHTML = '<div class="empty-state" style="grid-column:1/-1;"><div class="empty-icon">&#9733;</div><p>暂无资源</p></div>';
+    return;
+  }
+  var html = '';
+  var accessLabels = ['免费V0', '体验V1', '普通V2', '高级V3'];
+  for (var i = 0; i < list.length; i++) {
+    var r = list[i];
+    var coverImg = r.cover ? '<img src="' + r.cover + '">' : '<div style="display:flex;align-items:center;justify-content:center;width:100%;height:100%;color:#ccc;font-size:48px;">&#9733;</div>';
+    var discount = '';
+    if (r.originalPrice && r.originalPrice > r.price && r.price > 0) {
+      var pct = Math.round(r.price / r.originalPrice * 10) / 10;
+      discount = '<span class="res-discount-badge">' + pct + '折</span>';
+    }
+    var accessLevel = (r.accessLevel !== undefined) ? r.accessLevel : 0;
+    var accessBadge = '<span class="res-access-badge v' + accessLevel + '">' + (accessLabels[accessLevel] || '免费V0') + '</span>';
+    var hiddenBadge = r.hidden ? '<span class="res-hidden-badge">已隐藏</span>' : '';
+    var starsHtml = '';
+    var rating = (r.rating !== undefined) ? r.rating : 0;
+    if (rating > 0) {
+      var fullStar = Math.floor(rating);
+      var halfStar = (rating % 1 >= 0.5) ? 1 : 0;
+      var starStr = '';
+      for (var s = 0; s < fullStar; s++) starStr += '&#9733;';
+      if (halfStar) starStr += '&#189;';
+      starsHtml = '<span class="res-stars">' + starStr + '</span> ' + rating;
+    }
+    var sold = (r.sold !== undefined) ? r.sold : 0;
+    var metaHtml = '';
+    if (starsHtml || sold) {
+      metaHtml = '<div class="res-card-meta">' + starsHtml + (sold ? '<span>已售 ' + sold + '</span>' : '') + '</div>';
+    }
+    var priceHtml = '<div class="res-card-price"><span class="res-now-price">&yen;' + (r.price || 0) + '</span>';
+    if (r.originalPrice && r.originalPrice > r.price) {
+      priceHtml += '<span class="res-orig-price">&yen;' + r.originalPrice + '</span>';
+    }
+    priceHtml += '</div>';
+    var resUpBtn = (i > 0) ? '<input type="button" class="btn-sm btn-move" value="\u2191" title="\u4e0a\u79fb" onclick="moveItem(\'resources\',' + i + ',-1)">' : '';
+    var resDownBtn = (i < list.length - 1) ? '<input type="button" class="btn-sm btn-move" value="\u2193" title="\u4e0b\u79fb" onclick="moveItem(\'resources\',' + i + ',1)">' : '';
+    html += '<div class="res-card" data-key="' + (r.id || r._key || '') + '">' +
+      '<div class="res-card-cover">' +
+        coverImg + discount + accessBadge + hiddenBadge +
+      '</div>' +
+      '<div class="res-card-info">' +
+        '<div class="res-card-title" title="' + escapeHtml(r.title || '') + '">' + escapeHtml(r.title || '无标题') + '</div>' +
+        metaHtml +
+        priceHtml +
+        '<div class="res-card-actions">' + resUpBtn + resDownBtn +
+          '<input type="button" class="btn-sm btn-edit" value="编辑" onclick="editResource(\'' + (r.id || r._key || '') + '\')">' +
+          '<input type="button" class="btn-sm ' + (r.hidden ? 'btn-success' : 'btn-warning') + '" value="' + (r.hidden ? '显示' : '隐藏') + '" onclick="toggleResourceHidden(\'' + (r.id || r._key || '') + '\')">' +
+          '<input type="button" class="btn-sm btn-del" value="删除" onclick="deleteResource(\'' + (r.id || r._key || '') + '\')">' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  }
+  container.innerHTML = html;
+}
+
+function openResourceModal(resId) {
+  var cats = toArray(allData.categories || []);
+  var res = null;
+  var isEdit = false;
+
+  if (resId) {
+    var list = toArray(allData.resources || []);
+    for (var i = 0; i < list.length; i++) {
+      if ((list[i].id || list[i]._key) === resId) { res = list[i]; break; }
+    }
+    if (res) { isEdit = true; editingItemId = resId; }
+  }
+
+  var catOpts = '<option value="">请选择合集</option>';
+  for (var i = 0; i < cats.length; i++) {
+    var sel = (res && res.category === cats[i].val) ? ' selected' : '';
+    catOpts += '<option value="' + escapeHtml(cats[i].val) + '"' + sel + '>' + escapeHtml(cats[i].label || cats[i].val) + '</option>';
+  }
+
+  var selTags = res ? (res.tags || []) : [];
+
+  var accessLevel = (res && res.accessLevel !== undefined) ? res.accessLevel : 0;
+  var featured = (res && res.featured) ? ' checked' : '';
+  var normal = (res && res.normal === false) ? '' : ' checked';
+
+  var bodyHtml =
+    '<div class="res-form-steps">' +
+      '<div class="res-form-step active" onclick="switchResPage(0)">基本信息</div>' +
+      '<div class="res-form-step" onclick="switchResPage(1)">详细设置</div>' +
+    '</div>' +
+    '<div class="res-form-page active" id="resPage0">' +
+      '<div class="form-row"><label>商品标题<span class="req">*</span></label><input type="text" id="resTitle" value="' + escapeHtml(res ? res.title : '') + '"></div>' +
+      '<div class="form-row"><label>封面图片</label><div class="img-upload-area"><p>点击上传封面图 (1:1)</p><input type="file" accept="image/*" onchange="handleImageUpload(this,\'resCoverPreview\',\'resCoverData\',1)"></div><div class="img-preview" id="resCoverPreview">' + (res && res.cover ? '<img src="' + res.cover + '"><span class="remove-img" onclick="clearImage(\'resCoverPreview\',\'resCoverData\')">移除</span>' : '') + '</div></div>' +
+      '<div class="form-row"><label>商品简介</label><textarea id="resDesc">' + escapeHtml(res ? res.desc || '' : '') + '</textarea></div>' +
+      '<div class="form-row-half">' +
+        '<div class="form-row"><label>现价</label><input type="number" id="resPrice" step="0.01" value="' + (res && res.price !== undefined ? res.price : 0) + '"></div>' +
+        '<div class="form-row"><label>原价</label><input type="number" id="resOriginalPrice" step="0.01" value="' + (res && res.originalPrice !== undefined ? res.originalPrice : 0) + '"></div>' +
+      '</div>' +
+      '<div class="form-row-half">' +
+        '<div class="form-row"><label>库存数量</label><input type="number" id="resStock" value="' + (res && res.stock !== undefined ? res.stock : 0) + '"></div>' +
+        '<div class="form-row"><label>合集分类</label><div style="display:flex;gap:8px;"><select id="resCat" style="flex:1;padding:8px;border:1px solid #ddd;border-radius:6px;">' + catOpts + '</select><input type="button" value="&#43; 新建" onclick="addNewCategory(\'resource\')" style="padding:8px 12px;border:1px solid #E63946;color:#E63946;border-radius:6px;background:#fff;cursor:pointer;white-space:nowrap;"></div></div>' +
+      '</div>' +
+    '</div>' +
+    '<div class="res-form-page" id="resPage1">' +
+      '<div class="form-row-half">' +
+        '<div class="form-row"><label>评分 (0-5)</label><input type="number" id="resRating" min="0" max="5" step="0.1" value="' + (res && res.rating !== undefined ? res.rating : 0) + '"></div>' +
+        '<div class="form-row"><label>已售数量</label><input type="number" id="resSold" min="0" value="' + (res && res.sold !== undefined ? res.sold : 0) + '"></div>' +
+      '</div>' +
+      '<div class="form-row"><label>标签 (逗号分隔)</label><input type="text" id="resTagsInput" value="' + escapeHtml(selTags.join(', ')) + '" placeholder="标签1, 标签2"></div>' +
+      '<div class="form-row"><label>商品类型</label>' +
+        '<div style="display:flex;gap:20px;margin-top:6px;">' +
+          '<label class="form-switch"><input type="checkbox" id="resFeatured"' + featured + '><label for="resFeatured">加入精选</label></label>' +
+          '<label class="form-switch"><input type="checkbox" id="resNormal"' + normal + '><label for="resNormal">普通资源</label></label>' +
+        '</div>' +
+      '</div>' +
+      '<div class="form-row"><label>商品权限</label>' +
+        '<div style="display:flex;gap:12px;margin-top:6px;">' +
+          '<label class="form-switch"><input type="radio" name="resAccess" value="0"' + (accessLevel === 0 ? ' checked' : '') + ' id="resAccess0"><label for="resAccess0">免费下载 V0</label></label>' +
+          '<label class="form-switch"><input type="radio" name="resAccess" value="1"' + (accessLevel === 1 ? ' checked' : '') + ' id="resAccess1"><label for="resAccess1">体验会员 V1</label></label>' +
+          '<label class="form-switch"><input type="radio" name="resAccess" value="2"' + (accessLevel === 2 ? ' checked' : '') + ' id="resAccess2"><label for="resAccess2">普通会员 V2</label></label>' +
+          '<label class="form-switch"><input type="radio" name="resAccess" value="3"' + (accessLevel === 3 ? ' checked' : '') + ' id="resAccess3"><label for="resAccess3">高级会员 V3</label></label>' +
+        '</div>' +
+      '</div>' +
+      '<div class="form-row"><label>交付链接</label><input type="url" id="resDeliveryLink" value="' + escapeHtml(res ? res.deliveryLink || '' : '') + '" placeholder="https://..."></div>' +
+      '<div class="form-row"><label>链接密码 (选填)</label><input type="text" id="resDeliveryPassword" value="' + escapeHtml(res ? res.deliveryPassword || '' : '') + '" placeholder="选填"></div>' +
+    '</div>';
+
+  if (isEdit) { window.resCoverData = res.cover || ''; }
+
+  var footerHtml =
+    '<input type="button" class="btn-default" value="取消" onclick="closeModal()">' +
+    '<input type="button" class="btn-primary" value="保存" onclick="saveResource(\'' + (isEdit ? resId : '') + '\')">';
+
+  openModal(isEdit ? '编辑资源' : '添加资源', bodyHtml, footerHtml, true);
+}
+
+function switchResPage(idx) {
+  var steps = document.querySelectorAll('.res-form-step');
+  var pages = document.querySelectorAll('.res-form-page');
+  for (var i = 0; i < steps.length; i++) {
+    steps[i].classList.remove('active');
+    pages[i].classList.remove('active');
+  }
+  if (steps[idx]) steps[idx].classList.add('active');
+  if (pages[idx]) pages[idx].classList.add('active');
+}
+
+
+function saveResource(editId) {
+  var title = document.getElementById('resTitle').value.trim();
+  if (!title) { showToast('请输入资源标题', 'error'); return; }
+  var cover = window.resCoverData || '';
+  var desc = document.getElementById('resDesc').value.trim();
+  var price = parseFloat(document.getElementById('resPrice').value) || 0;
+  var originalPrice = parseFloat(document.getElementById('resOriginalPrice').value) || 0;
+  var stock = parseInt(document.getElementById('resStock').value) || 0;
+  var category = document.getElementById('resCat').value;
+  var rating = parseFloat(document.getElementById('resRating').value) || 0;
+  if (rating > 5) rating = 5;
+  if (rating < 0) rating = 0;
+  var sold = parseInt(document.getElementById('resSold').value) || 0;
+  var tagsStr = document.getElementById('resTagsInput').value.trim();
+  var tags = [];
+  if (tagsStr) {
+    var parts = tagsStr.split(',');
+    for (var i = 0; i < parts.length; i++) {
+      var t = parts[i].trim();
+      if (t) tags.push(t);
+    }
+  }
+  var featured = document.getElementById('resFeatured').checked;
+  var normal = document.getElementById('resNormal').checked;
+  var accessLevel = 0;
+  var radios = document.querySelectorAll('input[name="resAccess"]');
+  for (var i = 0; i < radios.length; i++) {
+    if (radios[i].checked) { accessLevel = parseInt(radios[i].value); break; }
+  }
+  var deliveryLink = document.getElementById('resDeliveryLink').value.trim();
+  var deliveryPassword = document.getElementById('resDeliveryPassword').value.trim();
+
+  var list = toArray(allData.resources || []);
+  if (editId) {
+    for (var i = 0; i < list.length; i++) {
+      if ((list[i].id || list[i]._key) === editId) {
+        list[i].title = title; list[i].cover = cover; list[i].desc = desc;
+        list[i].price = price; list[i].originalPrice = originalPrice; list[i].stock = stock;
+        list[i].category = category; list[i].rating = rating; list[i].sold = sold; list[i].tags = tags;
+        list[i].featured = featured; list[i].normal = normal; list[i].accessLevel = accessLevel;
+        list[i].deliveryLink = deliveryLink; list[i].deliveryPassword = deliveryPassword;
+        break;
+      }
+    }
+  } else {
+    list.push({
+      id: genId(), title: title, cover: cover, desc: desc,
+      price: price, originalPrice: originalPrice, stock: stock,
+      category: category, rating: rating, sold: sold, tags: tags,
+      featured: featured, normal: normal, accessLevel: accessLevel,
+      deliveryLink: deliveryLink, deliveryPassword: deliveryPassword,
+      hidden: false
+    });
+  }
+  saveData('resources', rebuildArray(list), function() {
+    showToast(editId ? '资源已更新' : '资源已添加', 'success');
+    closeModal();
+    window.resCoverData = '';
+    loadAllData();
+  });
+}
+
+function editResource(id) { openResourceModal(id); }
+
+function deleteResource(id) {
+  showConfirm('&#9888;', '删除资源', '确定要删除该资源吗？', function() {
+    var list = toArray(allData.resources || []);
+    var filtered = [];
+    for (var i = 0; i < list.length; i++) {
+      if ((list[i].id || list[i]._key) !== id) filtered.push(list[i]);
+    }
+    saveData('resources', rebuildArray(filtered), function() {
+      showToast('资源已删除', 'success');
+      loadAllData();
+    });
+  });
+}
+
+function toggleResourceHidden(id) {
+  var list = toArray(allData.resources || []);
+  for (var i = 0; i < list.length; i++) {
+    if ((list[i].id || list[i]._key) === id) { list[i].hidden = !list[i].hidden; break; }
+  }
+  saveData('resources', rebuildArray(list), function() {
+    showToast('状态已更新', 'success');
+    loadAllData();
+  });
+}
+
+// ==================== Albums ====================
+function loadAlbumGroups() {
+  var list = toArray(allData.albums || []);
+  var container = document.getElementById('albumGroupsList');
+  if (!list.length) {
+    container.innerHTML = '<div class="empty-state"><div class="empty-icon">&#9788;</div><p>暂无相册分组</p></div>';
+    document.getElementById('subAlbumsArea').style.display = 'none';
+    document.getElementById('photosArea').style.display = 'none';
+    return;
+  }
+  var html = '';
+  for (var i = 0; i < list.length; i++) {
+    var g = list[i];
+    var grpUpBtn = (i > 0) ? '<input type="button" class="btn-sm btn-move" value="\u2191" title="\u4e0a\u79fb" onclick="moveItem(\'albums\',' + i + ',-1)">' : '';
+    var grpDownBtn = (i < list.length - 1) ? '<input type="button" class="btn-sm btn-move" value="\u2193" title="\u4e0b\u79fb" onclick="moveItem(\'albums\',' + i + ',1)">' : '';
+    html += '<div class="album-group-item" data-key="' + (g.id || g._key || '') + '">' +
+      '<div style="display:flex;align-items:center;gap:12px;">' +
+        (g.cover ? '<img src="' + g.cover + '" style="width:48px;height:48px;object-fit:cover;border-radius:6px;">' : '') +
+        '<span class="group-name">' + escapeHtml(g.name || '未命名') + '</span>' +
+        '<span style="color:#999;font-size:12px;">(' + (g.subAlbums ? g.subAlbums.length : 0) + '个子相册)</span>' +
+      '</div>' +
+      '<div class="td-actions">' + grpUpBtn + grpDownBtn +
+        '<input type="button" class="btn-sm btn-edit" value="编辑" onclick="editAlbumGroup(\'' + (g.id || g._key || '') + '\')">' +
+        '<input type="button" class="btn-sm btn-primary" value="查看子相册" onclick="viewSubAlbums(\'' + (g.id || g._key || '') + '\')">' +
+        '<input type="button" class="btn-sm btn-del" value="删除" onclick="deleteAlbumGroup(\'' + (g.id || g._key || '') + '\')">' +
+      '</div></div>';
+  }
+  container.innerHTML = html;
+}
+
+function openAlbumGroupModal(groupId) {
+  var group = null;
+  var isEdit = false;
+  if (groupId) {
+    var list = toArray(allData.albums || []);
+    for (var i = 0; i < list.length; i++) {
+      if ((list[i].id || list[i]._key) === groupId) { group = list[i]; break; }
+    }
+    if (group) { isEdit = true; editingItemId = groupId; }
+  }
+
+  var bodyHtml =
+    '<div class="form-row"><label>分组名称<span class="req">*</span></label><input type="text" id="grpName" value="' + escapeHtml(group ? group.name : '') + '"></div>' +
+    '<div class="form-row"><label>封面图</label><div class="img-upload-area"><p>点击上传封面图</p><input type="file" accept="image/*" onchange="handleImageUpload(this,\'grpCoverPreview\',\'grpCoverData\',9/16)"></div><div class="img-preview" id="grpCoverPreview">' + (group && group.cover ? '<img src="' + group.cover + '"><span class="remove-img" onclick="clearImage(\'grpCoverPreview\',\'grpCoverData\')">移除</span>' : '') + '</div></div>' +
+    '<div class="form-row"><label>相册权限</label>' +
+      '<div style="display:flex;gap:12px;margin-top:6px;">' +
+        '<label class="form-switch"><input type="radio" name="grpAccess" value="0"' + (group && group.accessLevel === 1 ? '' : (group && group.accessLevel === 2 ? '' : (group && group.accessLevel === 3 ? '' : ' checked'))) + ' id="grpAccess0"><label for="grpAccess0">免费浏览 V0</label></label>' +
+        '<label class="form-switch"><input type="radio" name="grpAccess" value="1"' + (group && group.accessLevel === 1 ? ' checked' : '') + ' id="grpAccess1"><label for="grpAccess1">体验会员 V1</label></label>' +
+        '<label class="form-switch"><input type="radio" name="grpAccess" value="2"' + (group && group.accessLevel === 2 ? ' checked' : '') + ' id="grpAccess2"><label for="grpAccess2">普通会员 V2</label></label>' +
+        '<label class="form-switch"><input type="radio" name="grpAccess" value="3"' + (group && group.accessLevel === 3 ? ' checked' : '') + ' id="grpAccess3"><label for="grpAccess3">高级会员 V3</label></label>' +
+      '</div>' +
+    '</div>' +
+    '<div class="form-row"><label>标签 (逗号分隔)</label><input type="text" id="grpTags" value="' + escapeHtml(group && group.tags ? group.tags.join(', ') : '') + '" placeholder="标签1, 标签2, 标签3" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:6px;"></div>';
+
+  if (isEdit) { window.grpCoverData = group.cover || ''; }
+
+  var footerHtml =
+    '<input type="button" class="btn-default" value="取消" onclick="closeModal()">' +
+    '<input type="button" class="btn-primary" value="保存" onclick="saveAlbumGroup(\'' + (isEdit ? groupId : '') + '\')">';
+
+  openModal(isEdit ? '编辑分组' : '添加分组', bodyHtml, footerHtml);
+}
+
+function saveAlbumGroup(editId) {
+  var name = document.getElementById('grpName').value.trim();
+  if (!name) { showToast('请输入分组名称', 'error'); return; }
+  var cover = window.grpCoverData || '';
+  var accessLevel = 0;
+  var grpRadios = document.querySelectorAll('input[name="grpAccess"]');
+  for (var i = 0; i < grpRadios.length; i++) {
+    if (grpRadios[i].checked) { accessLevel = parseInt(grpRadios[i].value); break; }
+  }
+  var tagsStr = document.getElementById('grpTags').value.trim();
+  var tags = [];
+  if (tagsStr) {
+    var parts = tagsStr.split(',');
+    for (var i = 0; i < parts.length; i++) {
+      var t = parts[i].trim();
+      if (t) tags.push(t);
+    }
+  }
+  var list = toArray(allData.albums || []);
+  if (editId) {
+    for (var i = 0; i < list.length; i++) {
+      if ((list[i].id || list[i]._key) === editId) {
+        list[i].name = name; list[i].cover = cover; list[i].accessLevel = accessLevel; list[i].tags = tags; break;
+      }
+    }
+  } else {
+    list.push({ id: genId(), name: name, cover: cover, subAlbums: [], accessLevel: accessLevel, tags: tags });
+  }
+  saveData('albums', rebuildArray(list), function() {
+    showToast(editId ? '分组已更新' : '分组已添加', 'success');
+    closeModal();
+    window.grpCoverData = '';
+    loadAllData();
+  });
+}
+
+function editAlbumGroup(id) { openAlbumGroupModal(id); }
+
+function deleteAlbumGroup(id) {
+  showConfirm('&#9888;', '删除分组', '确定要删除该分组及其所有子相册和照片吗？', function() {
+    var list = toArray(allData.albums || []);
+    var filtered = [];
+    for (var i = 0; i < list.length; i++) {
+      if ((list[i].id || list[i]._key) !== id) filtered.push(list[i]);
+    }
+    saveData('albums', rebuildArray(filtered), function() {
+      showToast('分组已删除', 'success');
+      currentAlbumGroup = null;
+      document.getElementById('subAlbumsArea').style.display = 'none';
+      document.getElementById('photosArea').style.display = 'none';
+      loadAllData();
+    });
+  });
+}
+
+function viewSubAlbums(groupId) {
+  currentAlbumGroup = groupId;
+  currentSubAlbum = null;
+  currentAlbumIndex = -1;
+  currentSubAlbumIndex = -1;
+  document.getElementById('subAlbumsArea').style.display = 'block';
+  document.getElementById('photosArea').style.display = 'none';
+
+  var list = toArray(allData.albums || []);
+  var group = null;
+  for (var i = 0; i < list.length; i++) {
+    if ((list[i].id || list[i]._key) === groupId) { group = list[i]; currentAlbumIndex = i; break; }
+  }
+  if (!group) return;
+
+  document.getElementById('subAlbumTitle').textContent = group.name + ' - 子相册';
+  var subs = group.subAlbums || [];
+  var container = document.getElementById('subAlbumsList');
+  if (!subs.length) {
+    container.innerHTML = '<div class="empty-state"><p>暂无子相册</p></div>';
+    return;
+  }
+  var html = '';
+  for (var i = 0; i < subs.length; i++) {
+    var s = subs[i];
+    var subUpBtn = (i > 0) ? '<input type="button" class="btn-sm btn-move" value="\u2191" title="\u4e0a\u79fb" onclick="moveItem(\'subAlbums\',' + i + ',-1)">' : '';
+    var subDownBtn = (i < subs.length - 1) ? '<input type="button" class="btn-sm btn-move" value="\u2193" title="\u4e0b\u79fb" onclick="moveItem(\'subAlbums\',' + i + ',1)">' : '';
+    html += '<div class="album-group-item" data-key="' + (s.id || '') + '">' +
+      '<div style="display:flex;align-items:center;gap:12px;">' +
+        (s.cover ? '<img src="' + s.cover + '" style="width:48px;height:48px;object-fit:cover;border-radius:6px;">' : '') +
+        '<span class="group-name">' + escapeHtml(s.name || '未命名') + '</span>' +
+        '<span style="color:#999;font-size:12px;">(' + (s.photos ? s.photos.length : 0) + '张照片)</span>' +
+      '</div>' +
+      '<div class="td-actions">' + subUpBtn + subDownBtn +
+        '<input type="button" class="btn-sm btn-edit" value="编辑" onclick="editSubAlbum(\'' + (s.id || '') + '\')">' +
+        '<input type="button" class="btn-sm btn-primary" value="查看照片" onclick="viewPhotos(\'' + (s.id || '') + '\')">' +
+        '<input type="button" class="btn-sm btn-del" value="删除" onclick="deleteSubAlbum(\'' + (s.id || '') + '\')">' +
+      '</div></div>';
+  }
+  container.innerHTML = html;
+}
+
+function openSubAlbumModal(subId) {
+  var sub = null;
+  var isEdit = false;
+  if (subId && currentAlbumGroup) {
+    var list = toArray(allData.albums || []);
+    for (var i = 0; i < list.length; i++) {
+      if ((list[i].id || list[i]._key) === currentAlbumGroup) {
+        var subs = list[i].subAlbums || [];
+        for (var j = 0; j < subs.length; j++) {
+          if (subs[j].id === subId) { sub = subs[j]; break; }
+        }
+        break;
+      }
+    }
+    if (sub) { isEdit = true; }
+  }
+
+  var bodyHtml =
+    '<div class="form-row"><label>子相册名称<span class="req">*</span></label><input type="text" id="subName" value="' + escapeHtml(sub ? sub.name : '') + '"></div>' +
+    '<div class="form-row"><label>封面图</label><div class="img-upload-area"><p>点击上传封面图</p><input type="file" accept="image/*" onchange="handleImageUpload(this,\'subCoverPreview\',\'subCoverData\',9/16)"></div><div class="img-preview" id="subCoverPreview">' + (sub && sub.cover ? '<img src="' + sub.cover + '"><span class="remove-img" onclick="clearImage(\'subCoverPreview\',\'subCoverData\')">移除</span>' : '') + '</div></div>' +
+    '<div class="form-row"><label>子相册权限</label>' +
+      '<div style="display:flex;gap:12px;margin-top:6px;">' +
+        '<label class="form-switch"><input type="radio" name="subAccess" value="0"' + (sub && sub.accessLevel === 1 ? '' : (sub && sub.accessLevel === 2 ? '' : (sub && sub.accessLevel === 3 ? '' : ' checked'))) + ' id="subAccess0"><label for="subAccess0">免费浏览 V0</label></label>' +
+        '<label class="form-switch"><input type="radio" name="subAccess" value="1"' + (sub && sub.accessLevel === 1 ? ' checked' : '') + ' id="subAccess1"><label for="subAccess1">体验会员 V1</label></label>' +
+        '<label class="form-switch"><input type="radio" name="subAccess" value="2"' + (sub && sub.accessLevel === 2 ? ' checked' : '') + ' id="subAccess2"><label for="subAccess2">普通会员 V2</label></label>' +
+        '<label class="form-switch"><input type="radio" name="subAccess" value="3"' + (sub && sub.accessLevel === 3 ? ' checked' : '') + ' id="subAccess3"><label for="subAccess3">高级会员 V3</label></label>' +
+      '</div>' +
+    '</div>' +
+    '<div class="form-row"><label>标签 (逗号分隔)</label><input type="text" id="subTags" value="' + escapeHtml(sub && sub.tags ? sub.tags.join(', ') : '') + '" placeholder="标签1, 标签2, 标签3" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:6px;"></div>';
+
+  if (isEdit) { window.subCoverData = sub.cover || ''; }
+
+  var footerHtml =
+    '<input type="button" class="btn-default" value="取消" onclick="closeModal()">' +
+    '<input type="button" class="btn-primary" value="保存" onclick="saveSubAlbum(\'' + (isEdit ? subId : '') + '\')">';
+
+  openModal(isEdit ? '编辑子相册' : '添加子相册', bodyHtml, footerHtml);
+}
+
+function saveSubAlbum(editId) {
+  var name = document.getElementById('subName').value.trim();
+  if (!name) { showToast('请输入子相册名称', 'error'); return; }
+  var cover = window.subCoverData || '';
+  var accessLevel = 0;
+  var subRadios = document.querySelectorAll('input[name="subAccess"]');
+  for (var i = 0; i < subRadios.length; i++) {
+    if (subRadios[i].checked) { accessLevel = parseInt(subRadios[i].value); break; }
+  }
+  var tagsStr = document.getElementById('subTags').value.trim();
+  var tags = [];
+  if (tagsStr) {
+    var parts = tagsStr.split(',');
+    for (var i = 0; i < parts.length; i++) {
+      var t = parts[i].trim();
+      if (t) tags.push(t);
+    }
+  }
+  var list = toArray(allData.albums || []);
+  for (var i = 0; i < list.length; i++) {
+    if ((list[i].id || list[i]._key) === currentAlbumGroup) {
+      if (!list[i].subAlbums) list[i].subAlbums = [];
+      if (editId) {
+        for (var j = 0; j < list[i].subAlbums.length; j++) {
+          if (list[i].subAlbums[j].id === editId) {
+            list[i].subAlbums[j].name = name;
+            list[i].subAlbums[j].cover = cover;
+            list[i].subAlbums[j].accessLevel = accessLevel;
+            list[i].subAlbums[j].tags = tags;
+            break;
+          }
+        }
+      } else {
+        list[i].subAlbums.push({ id: genId(), name: name, cover: cover, photos: [], accessLevel: accessLevel, tags: tags });
+      }
+      break;
+    }
+  }
+  saveData('albums', rebuildArray(list), function() {
+    showToast(editId ? '子相册已更新' : '子相册已添加', 'success');
+    closeModal();
+    window.subCoverData = '';
+    loadAllData();
+  });
+}
+
+function editSubAlbum(id) { openSubAlbumModal(id); }
+
+function deleteSubAlbum(subId) {
+  showConfirm('&#9888;', '删除子相册', '确定要删除该子相册及所有照片吗？', function() {
+    var list = toArray(allData.albums || []);
+    for (var i = 0; i < list.length; i++) {
+      if ((list[i].id || list[i]._key) === currentAlbumGroup) {
+        var subs = list[i].subAlbums || [];
+        var filtered = [];
+        for (var j = 0; j < subs.length; j++) {
+          if (subs[j].id !== subId) filtered.push(subs[j]);
+        }
+        list[i].subAlbums = filtered;
+        break;
+      }
+    }
+    saveData('albums', rebuildArray(list), function() {
+      showToast('子相册已删除', 'success');
+      document.getElementById('photosArea').style.display = 'none';
+      currentSubAlbum = null;
+      loadAllData();
+    });
+  });
+}
+
+function viewPhotos(subId) {
+  currentSubAlbum = subId;
+  currentSubAlbumIndex = -1;
+  document.getElementById('photosArea').style.display = 'block';
+  var list = toArray(allData.albums || []);
+  var sub = null;
+  for (var i = 0; i < list.length; i++) {
+    if ((list[i].id || list[i]._key) === currentAlbumGroup) {
+      var subs = list[i].subAlbums || [];
+      for (var j = 0; j < subs.length; j++) {
+        if (subs[j].id === subId) { sub = subs[j]; currentSubAlbumIndex = j; break; }
+      }
+      break;
+    }
+  }
+  if (!sub) return;
+  document.getElementById('photosTitle').textContent = sub.name + ' - 照片';
+  var photos = sub.photos || [];
+  var grid = document.getElementById('photosGrid');
+  if (!photos.length) {
+    grid.innerHTML = '<div class="empty-state"><p>暂无照片，请上传</p></div>';
+    return;
+  }
+  var html = '';
+  for (var k = 0; k < photos.length; k++) {
+    var photoUpBtn = (k > 0) ? '<input type="button" class="photo-move-btn photo-up-btn" value="\u2191" title="\u4e0a\u79fb" onclick="moveItem(\'photos\',' + k + ',-1)">' : '';
+    var photoDownBtn = (k < photos.length - 1) ? '<input type="button" class="photo-move-btn photo-down-btn" value="\u2193" title="\u4e0b\u79fb" onclick="moveItem(\'photos\',' + k + ',1)">' : '';
+    html += '<div class="photo-item" data-index="' + k + '" data-photo-key="' + k + '">' +
+      '<img src="' + photos[k] + '">' +
+      '<input type="button" class="photo-del" value="&times;" onclick="deletePhoto(' + k + ')">' +
+      '<div class="photo-move-btns">' + photoUpBtn + photoDownBtn + '</div>' +
+    '</div>';
+  }
+  grid.innerHTML = html;
+}
+
+function uploadPhotos(input) {
+  if (!input || !input.files || input.files.length === 0) {
+    showToast('请选择图片文件');
+    return;
+  }
+  var files = input.files;
+  var count = 0;
+  var total = files.length;
+  showToast('正在上传 ' + total + ' 张照片...');
+
+  function processOne(idx) {
+    if (idx >= total) {
+      showToast('已上传 ' + count + '/' + total + ' 张照片', 'success');
+      input.value = '';
+      loadAlbumPhotos();
+      return;
+    }
+    var albumIdx = currentAlbumIndex;
+    var subIdx = currentSubAlbumIndex;
+    if (albumIdx < 0 || subIdx < 0) {
+      showToast('请先选择子相册', 'error');
+      return;
+    }
+    compressAndRead(files[idx], function(base64) {
+      var photosRef = db.ref('/site/albums/' + albumIdx + '/subAlbums/' + subIdx + '/photos');
+      photosRef.once('value', function(snap) {
+        var arr = snap.val() || [];
+        arr.push(base64);
+        photosRef.set(arr, function(err) {
+          if (!err) count++;
+          else showToast('第' + (idx + 1) + '张上传失败', 'error');
+          processOne(idx + 1);
+        });
+      });
+    });
+  }
+  processOne(0);
+}
+
+function loadAlbumPhotos() {
+  if (currentAlbumGroup && currentSubAlbum) {
+    viewPhotos(currentSubAlbum);
+  }
+  loadAllData();
+}
+
+function deletePhoto(index) {
+  showConfirm('&#9888;', '删除照片', '确定要删除这张照片吗？', function() {
+    var list = toArray(allData.albums || []);
+    for (var i = 0; i < list.length; i++) {
+      if ((list[i].id || list[i]._key) === currentAlbumGroup) {
+        var subs = list[i].subAlbums || [];
+        for (var j = 0; j < subs.length; j++) {
+          if (subs[j].id === currentSubAlbum) {
+            subs[j].photos.splice(index, 1);
+            break;
+          }
+        }
+        break;
+      }
+    }
+    saveData('albums', rebuildArray(list), function() {
+      showToast('照片已删除', 'success');
+      loadAllData();
+    });
+  });
+}
+
+// ==================== Carousel ====================
+function loadCarousel() {
+  var list = toArray(allData.carousel || []);
+  var tbody = document.getElementById('carouselList');
+  if (!list.length) {
+    tbody.innerHTML = '<tr><td colspan="5" class="empty-state"><div class="empty-icon">&#9654;</div><p>暂无轮播图</p></td></tr>';
+    return;
+  }
+  var html = '';
+  for (var i = 0; i < list.length; i++) {
+    var c = list[i];
+    html += '<tr>' +
+      '<td>' + (c.img ? '<img src="' + c.img + '">' : '-') + '</td>' +
+      '<td>' + escapeHtml(c.title || '-') + '</td>' +
+      '<td>' + escapeHtml(truncate(c.link || '-', 30)) + '</td>' +
+      '<td>' + (c.hidden ? '<span style="color:#E63946;">已隐藏</span>' : '<span style="color:#52c41a;">显示中</span>') + '</td>' +
+      '<td class="td-actions">' +
+        '<input type="button" class="btn-sm btn-edit" value="编辑" onclick="editCarousel(\'' + (c.id || c._key || i) + '\')">' +
+        '<input type="button" class="btn-sm ' + (c.hidden ? 'btn-success' : 'btn-warning') + '" value="' + (c.hidden ? '显示' : '隐藏') + '" onclick="toggleCarouselHidden(\'' + (c.id || c._key || i) + '\')">' +
+        '<input type="button" class="btn-sm btn-del" value="删除" onclick="deleteCarousel(\'' + (c.id || c._key || i) + '\')">' +
+      '</td></tr>';
+  }
+  tbody.innerHTML = html;
+}
+
+function openCarouselModal(itemId) {
+  var item = null;
+  var isEdit = false;
+  if (itemId !== undefined && itemId !== null && itemId !== '') {
+    var list = toArray(allData.carousel || []);
+    for (var i = 0; i < list.length; i++) {
+      if ((list[i].id || list[i]._key || i) === itemId) { item = list[i]; break; }
+    }
+    if (item) { isEdit = true; }
+  }
+
+  var bodyHtml =
+    '<div class="form-row"><label>轮播图片<span class="req">*</span></label><div class="img-upload-area"><p>点击上传轮播图</p><input type="file" accept="image/*" onchange="handleImageUpload(this,\'carouselImgPreview\',\'carouselImgData\',16/9)"></div><div class="img-preview" id="carouselImgPreview">' + (item && item.img ? '<img src="' + item.img + '"><span class="remove-img" onclick="clearImage(\'carouselImgPreview\',\'carouselImgData\')">移除</span>' : '') + '</div></div>' +
+    '<div class="form-row"><label>标题</label><input type="text" id="carouselTitle" value="' + escapeHtml(item ? item.title : '') + '"></div>' +
+    '<div class="form-row"><label>链接</label><input type="url" id="carouselLink" value="' + escapeHtml(item ? item.link || '' : '') + '" placeholder="https://"></div>' +
+    '<div class="form-row"><div class="form-switch"><input type="checkbox" id="carouselHidden"' + (item && item.hidden ? ' checked' : '') + '><label for="carouselHidden">隐藏</label></div></div>';
+
+  if (isEdit) { window.carouselImgData = item.img || ''; }
+
+  var footerHtml =
+    '<input type="button" class="btn-default" value="取消" onclick="closeModal()">' +
+    '<input type="button" class="btn-primary" value="保存" onclick="saveCarousel(\'' + (isEdit ? itemId : '') + '\')">';
+
+  openModal(isEdit ? '编辑轮播图' : '添加轮播图', bodyHtml, footerHtml);
+}
+
+function saveCarousel(editId) {
+  var img = window.carouselImgData || '';
+  if (!img && !editId) { showToast('请上传轮播图', 'error'); return; }
+  var title = document.getElementById('carouselTitle').value.trim();
+  var link = document.getElementById('carouselLink').value.trim();
+  var hidden = document.getElementById('carouselHidden').checked;
+
+  var list = toArray(allData.carousel || []);
+  if (editId) {
+    for (var i = 0; i < list.length; i++) {
+      if ((list[i].id || list[i]._key || i) === editId) {
+        list[i].img = img || list[i].img;
+        list[i].title = title;
+        list[i].link = link;
+        list[i].hidden = hidden;
+        break;
+      }
+    }
+  } else {
+    list.push({ id: genId(), img: img, title: title, link: link, hidden: hidden });
+  }
+  saveData('carousel', rebuildArray(list), function() {
+    showToast(editId ? '轮播图已更新' : '轮播图已添加', 'success');
+    closeModal();
+    window.carouselImgData = '';
+    loadAllData();
+  });
+}
+
+function editCarousel(id) { openCarouselModal(id); }
+
+function deleteCarousel(id) {
+  showConfirm('&#9888;', '删除轮播图', '确定要删除该轮播图吗？', function() {
+    var list = toArray(allData.carousel || []);
+    var filtered = [];
+    for (var i = 0; i < list.length; i++) {
+      if ((list[i].id || list[i]._key || i) !== id) filtered.push(list[i]);
+    }
+    saveData('carousel', rebuildArray(filtered), function() {
+      showToast('轮播图已删除', 'success');
+      loadAllData();
+    });
+  });
+}
+
+function toggleCarouselHidden(id) {
+  var list = toArray(allData.carousel || []);
+  for (var i = 0; i < list.length; i++) {
+    if ((list[i].id || list[i]._key || i) === id) { list[i].hidden = !list[i].hidden; break; }
+  }
+  saveData('carousel', rebuildArray(list), function() {
+    showToast('状态已更新', 'success');
+    loadAllData();
+  });
+}
+
+// ==================== Announcements ====================
+function loadAnnouncements() {
+  var list = toArray(allData.announcements || []);
+  var tbody = document.getElementById('announcementsList');
+  if (!list.length) {
+    tbody.innerHTML = '<tr><td colspan="4" class="empty-state"><div class="empty-icon">&#9993;</div><p>暂无公告</p></td></tr>';
+    return;
+  }
+  var html = '';
+  for (var i = 0; i < list.length; i++) {
+    var a = list[i];
+    html += '<tr>' +
+      '<td>' + escapeHtml(a.title || '-') + '</td>' +
+      '<td>' + escapeHtml(truncate(a.content || '-', 60)) + '</td>' +
+      '<td>' + formatDate(a.date) + '</td>' +
+      '<td class="td-actions">' +
+        '<input type="button" class="btn-sm btn-edit" value="编辑" onclick="editAnnouncement(\'' + (a.id || a._key || '') + '\')">' +
+        '<input type="button" class="btn-sm btn-del" value="删除" onclick="deleteAnnouncement(\'' + (a.id || a._key || '') + '\')">' +
+      '</td></tr>';
+  }
+  tbody.innerHTML = html;
+}
+
+function openAnnouncementModal(annId) {
+  var ann = null;
+  var isEdit = false;
+  if (annId) {
+    var list = toArray(allData.announcements || []);
+    for (var i = 0; i < list.length; i++) {
+      if ((list[i].id || list[i]._key) === annId) { ann = list[i]; break; }
+    }
+    if (ann) { isEdit = true; }
+  }
+
+  var bodyHtml =
+    '<div class="form-row"><label>公告标题<span class="req">*</span></label><input type="text" id="annTitle" value="' + escapeHtml(ann ? ann.title : '') + '"></div>' +
+    '<div class="form-row"><label>公告内容<span class="req">*</span></label><textarea id="annContent" style="min-height:150px;">' + escapeHtml(ann ? ann.content || '' : '') + '</textarea></div>' +
+    '<div class="form-row"><label>日期</label><input type="date" id="annDate" value="' + (ann ? formatDate(ann.date) : new Date().toISOString().slice(0,10)) + '"></div>';
+
+  var footerHtml =
+    '<input type="button" class="btn-default" value="取消" onclick="closeModal()">' +
+    '<input type="button" class="btn-primary" value="保存" onclick="saveAnnouncement(\'' + (isEdit ? annId : '') + '\')">';
+
+  openModal(isEdit ? '编辑公告' : '添加公告', bodyHtml, footerHtml);
+}
+
+function saveAnnouncement(editId) {
+  var title = document.getElementById('annTitle').value.trim();
+  var content = document.getElementById('annContent').value.trim();
+  if (!title || !content) { showToast('请填写标题和内容', 'error'); return; }
+  var date = document.getElementById('annDate').value || new Date().toISOString().slice(0,10);
+
+  var list = toArray(allData.announcements || []);
+  if (editId) {
+    for (var i = 0; i < list.length; i++) {
+      if ((list[i].id || list[i]._key) === editId) {
+        list[i].title = title; list[i].content = content; list[i].date = date; break;
+      }
+    }
+  } else {
+    list.push({ id: genId(), title: title, content: content, date: date });
+  }
+  saveData('announcements', rebuildArray(list), function() {
+    showToast(editId ? '公告已更新' : '公告已添加', 'success');
+    closeModal();
+    loadAllData();
+  });
+}
+
+function editAnnouncement(id) { openAnnouncementModal(id); }
+
+function deleteAnnouncement(id) {
+  showConfirm('&#9888;', '删除公告', '确定要删除该公告吗？', function() {
+    var list = toArray(allData.announcements || []);
+    var filtered = [];
+    for (var i = 0; i < list.length; i++) {
+      if ((list[i].id || list[i]._key) !== id) filtered.push(list[i]);
+    }
+    saveData('announcements', rebuildArray(filtered), function() {
+      showToast('公告已删除', 'success');
+      loadAllData();
+    });
+  });
+}
+
+// ==================== Pricing ====================
+function loadPricing() {
+  var pricingHtml = allData.pricing_html;
+  var plans = [];
+  if (pricingHtml) {
+    try { plans = JSON.parse(pricingHtml); } catch(e) { plans = []; }
+  }
+  if (!plans.length) {
+    plans = [
+      { name: '月度会员', price: '29.9/月', desc: '', features: ['功能1', '功能2'] },
+      { name: '季度会员', price: '69.9/季', desc: '', features: ['功能1', '功能2', '功能3'] },
+      { name: '年度会员', price: '199/年', desc: '', features: ['全部功能', '专属客服', '优先更新'] }
+    ];
+  }
+
+  var grid = document.getElementById('pricingGrid');
+  var html = '';
+  for (var i = 0; i < plans.length; i++) {
+    var p = plans[i];
+    var featureItems = '';
+    var features = p.features || [];
+    for (var j = 0; j < features.length; j++) {
+      featureItems += '<div class="feature-item"><input type="text" value="' + escapeHtml(features[j]) + '"><input type="button" class="remove-feature" value="&times;" onclick="this.parentNode.remove()"></div>';
+    }
+    html += '<div class="pricing-card">' +
+      '<div class="form-row"><label>套餐名称</label><input type="text" class="plan-name" value="' + escapeHtml(p.name || '') + '"></div>' +
+      '<div class="form-row"><label>价格</label><input type="text" class="plan-price" value="' + escapeHtml(p.price || '') + '"></div>' +
+      '<div class="form-row"><label>描述</label><input type="text" class="plan-desc" value="' + escapeHtml(p.desc || '') + '"></div>' +
+      '<div class="form-row"><label>功能列表</label><div class="feature-list-editor" id="planFeatures' + i + '">' + featureItems + '</div><input type="button" class="add-feature-btn" value="+ 添加功能" onclick="addPlanFeature(\'planFeatures' + i + '\')"></div>' +
+    '</div>';
+  }
+  grid.innerHTML = html;
+
+  // VIP Banner
+  var banner = allData.vip_banner || {};
+  document.getElementById('vipBannerTitle').value = banner.title || '';
+  document.getElementById('vipBannerDesc').value = banner.desc || '';
+  if (banner.bgImage) {
+    window.vipBannerImgData = banner.bgImage;
+    document.getElementById('vipBannerImgPreview').innerHTML = '<img src="' + banner.bgImage + '"><span class="remove-img" onclick="clearImage(\'vipBannerImgPreview\',\'vipBannerImgData\')">移除</span>';
+  }
+
+  // QR Code
+  var qr = allData.qr_code || '';
+  if (qr) {
+    window.qrCodeData = qr;
+    document.getElementById('qrCodePreview').innerHTML = '<img src="' + qr + '" style="max-width:200px;"><span class="remove-img" onclick="clearImage(\'qrCodePreview\',\'qrCodeData\')">移除</span>';
+  }
+
+  // Benefits - visual card editor
+  var benefitsHtml = allData.benefits_html;
+  var benefitItems = [];
+  var benefitTitle = '';
+  if (benefitsHtml) {
+    try {
+      var bObj = JSON.parse(benefitsHtml);
+      benefitTitle = bObj.title || '';
+      benefitItems = bObj.items || [];
+    } catch(e) {
+      try { benefitItems = JSON.parse(benefitsHtml); } catch(e2) {}
+    }
+  }
+  document.getElementById('benefitsTitle').value = benefitTitle;
+  renderBenefitCards(benefitItems);
+}
+
+function addPlanFeature(containerId) {
+  var container = document.getElementById(containerId);
+  var div = document.createElement('div');
+  div.className = 'feature-item';
+  div.innerHTML = '<input type="text" value=""><input type="button" class="remove-feature" value="&times;" onclick="this.parentNode.remove()">';
+  container.appendChild(div);
+}
+
+function savePricing() {
+  var names = document.querySelectorAll('.plan-name');
+  var prices = document.querySelectorAll('.plan-price');
+  var descs = document.querySelectorAll('.plan-desc');
+  var plans = [];
+  for (var i = 0; i < names.length; i++) {
+    var features = [];
+    var container = document.getElementById('planFeatures' + i);
+    if (container) {
+      var inputs = container.querySelectorAll('.feature-item input[type="text"]');
+      for (var j = 0; j < inputs.length; j++) {
+        var v = inputs[j].value.trim();
+        if (v) features.push(v);
+      }
+    }
+    plans.push({ name: names[i].value.trim(), price: prices[i].value.trim(), desc: descs[i] ? descs[i].value.trim() : '', features: features });
+  }
+  saveData('pricing_html', JSON.stringify(plans), function() {
+    showToast('套餐设置已保存', 'success');
+    loadAllData();
+  });
+}
+
+function saveVipBanner() {
+  var title = document.getElementById('vipBannerTitle').value.trim();
+  var desc = document.getElementById('vipBannerDesc').value.trim();
+  var bgImage = window.vipBannerImgData || '';
+  saveData('vip_banner', { title: title, desc: desc, bgImage: bgImage }, function() {
+    showToast('VIP Banner 已保存', 'success');
+    loadAllData();
+  });
+}
+
+function saveQRCode() {
+  var data = window.qrCodeData || '';
+  if (!data) { showToast('请上传二维码', 'error'); return; }
+  saveData('qr_code', data, function() {
+    showToast('二维码已保存', 'success');
+    loadAllData();
+  });
+}
+
+function saveBenefits() {
+  var title = document.getElementById('benefitsTitle').value.trim();
+  var items = collectBenefitCards();
+  saveData('benefits_html', JSON.stringify({ title: title, items: items }), function() {
+    showToast('权益展示已保存', 'success');
+    loadAllData();
+  });
+}
+
+function renderBenefitCards(items) {
+  var container = document.getElementById('benefitsCardsList');
+  var html = '';
+  for (var i = 0; i < items.length; i++) {
+    var item = items[i];
+    html += '<div class="card-item">' +
+      '<div class="card-item-header"><h5>权益 #' + (i + 1) + '</h5><input type="button" class="remove-card-item" value="删除" onclick="this.closest(\'.card-item\').remove()"></div>' +
+      '<div style="display:flex;gap:12px;align-items:flex-start;">' +
+        '<div class="mini-img-upload">' +
+          (item.icon ? '<img src="' + item.icon + '">' : '<span style="color:#999;font-size:11px;">图标</span>') +
+          '<input type="file" accept="image/*" onchange="handleMiniUpload(this)">' +
+          '<input type="hidden" class="card-icon-data" value="' + (item.icon || '') + '">' +
+        '</div>' +
+        '<div style="flex:1;">' +
+          '<div class="mini-form-row"><label>标题</label><input type="text" class="card-title" value="' + escapeHtml(item.title || '') + '"></div>' +
+          '<div class="mini-form-row"><label>描述</label><input type="text" class="card-desc" value="' + escapeHtml(item.desc || '') + '"></div>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  }
+  container.innerHTML = html;
+}
+
+function addBenefitCard() {
+  var container = document.getElementById('benefitsCardsList');
+  var idx = container.querySelectorAll('.card-item').length + 1;
+  var div = document.createElement('div');
+  div.className = 'card-item';
+  div.innerHTML =
+    '<div class="card-item-header"><h5>权益 #' + idx + '</h5><input type="button" class="remove-card-item" value="删除" onclick="this.closest(\'.card-item\').remove()"></div>' +
+    '<div style="display:flex;gap:12px;align-items:flex-start;">' +
+      '<div class="mini-img-upload">' +
+        '<span style="color:#999;font-size:11px;">图标</span>' +
+        '<input type="file" accept="image/*" onchange="handleMiniUpload(this)">' +
+        '<input type="hidden" class="card-icon-data" value="">' +
+      '</div>' +
+      '<div style="flex:1;">' +
+        '<div class="mini-form-row"><label>标题</label><input type="text" class="card-title" value=""></div>' +
+        '<div class="mini-form-row"><label>描述</label><input type="text" class="card-desc" value=""></div>' +
+      '</div>' +
+    '</div>';
+  container.appendChild(div);
+}
+
+function collectBenefitCards() {
+  var container = document.getElementById('benefitsCardsList');
+  var cards = container.querySelectorAll('.card-item');
+  var items = [];
+  for (var i = 0; i < cards.length; i++) {
+    var title = cards[i].querySelector('.card-title');
+    var desc = cards[i].querySelector('.card-desc');
+    var iconData = cards[i].querySelector('.card-icon-data');
+    items.push({
+      title: title ? title.value.trim() : '',
+      icon: iconData ? iconData.value : '',
+      desc: desc ? desc.value.trim() : ''
+    });
+  }
+  return items;
+}
+
+function handleMiniUpload(input) {
+  if (!input.files || !input.files[0]) return;
+  var file = input.files[0];
+  compressAndRead(file, function(base64) {
+    var container = input.parentElement;
+    var hidden = container.querySelector('input[type="hidden"]');
+    var img = container.querySelector('img');
+    if (hidden) hidden.value = base64;
+    if (img) { img.src = base64; } else {
+      var newImg = document.createElement('img');
+      newImg.src = base64;
+      container.insertBefore(newImg, input);
+      var span = container.querySelector('span');
+      if (span) span.style.display = 'none';
+    }
+  });
+}
+
+// ==================== Settings ====================
+function loadSettings() {
+  var siteTitle = allData.site_title || '';
+  var profile = allData.profile_data || {};
+  document.getElementById('siteTitleInput').value = siteTitle;
+  document.getElementById('siteSubtitleInput').value = profile.desc || '';
+  document.getElementById('siteDescInput').value = profile.desc || '';
+  document.getElementById('siteAvatarInput').value = profile.avatar || '';
+
+  // About - visual editors
+  var about = allData.about_data || {};
+  document.getElementById('aboutBrand').value = about.brand || '';
+  renderStoryCards(about.stories || []);
+  renderValueCards(about.values || []);
+  renderFaqAccordion(about.faq || []);
+
+  // Contact
+  renderContactList(allData.contact_list || []);
+
+}
+
+function saveSiteSettings() {
+  var title = document.getElementById('siteTitleInput').value.trim();
+  var desc = document.getElementById('siteSubtitleInput').value.trim();
+  var avatar = document.getElementById('siteAvatarInput').value.trim();
+
+  saveData('site_title', title, function() {
+    saveData('profile_data', { title: title, desc: desc, avatar: avatar }, function() {
+      showToast('基本设置已保存', 'success');
+      loadAllData();
+    });
+  });
+}
+
+function saveAboutData() {
+  var brand = document.getElementById('aboutBrand').value.trim();
+  var stories = collectStoryCards();
+  var values = collectValueCards();
+  var faq = collectFaqItems();
+  saveData('about_data', { brand: brand, stories: stories, values: values, faq: faq }, function() {
+    showToast('关于我们已保存', 'success');
+    loadAllData();
+  });
+}
+
+function saveContactList(list) {
+  saveData('contact_list', list, function() {
+    showToast('联系方式已保存', 'success');
+    loadAllData();
+  });
+}
+
+function renderContactList(list) {
+  var container = document.getElementById('contactListContainer');
+  if (!list || !list.length) {
+    container.innerHTML = '<div class="empty-state"><p>暂无联系方式，点击上方按钮添加</p></div>';
+    return;
+  }
+  var html = '';
+  for (var i = 0; i < list.length; i++) {
+    var c = list[i];
+    html += '<div class="album-group-item" style="gap:16px;">' +
+      '<div style="display:flex;align-items:center;gap:12px;">' +
+        (c.icon ? '<img src="' + c.icon + '" style="width:36px;height:36px;object-fit:cover;border-radius:6px;">' : '<div style="width:36px;height:36px;background:#f0f0f0;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#999;">&#9742;</div>') +
+        '<div>' +
+          '<div style="font-weight:500;font-size:14px;">' + escapeHtml(c.platform || '未命名') + '</div>' +
+          '<div style="color:#999;font-size:12px;">' + escapeHtml(c.account || '-') + '</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="td-actions">' +
+        '<input type="button" class="btn-sm btn-edit" value="编辑" onclick="openContactModal(' + i + ')">' +
+        '<input type="button" class="btn-sm btn-del" value="删除" onclick="deleteContact(' + i + ')">' +
+      '</div></div>';
+  }
+  container.innerHTML = html;
+}
+
+function openContactModal(editIndex) {
+  var list = allData.contact_list || [];
+  var item = (editIndex !== undefined && editIndex !== null && list[editIndex]) ? list[editIndex] : null;
+  var isEdit = !!item;
+
+  var bodyHtml =
+    '<div class="form-row"><label>平台图标</label><div class="img-upload-area"><p>点击上传图标</p><input type="file" accept="image/*" onchange="handleImageUpload(this,\'contactIconPreview\',\'contactIconData\')"></div><div class="img-preview" id="contactIconPreview">' + (item && item.icon ? '<img src="' + item.icon + '"><span class="remove-img" onclick="clearImage(\'contactIconPreview\',\'contactIconData\')">移除</span>' : '') + '</div></div>' +
+    '<div class="form-row"><label>平台名称<span class="req">*</span></label><input type="text" id="contactPlatform" value="' + escapeHtml(item ? item.platform : '') + '" placeholder="如：微信"></div>' +
+    '<div class="form-row"><label>账号<span class="req">*</span></label><input type="text" id="contactAccount" value="' + escapeHtml(item ? item.account : '') + '" placeholder="如：aiyoushe2024"></div>';
+
+  if (isEdit) { window.contactIconData = item.icon || ''; }
+
+  var footerHtml =
+    '<input type="button" class="btn-default" value="取消" onclick="closeModal()">' +
+    '<input type="button" class="btn-primary" value="保存" onclick="saveContactItem(' + (isEdit ? editIndex : -1) + ')">';
+
+  openModal(isEdit ? '编辑联系方式' : '添加联系方式', bodyHtml, footerHtml);
+}
+
+function saveContactItem(editIndex) {
+  var platform = document.getElementById('contactPlatform').value.trim();
+  var account = document.getElementById('contactAccount').value.trim();
+  if (!platform || !account) { showToast('请填写平台名称和账号', 'error'); return; }
+  var icon = window.contactIconData || '';
+  var list = allData.contact_list || [];
+  if (editIndex >= 0) {
+    list[editIndex] = { platform: platform, account: account, icon: icon };
+  } else {
+    list.push({ platform: platform, account: account, icon: icon });
+  }
+  saveContactList(list);
+  closeModal();
+  window.contactIconData = '';
+}
+
+function deleteContact(index) {
+  showConfirm('&#9888;', '删除联系方式', '确定要删除该联系方式吗？', function() {
+    var list = allData.contact_list || [];
+    var filtered = [];
+    for (var i = 0; i < list.length; i++) {
+      if (i !== index) filtered.push(list[i]);
+    }
+    saveContactList(filtered);
+  });
+}
+
+// Category Management - inline add/refresh for article & resource modals
+function addNewCategory(type) {
+  var name = prompt('请输入新合集名称');
+  if (!name || !name.trim()) return;
+  name = name.trim();
+  db.ref('/site/categories').once('value').then(function(snap) {
+    var cats = toArray(snap.val());
+    for (var i = 0; i < cats.length; i++) {
+      if (cats[i].val === name || cats[i].label === name) {
+        showToast('该合集已存在');
+        return;
+      }
+    }
+    cats.push({val: name, label: name});
+    return db.ref('/site/categories').set(cats);
+  }).then(function() {
+    showToast('合集"' + name + '"已添加', 'success');
+    refreshCategoryDropdown(type);
+    loadAllData();
+  }).catch(function(e) {
+    showToast('添加失败');
+  });
+}
+
+function refreshCategoryDropdown(type) {
+  db.ref('/site/categories').once('value').then(function(snap) {
+    var cats = toArray(snap.val());
+    var selectId = type === 'article' ? 'artCat' : 'resCat';
+    var sel = document.getElementById(selectId);
+    if (!sel) return;
+    var currentVal = sel.value;
+    sel.innerHTML = '<option value="">请选择合集</option>';
+    cats.forEach(function(c) {
+      var opt = document.createElement('option');
+      opt.value = c.val || c.label;
+      opt.textContent = c.label || c.val;
+      sel.appendChild(opt);
+    });
+    sel.value = currentVal;
+  });
+}
+
+// Category Management (legacy - kept for reference)
+function openCategoryModal() {
+  var bodyHtml =
+    '<div class="form-row"><label>分类值 (英文)<span class="req">*</span></label><input type="text" id="catVal" placeholder="如: technology"></div>' +
+    '<div class="form-row"><label>分类标签 (中文)<span class="req">*</span></label><input type="text" id="catLabel" placeholder="如: 科技">';
+  var footerHtml =
+    '<input type="button" class="btn-default" value="取消" onclick="closeModal()">' +
+    '<input type="button" class="btn-primary" value="添加" onclick="addCategory()">';
+  openModal('添加分类', bodyHtml, footerHtml);
+}
+
+function addCategory() {
+  var val = document.getElementById('catVal').value.trim();
+  var label = document.getElementById('catLabel').value.trim();
+  if (!val || !label) { showToast('请填写完整', 'error'); return; }
+  var list = toArray(allData.categories || []);
+  list.push({ val: val, label: label });
+  saveData('categories', rebuildArray(list), function() {
+    showToast('分类已添加', 'success');
+    closeModal();
+    loadAllData();
+  });
+}
+
+function deleteCategory(val) {
+  var list = toArray(allData.categories || []);
+  var filtered = [];
+  for (var i = 0; i < list.length; i++) {
+    if (list[i].val !== val) filtered.push(list[i]);
+  }
+  saveData('categories', rebuildArray(filtered), function() {
+    showToast('分类已删除', 'success');
+    loadAllData();
+  });
+}
+
+// Tag Management
+function openTagModal() {
+  var bodyHtml = '<div class="form-row"><label>标签名称<span class="req">*</span></label><input type="text" id="tagName" placeholder="如: AI">';
+  var footerHtml =
+    '<input type="button" class="btn-default" value="取消" onclick="closeModal()">' +
+    '<input type="button" class="btn-primary" value="添加" onclick="addTag()">';
+  openModal('添加标签', bodyHtml, footerHtml);
+}
+
+function addTag() {
+  var name = document.getElementById('tagName').value.trim();
+  if (!name) { showToast('请输入标签名称', 'error'); return; }
+  var tags = allData.tags || [];
+  for (var i = 0; i < tags.length; i++) {
+    if (tags[i] === name) { showToast('标签已存在', 'error'); return; }
+  }
+  tags.push(name);
+  saveData('tags', tags, function() {
+    showToast('标签已添加', 'success');
+    closeModal();
+    loadAllData();
+  });
+}
+
+function deleteTag(name) {
+  var tags = allData.tags || [];
+  var filtered = [];
+  for (var i = 0; i < tags.length; i++) {
+    if (tags[i] !== name) filtered.push(tags[i]);
+  }
+  saveData('tags', filtered, function() {
+    showToast('标签已删除', 'success');
+    loadAllData();
+  });
+}
+
+// Featured Cat Management
+function openFeaturedCatModal() {
+  var bodyHtml =
+    '<div class="form-row"><label>分类值<span class="req">*</span></label><input type="text" id="fCatVal" placeholder="如: hot"></div>' +
+    '<div class="form-row"><label>分类标签<span class="req">*</span></label><input type="text" id="fCatLabel" placeholder="如: 热门">';
+  var footerHtml =
+    '<input type="button" class="btn-default" value="取消" onclick="closeModal()">' +
+    '<input type="button" class="btn-primary" value="添加" onclick="addFeaturedCat()">';
+  openModal('添加精选分类', bodyHtml, footerHtml);
+}
+
+function addFeaturedCat() {
+  var val = document.getElementById('fCatVal').value.trim();
+  var label = document.getElementById('fCatLabel').value.trim();
+  if (!val || !label) { showToast('请填写完整', 'error'); return; }
+  var list = toArray(allData.featuredCats || []);
+  list.push({ val: val, label: label });
+  saveData('featuredCats', rebuildArray(list), function() {
+    showToast('精选分类已添加', 'success');
+    closeModal();
+    loadAllData();
+  });
+}
+
+function deleteFeaturedCat(val) {
+  var list = toArray(allData.featuredCats || []);
+  var filtered = [];
+  for (var i = 0; i < list.length; i++) {
+    if (list[i].val !== val) filtered.push(list[i]);
+  }
+  saveData('featuredCats', rebuildArray(filtered), function() {
+    showToast('精选分类已删除', 'success');
+    loadAllData();
+  });
+}
+
+// ==================== Messages ====================
+function loadMessages() {
+  var list = toArray(allData.messages || []);
+  // Sort: pinned first
+  var pinned = [];
+  var unpinned = [];
+  for (var i = 0; i < list.length; i++) {
+    if (list[i].pinned) { pinned.push(list[i]); } else { unpinned.push(list[i]); }
+  }
+  list = pinned.concat(unpinned);
+
+  var tbody = document.getElementById('messagesList');
+  if (!list.length) {
+    tbody.innerHTML = '<tr><td colspan="4" class="empty-state"><div class="empty-icon">&#9997;</div><p>暂无留言</p></td></tr>';
+    return;
+  }
+  var html = '';
+  for (var i = 0; i < list.length; i++) {
+    var m = list[i];
+    var nickname = m.nickname || m.name || '匿名用户';
+    var avatarColor = m.avatarColor || '#999';
+    var firstChar = nickname.charAt(0);
+    var pinBadge = m.pinned ? '<span class="msg-pin-badge">&#128204; 已置顶</span>' : '';
+    html += '<tr>' +
+      '<td><div style="display:flex;align-items:center;gap:8px;"><div class="msg-avatar" style="background:' + avatarColor + ';">' + escapeHtml(firstChar) + '</div><div><div>' + escapeHtml(nickname) + pinBadge + '</div></div></div></td>' +
+      '<td>' + escapeHtml(truncate(m.text || '-', 50)) + '</td>' +
+      '<td>' + (m.time ? formatDate(m.time) : '-') + '</td>' +
+      '<td class="td-actions">' +
+        '<input type="button" class="btn-sm ' + (m.pinned ? 'btn-warning' : 'btn-success') + '" value="' + (m.pinned ? '取消置顶' : '置顶') + '" onclick="toggleMessagePin(\'' + (m.id || m._key || i) + '\')">' +
+        '<input type="button" class="btn-sm btn-del" value="删除" onclick="deleteMessage(\'' + (m.id || m._key || i) + '\')">' +
+      '</td></tr>';
+  }
+  tbody.innerHTML = html;
+}
+
+function toggleMessagePin(id) {
+  var list = toArray(allData.messages || []);
+  for (var i = 0; i < list.length; i++) {
+    if ((list[i].id || list[i]._key || i) === id) {
+      list[i].pinned = !list[i].pinned;
+      break;
+    }
+  }
+  saveData('messages', rebuildArray(list), function() {
+    showToast('置顶状态已更新', 'success');
+    loadAllData();
+  });
+}
+
+function deleteMessage(id) {
+  showConfirm('&#9888;', '删除留言', '确定要删除该留言吗？', function() {
+    var list = toArray(allData.messages || []);
+    var filtered = [];
+    for (var i = 0; i < list.length; i++) {
+      if ((list[i].id || list[i]._key || i) !== id) filtered.push(list[i]);
+    }
+    saveData('messages', rebuildArray(filtered), function() {
+      showToast('留言已删除', 'success');
+      loadAllData();
+    });
+  });
+}
+
+// ==================== Data Management ====================
+function loadDataMgmt() {
+  var savedConfig = localStorage.getItem('firebase_config');
+  if (savedConfig) {
+    try {
+      var config = JSON.parse(savedConfig);
+      document.getElementById('cfgDbUrl').value = config.databaseURL || '';
+    } catch(e) {}
+  }
+  loadCodesList();
+}
+
+function saveFirebaseConfig() {
+  var dbUrl = document.getElementById('cfgDbUrl').value.trim();
+  if (!dbUrl) { showToast('请输入 Database URL', 'error'); return; }
+  var config = { databaseURL: dbUrl };
+  localStorage.setItem('firebase_config', JSON.stringify(config));
+  showToast('配置已保存，正在连接...', 'info');
+
+  connectFirebase(config, function() {
+    showToast('Firebase 连接成功', 'success');
+    loadAllData();
+  });
+}
+
+function backupData() {
+  if (!db) { showToast('Firebase 未连接', 'error'); return; }
+  db.ref('site').once('value', function(snap) {
+    var data = snap.val();
+    var json = JSON.stringify(data, null, 2);
+    var blob = new Blob([json], { type: 'application/json' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = 'backup_' + new Date().toISOString().slice(0,10) + '.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showToast('数据备份成功', 'success');
+  }, function(err) {
+    showToast('备份失败: ' + err.message, 'error');
+  });
+}
+
+function restoreData(input) {
+  if (!input.files || !input.files[0]) return;
+  var file = input.files[0];
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      var data = JSON.parse(e.target.result);
+      showConfirm('&#9888;', '恢复数据', '此操作将覆盖所有现有数据，确定要继续吗？', function() {
+        if (!db) { showToast('Firebase 未连接', 'error'); return; }
+        db.ref('site').set(data, function(err) {
+          if (err) {
+            showToast('恢复失败: ' + err.message, 'error');
+          } else {
+            showToast('数据恢复成功', 'success');
+            loadAllData();
+          }
+        });
+      });
+    } catch(e) {
+      showToast('JSON 文件格式错误', 'error');
+    }
+  };
+  reader.readAsText(file);
+  input.value = '';
+}
+
+function confirmClearAll() {
+  showConfirm('&#9888;', '清空所有数据', '此操作将删除所有数据且不可恢复，确定要继续吗？', function() {
+    if (!db) { showToast('Firebase 未连接', 'error'); return; }
+    db.ref('site').remove(function(err) {
+      if (err) {
+        showToast('清空失败: ' + err.message, 'error');
+      } else {
+        showToast('所有数据已清空', 'success');
+        allData = {};
+        refreshCurrentPage();
+      }
+    });
+  });
+}
+
+// ==================== Code Management ====================
+var levelNames = ['免费下载 V0', '体验会员 V1', '普通会员 V2', '高级会员 V3'];
+
+function loadCodesList() {
+  var codes = allData.codes || [];
+  var tbody = document.getElementById('codesList');
+  if (!codes || !codes.length) {
+    tbody.innerHTML = '<tr><td colspan="6" class="empty-state"><div class="empty-icon">&#128274;</div><p>暂无指令码</p></td></tr>';
+    return;
+  }
+  var html = '';
+  for (var i = 0; i < codes.length; i++) {
+    var c = codes[i];
+    var levelName = levelNames[c.level] || ('V' + c.level);
+    var status = c.used ? '<span style="color:#E63946;">已使用</span>' : '<span style="color:#52c41a;">未使用</span>';
+    var usedAt = c.usedAt || '-';
+    html += '<tr>' +
+      '<td><code style="background:#f5f5f5;padding:4px 8px;border-radius:4px;font-size:13px;cursor:pointer;" onclick="copyCode(\'' + escapeHtml(c.code) + '\')">' + escapeHtml(c.code) + '</code></td>' +
+      '<td>' + escapeHtml(levelName) + '</td>' +
+      '<td>' + escapeHtml(c.ip || '-') + '</td>' +
+      '<td>' + status + '</td>' +
+      '<td>' + escapeHtml(usedAt) + '</td>' +
+      '<td class="td-actions">' +
+        '<input type="button" class="btn-sm btn-edit" value="复制" onclick="copyCode(\'' + escapeHtml(c.code) + '\')">' +
+        '<input type="button" class="btn-sm btn-del" value="删除" onclick="deleteCode(' + i + ')">' +
+      '</td></tr>';
+  }
+  tbody.innerHTML = html;
+}
+
+function copyCode(code) {
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(code).then(function() {
+      showToast('已复制: ' + code, 'success');
+    });
+  } else {
+    var ta = document.createElement('textarea');
+    ta.value = code;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    showToast('已复制: ' + code, 'success');
+  }
+}
+
+function openCodeGenModal() {
+  var bodyHtml =
+    '<div class="form-row"><label>权限等级</label><select id="codeLevel">' +
+      '<option value="0">免费下载 V0</option>' +
+      '<option value="1">体验会员 V1</option>' +
+      '<option value="2">普通会员 V2</option>' +
+      '<option value="3">高级会员 V3</option>' +
+    '</select></div>' +
+    '<div class="form-row"><label>生成数量</label><input type="number" id="codeCount" value="1" min="1" max="50" placeholder="1-50"></div>';
+  var footerHtml =
+    '<input type="button" class="btn-default" value="取消" onclick="closeModal()">' +
+    '<input type="button" class="btn-primary" value="生成" onclick="generateCodes()">';
+  openModal('生成指令码', bodyHtml, footerHtml);
+}
+
+function generateCodes() {
+  var level = parseInt(document.getElementById('codeLevel').value);
+  var count = parseInt(document.getElementById('codeCount').value) || 1;
+  if (count < 1) count = 1;
+  if (count > 50) count = 50;
+
+  var codes = allData.codes || [];
+  var newCodes = [];
+  for (var i = 0; i < count; i++) {
+    var code = genCodeStr();
+    newCodes.push({ code: code, level: level, ip: '', used: false, usedAt: '' });
+    codes.push(newCodes[newCodes.length - 1]);
+  }
+  saveData('codes', rebuildArray(codes), function() {
+    showToast('已生成 ' + count + ' 个指令码', 'success');
+    closeModal();
+    // Show generated codes in a modal for copying
+    var codeListHtml = '';
+    for (var i = 0; i < newCodes.length; i++) {
+      codeListHtml += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;padding:8px;background:#f5f5f5;border-radius:4px;">' +
+        '<code style="flex:1;font-size:14px;">' + escapeHtml(newCodes[i].code) + '</code>' +
+        '<input type="button" class="btn-sm btn-primary" value="复制" onclick="copyCode(\'' + escapeHtml(newCodes[i].code) + '\')">' +
+      '</div>';
+    }
+    var bodyHtml = '<p style="margin-bottom:12px;color:#999;">已生成以下指令码，请复制发送给用户：</p>' + codeListHtml;
+    var footerHtml = '<input type="button" class="btn-primary" value="关闭" onclick="closeModal()">';
+    openModal('生成的指令码', bodyHtml, footerHtml);
+    loadAllData();
+  });
+}
+
+function genCodeStr() {
+  var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  var result = '';
+  for (var i = 0; i < 8; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return result;
+}
+
+function deleteCode(index) {
+  showConfirm('&#9888;', '删除指令码', '确定要删除该指令码吗？', function() {
+    var codes = allData.codes || [];
+    var filtered = [];
+    for (var i = 0; i < codes.length; i++) {
+      if (i !== index) filtered.push(codes[i]);
+    }
+    saveData('codes', rebuildArray(filtered), function() {
+      showToast('指令码已删除', 'success');
+      loadAllData();
+    });
+  });
+}
+
+// ==================== Story Cards ====================
+function renderStoryCards(items) {
+  var container = document.getElementById('storiesCardsList');
+  if (!items.length) { container.innerHTML = '<div style="color:#999;text-align:center;padding:20px;">暂无品牌故事，点击下方按钮添加</div>'; return; }
+  var html = '';
+  for (var i = 0; i < items.length; i++) {
+    var item = items[i];
+    html += '<div class="card-item">' +
+      '<div class="card-item-header"><h5>故事 #' + (i + 1) + '</h5><input type="button" class="remove-card-item" value="删除" onclick="this.closest(\'.card-item\').remove()"></div>' +
+      '<div style="display:flex;gap:12px;align-items:flex-start;">' +
+        '<div class="mini-img-upload">' +
+          (item.img ? '<img src="' + item.img + '">' : '<span style="color:#999;font-size:11px;">图片</span>') +
+          '<input type="file" accept="image/*" onchange="handleMiniUpload(this)">' +
+          '<input type="hidden" class="card-icon-data" value="' + (item.img || '') + '">' +
+        '</div>' +
+        '<div style="flex:1;">' +
+          '<div class="mini-form-row"><label>标题</label><input type="text" class="card-title" value="' + escapeHtml(item.title || '') + '"></div>' +
+          '<div class="mini-form-row"><label>描述</label><textarea class="card-desc" style="width:100%;padding:8px 10px;border:1px solid #d9d9d9;border-radius:4px;font-size:13px;min-height:60px;">' + escapeHtml(item.desc || '') + '</textarea></div>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  }
+  container.innerHTML = html;
+}
+
+function addStoryCard() {
+  var container = document.getElementById('storiesCardsList');
+  if (container.querySelector('.empty-state,div[style*="color:#999"]')) container.innerHTML = '';
+  var idx = container.querySelectorAll('.card-item').length + 1;
+  var div = document.createElement('div');
+  div.className = 'card-item';
+  div.innerHTML =
+    '<div class="card-item-header"><h5>故事 #' + idx + '</h5><input type="button" class="remove-card-item" value="删除" onclick="this.closest(\'.card-item\').remove()"></div>' +
+    '<div style="display:flex;gap:12px;align-items:flex-start;">' +
+      '<div class="mini-img-upload"><span style="color:#999;font-size:11px;">图片</span><input type="file" accept="image/*" onchange="handleMiniUpload(this)"><input type="hidden" class="card-icon-data" value=""></div>' +
+      '<div style="flex:1;"><div class="mini-form-row"><label>标题</label><input type="text" class="card-title" value=""></div><div class="mini-form-row"><label>描述</label><textarea class="card-desc" style="width:100%;padding:8px 10px;border:1px solid #d9d9d9;border-radius:4px;font-size:13px;min-height:60px;"></textarea></div></div>' +
+    '</div>';
+  container.appendChild(div);
+}
+
+function collectStoryCards() {
+  var container = document.getElementById('storiesCardsList');
+  var cards = container.querySelectorAll('.card-item');
+  var items = [];
+  for (var i = 0; i < cards.length; i++) {
+    var title = cards[i].querySelector('.card-title');
+    var desc = cards[i].querySelector('.card-desc');
+    var imgData = cards[i].querySelector('.card-icon-data');
+    items.push({
+      title: title ? title.value.trim() : '',
+      img: imgData ? imgData.value : '',
+      desc: desc ? desc.value.trim() : ''
+    });
+  }
+  return items;
+}
+
+// ==================== Value Cards ====================
+function renderValueCards(items) {
+  var container = document.getElementById('valuesCardsList');
+  if (!items.length) { container.innerHTML = '<div style="color:#999;text-align:center;padding:20px;">暂无品牌价值观，点击下方按钮添加</div>'; return; }
+  var html = '';
+  for (var i = 0; i < items.length; i++) {
+    var item = items[i];
+    html += '<div class="card-item">' +
+      '<div class="card-item-header"><h5>价值观 #' + (i + 1) + '</h5><input type="button" class="remove-card-item" value="删除" onclick="this.closest(\'.card-item\').remove()"></div>' +
+      '<div style="display:flex;gap:12px;align-items:flex-start;">' +
+        '<div class="mini-img-upload">' +
+          (item.icon ? '<img src="' + item.icon + '">' : '<span style="color:#999;font-size:11px;">图标</span>') +
+          '<input type="file" accept="image/*" onchange="handleMiniUpload(this)">' +
+          '<input type="hidden" class="card-icon-data" value="' + (item.icon || '') + '">' +
+        '</div>' +
+        '<div style="flex:1;">' +
+          '<div class="mini-form-row"><label>标题</label><input type="text" class="card-title" value="' + escapeHtml(item.title || '') + '"></div>' +
+          '<div class="mini-form-row"><label>描述</label><input type="text" class="card-desc" value="' + escapeHtml(item.desc || '') + '"></div>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  }
+  container.innerHTML = html;
+}
+
+function addValueCard() {
+  var container = document.getElementById('valuesCardsList');
+  if (container.querySelector('div[style*="color:#999"]')) container.innerHTML = '';
+  var idx = container.querySelectorAll('.card-item').length + 1;
+  var div = document.createElement('div');
+  div.className = 'card-item';
+  div.innerHTML =
+    '<div class="card-item-header"><h5>价值观 #' + idx + '</h5><input type="button" class="remove-card-item" value="删除" onclick="this.closest(\'.card-item\').remove()"></div>' +
+    '<div style="display:flex;gap:12px;align-items:flex-start;">' +
+      '<div class="mini-img-upload"><span style="color:#999;font-size:11px;">图标</span><input type="file" accept="image/*" onchange="handleMiniUpload(this)"><input type="hidden" class="card-icon-data" value=""></div>' +
+      '<div style="flex:1;"><div class="mini-form-row"><label>标题</label><input type="text" class="card-title" value=""></div><div class="mini-form-row"><label>描述</label><input type="text" class="card-desc" value=""></div></div>' +
+    '</div>';
+  container.appendChild(div);
+}
+
+function collectValueCards() {
+  var container = document.getElementById('valuesCardsList');
+  var cards = container.querySelectorAll('.card-item');
+  var items = [];
+  for (var i = 0; i < cards.length; i++) {
+    var title = cards[i].querySelector('.card-title');
+    var desc = cards[i].querySelector('.card-desc');
+    var iconData = cards[i].querySelector('.card-icon-data');
+    items.push({
+      title: title ? title.value.trim() : '',
+      icon: iconData ? iconData.value : '',
+      desc: desc ? desc.value.trim() : ''
+    });
+  }
+  return items;
+}
+
+// ==================== FAQ Accordion ====================
+function renderFaqAccordion(items) {
+  var container = document.getElementById('faqAccordionList');
+  if (!items.length) { container.innerHTML = '<div style="color:#999;text-align:center;padding:20px;">暂无常见问题，点击下方按钮添加</div>'; return; }
+  var html = '';
+  for (var i = 0; i < items.length; i++) {
+    var item = items[i];
+    html += '<div class="accordion-item" data-idx="' + i + '">' +
+      '<div class="acc-header" onclick="toggleFaqAccordion(this)">' +
+        '<span>' + escapeHtml(item.q || '未填写问题') + '</span>' +
+        '<div class="acc-actions">' +
+          '<input type="button" class="btn-sm btn-del" value="删除" onclick="event.stopPropagation();this.closest(\'.accordion-item\').remove()">' +
+          '<span class="acc-toggle">&#9660;</span>' +
+        '</div>' +
+      '</div>' +
+      '<div class="acc-body">' +
+        '<div class="mini-form-row"><label>问题</label><input type="text" class="faq-q" value="' + escapeHtml(item.q || '') + '" oninput="this.closest(\'.accordion-item\').querySelector(\'.acc-header span\').textContent=this.value||\'未填写问题\'"></div>' +
+        '<div class="mini-form-row"><label>答案</label><textarea class="faq-a" style="width:100%;padding:8px 10px;border:1px solid #d9d9d9;border-radius:4px;font-size:13px;min-height:60px;">' + escapeHtml(item.a || '') + '</textarea></div>' +
+      '</div>' +
+    '</div>';
+  }
+  container.innerHTML = html;
+}
+
+function addFaqItem() {
+  var container = document.getElementById('faqAccordionList');
+  if (container.querySelector('div[style*="color:#999"]')) container.innerHTML = '';
+  var div = document.createElement('div');
+  div.className = 'accordion-item';
+  div.innerHTML =
+    '<div class="acc-header" onclick="toggleFaqAccordion(this)">' +
+      '<span>未填写问题</span>' +
+      '<div class="acc-actions">' +
+        '<input type="button" class="btn-sm btn-del" value="删除" onclick="event.stopPropagation();this.closest(\'.accordion-item\').remove()">' +
+        '<span class="acc-toggle">&#9660;</span>' +
+      '</div>' +
+    '</div>' +
+    '<div class="acc-body">' +
+      '<div class="mini-form-row"><label>问题</label><input type="text" class="faq-q" value="" oninput="this.closest(\'.accordion-item\').querySelector(\'.acc-header span\').textContent=this.value||\'未填写问题\'"></div>' +
+      '<div class="mini-form-row"><label>答案</label><textarea class="faq-a" style="width:100%;padding:8px 10px;border:1px solid #d9d9d9;border-radius:4px;font-size:13px;min-height:60px;"></textarea></div>' +
+    '</div>';
+  container.appendChild(div);
+}
+
+function toggleFaqAccordion(headerEl) {
+  var body = headerEl.nextElementSibling;
+  var toggle = headerEl.querySelector('.acc-toggle');
+  if (body.classList.contains('open')) {
+    body.classList.remove('open');
+    toggle.classList.remove('open');
+  } else {
+    body.classList.add('open');
+    toggle.classList.add('open');
+  }
+}
+
+function collectFaqItems() {
+  var container = document.getElementById('faqAccordionList');
+  var items = container.querySelectorAll('.accordion-item');
+  var result = [];
+  for (var i = 0; i < items.length; i++) {
+    var q = items[i].querySelector('.faq-q');
+    var a = items[i].querySelector('.faq-a');
+    result.push({
+      q: q ? q.value.trim() : '',
+      a: a ? a.value.trim() : ''
+    });
+  }
+  return result;
+}
+
+// ==================== Article Comments Management ====================
+function loadArticleCommentsPage() {
+  var articles = toArray(allData.articles || []);
+  var sel = document.getElementById('articleCommentSelect');
+  var html = '<option value="">-- 选择文章 --</option>';
+  for (var i = 0; i < articles.length; i++) {
+    html += '<option value="' + (articles[i].id || articles[i]._key || '') + '">' + escapeHtml(truncate(articles[i].title || '未命名', 40)) + '</option>';
+  }
+  sel.innerHTML = html;
+  document.getElementById('articleCommentsList').innerHTML = '<div class="empty-state"><p>请选择一篇文章查看留言</p></div>';
+}
+
+function loadArticleComments() {
+  var articleId = document.getElementById('articleCommentSelect').value;
+  if (!articleId) {
+    document.getElementById('articleCommentsList').innerHTML = '<div class="empty-state"><p>请选择一篇文章查看留言</p></div>';
+    return;
+  }
+  if (!db) { showToast('Firebase 未连接', 'error'); return; }
+  db.ref('site/comments/article/' + articleId).once('value', function(snap) {
+    var list = toArray(snap.val() || []);
+    // Sort: pinned first
+    var pinned = [], unpinned = [];
+    for (var i = 0; i < list.length; i++) {
+      if (list[i].pinned) pinned.push(list[i]); else unpinned.push(list[i]);
+    }
+    list = pinned.concat(unpinned);
+
+    var container = document.getElementById('articleCommentsList');
+    if (!list.length) {
+      container.innerHTML = '<div class="empty-state"><p>暂无留言</p></div>';
+      return;
+    }
+    var html = '<table><thead><tr><th>用户</th><th>内容</th><th>时间</th><th>操作</th></tr></thead><tbody>';
+    for (var i = 0; i < list.length; i++) {
+      var c = list[i];
+      var nickname = c.nickname || '匿名用户';
+      var avatarColor = c.avatarColor || '#999';
+      var firstChar = nickname.charAt(0);
+      var pinBadge = c.pinned ? ' <span style="color:#f59e0b;">&#128204;</span>' : '';
+      html += '<tr>' +
+        '<td><div style="display:flex;align-items:center;gap:8px;"><div class="msg-avatar" style="background:' + avatarColor + ';">' + escapeHtml(firstChar) + '</div>' + escapeHtml(nickname) + pinBadge + '</div></td>' +
+        '<td>' + escapeHtml(truncate(c.text || '-', 50)) + '</td>' +
+        '<td>' + (c.time ? formatDate(c.time) : '-') + '</td>' +
+        '<td class="td-actions">' +
+          '<input type="button" class="btn-sm ' + (c.pinned ? 'btn-warning' : 'btn-success') + '" value="' + (c.pinned ? '取消置顶' : '置顶') + '" onclick="toggleArticleCommentPin(\'' + articleId + '\',\'' + (c.id || c._key || i) + '\')">' +
+          '<input type="button" class="btn-sm btn-del" value="删除" onclick="deleteArticleComment(\'' + articleId + '\',\'' + (c.id || c._key || i) + '\')">' +
+        '</td></tr>';
+    }
+    html += '</tbody></table>';
+    container.innerHTML = html;
+  });
+}
+
+function toggleArticleCommentPin(articleId, commentId) {
+  if (!db) return;
+  db.ref('site/comments/article/' + articleId).once('value', function(snap) {
+    var list = toArray(snap.val() || []);
+    for (var i = 0; i < list.length; i++) {
+      if ((list[i].id || list[i]._key || i) === commentId) {
+        list[i].pinned = !list[i].pinned;
+        break;
+      }
+    }
+    db.ref('site/comments/article/' + articleId).set(rebuildArray(list), function(err) {
+      if (!err) { showToast('置顶状态已更新', 'success'); loadArticleComments(); }
+    });
+  });
+}
+
+function deleteArticleComment(articleId, commentId) {
+  showConfirm('&#9888;', '删除留言', '确定要删除该留言吗？', function() {
+    if (!db) return;
+    db.ref('site/comments/article/' + articleId).once('value', function(snap) {
+      var list = toArray(snap.val() || []);
+      var filtered = [];
+      for (var i = 0; i < list.length; i++) {
+        if ((list[i].id || list[i]._key || i) !== commentId) filtered.push(list[i]);
+      }
+      db.ref('site/comments/article/' + articleId).set(rebuildArray(filtered), function(err) {
+        if (!err) { showToast('留言已删除', 'success'); loadArticleComments(); }
+      });
+    });
+  });
+}
+
+// ==================== Resource Comments Management ====================
+function loadResourceCommentsPage() {
+  var resources = toArray(allData.resources || []);
+  var sel = document.getElementById('resourceCommentSelect');
+  var html = '<option value="">-- 选择资源 --</option>';
+  for (var i = 0; i < resources.length; i++) {
+    html += '<option value="' + (resources[i].id || resources[i]._key || '') + '">' + escapeHtml(truncate(resources[i].title || '未命名', 40)) + '</option>';
+  }
+  sel.innerHTML = html;
+  document.getElementById('resourceCommentsList').innerHTML = '<div class="empty-state"><p>请选择一个资源查看留言</p></div>';
+}
+
+function loadResourceComments() {
+  var resId = document.getElementById('resourceCommentSelect').value;
+  if (!resId) {
+    document.getElementById('resourceCommentsList').innerHTML = '<div class="empty-state"><p>请选择一个资源查看留言</p></div>';
+    return;
+  }
+  if (!db) { showToast('Firebase 未连接', 'error'); return; }
+  db.ref('site/comments/resource/' + resId).once('value', function(snap) {
+    var list = toArray(snap.val() || []);
+    var pinned = [], unpinned = [];
+    for (var i = 0; i < list.length; i++) {
+      if (list[i].pinned) pinned.push(list[i]); else unpinned.push(list[i]);
+    }
+    list = pinned.concat(unpinned);
+
+    var container = document.getElementById('resourceCommentsList');
+    if (!list.length) {
+      container.innerHTML = '<div class="empty-state"><p>暂无留言</p></div>';
+      return;
+    }
+    var html = '<table><thead><tr><th>用户</th><th>内容</th><th>时间</th><th>操作</th></tr></thead><tbody>';
+    for (var i = 0; i < list.length; i++) {
+      var c = list[i];
+      var nickname = c.nickname || '匿名用户';
+      var avatarColor = c.avatarColor || '#999';
+      var firstChar = nickname.charAt(0);
+      var pinBadge = c.pinned ? ' <span style="color:#f59e0b;">&#128204;</span>' : '';
+      html += '<tr>' +
+        '<td><div style="display:flex;align-items:center;gap:8px;"><div class="msg-avatar" style="background:' + avatarColor + ';">' + escapeHtml(firstChar) + '</div>' + escapeHtml(nickname) + pinBadge + '</div></td>' +
+        '<td>' + escapeHtml(truncate(c.text || '-', 50)) + '</td>' +
+        '<td>' + (c.time ? formatDate(c.time) : '-') + '</td>' +
+        '<td class="td-actions">' +
+          '<input type="button" class="btn-sm ' + (c.pinned ? 'btn-warning' : 'btn-success') + '" value="' + (c.pinned ? '取消置顶' : '置顶') + '" onclick="toggleResourceCommentPin(\'' + resId + '\',\'' + (c.id || c._key || i) + '\')">' +
+          '<input type="button" class="btn-sm btn-del" value="删除" onclick="deleteResourceComment(\'' + resId + '\',\'' + (c.id || c._key || i) + '\')">' +
+        '</td></tr>';
+    }
+    html += '</tbody></table>';
+    container.innerHTML = html;
+  });
+}
+
+function toggleResourceCommentPin(resId, commentId) {
+  if (!db) return;
+  db.ref('site/comments/resource/' + resId).once('value', function(snap) {
+    var list = toArray(snap.val() || []);
+    for (var i = 0; i < list.length; i++) {
+      if ((list[i].id || list[i]._key || i) === commentId) {
+        list[i].pinned = !list[i].pinned;
+        break;
+      }
+    }
+    db.ref('site/comments/resource/' + resId).set(rebuildArray(list), function(err) {
+      if (!err) { showToast('置顶状态已更新', 'success'); loadResourceComments(); }
+    });
+  });
+}
+
+function deleteResourceComment(resId, commentId) {
+  showConfirm('&#9888;', '删除留言', '确定要删除该留言吗？', function() {
+    if (!db) return;
+    db.ref('site/comments/resource/' + resId).once('value', function(snap) {
+      var list = toArray(snap.val() || []);
+      var filtered = [];
+      for (var i = 0; i < list.length; i++) {
+        if ((list[i].id || list[i]._key || i) !== commentId) filtered.push(list[i]);
+      }
+      db.ref('site/comments/resource/' + resId).set(rebuildArray(filtered), function(err) {
+        if (!err) { showToast('留言已删除', 'success'); loadResourceComments(); }
+      });
+    });
+  });
+}
+
+// ==================== Platform Profile ====================
+function loadProfilePage() {
+  var profile = allData.profile_data || {};
+  document.getElementById('profileName').value = profile.title || '艾优社';
+  document.getElementById('profileSubtitle').value = profile.subtitle || profile.desc || '资源馆';
+  if (profile.avatar) {
+    window.profileAvatarData = profile.avatar;
+    document.getElementById('profileAvatarPreview').innerHTML = '<img src="' + profile.avatar + '"><span class="remove-img" onclick="clearImage(\'profileAvatarPreview\',\'profileAvatarData\')">移除</span>';
+  }
+}
+
+function saveProfileData() {
+  var name = document.getElementById('profileName').value.trim() || '艾优社';
+  var subtitle = document.getElementById('profileSubtitle').value.trim() || '资源馆';
+  var avatar = window.profileAvatarData || '';
+  saveData('profile_data', { title: name, subtitle: subtitle, desc: subtitle, avatar: avatar }, function() {
+    showToast('平台资料已保存', 'success');
+    loadAllData();
+  });
+}
+
+// ==================== Random Nickname Generator (for anonymous messages) ====================
+var _randomNicknames = [
+  '快乐的小星星', '勇敢的探险家', '温柔的海风', '聪明的熊猫', '活泼的小鹿',
+  '善良的彩虹', '快乐的小熊', '自由的小鸟', '可爱的小猫', '帅气的小龙',
+  '梦幻的云朵', '热情的小太阳', '安静的小树', '快乐的小兔子', '勇敢的小狮子',
+  '聪明的小狐狸', '温暖的小火炉', '调皮的小猴子', '优雅的天鹅', '快乐的小蜜蜂',
+  '神奇的小精灵', '可爱的小企鹅', '快乐的小海豚', '活泼的小松鼠', '勇敢的小鹰'
+];
+var _avatarColors = ['#E63946','#3b82f6','#10b981','#f59e0b','#8b5cf6','#ec4899','#14b8a6','#f97316','#6366f1','#84cc16'];
+
+function generateRandomNickname() {
+  return _randomNicknames[Math.floor(Math.random() * _randomNicknames.length)];
+}
+function generateRandomColor() {
+  return _avatarColors[Math.floor(Math.random() * _avatarColors.length)];
+}
+
+// ==================== Init ====================
+(function() {
+  var isLoggedIn = checkAuth();
+  if (isLoggedIn) {
+    initFirebase(function() {
+      loadAllData();
+    });
+  } else {
+    initFirebase(function() {});
+  }
+})();
+</script>
+</body>
+</html>

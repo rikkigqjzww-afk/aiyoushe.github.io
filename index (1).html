@@ -1,0 +1,2436 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="referrer" content="no-referrer">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+<title>艾优社资源馆</title>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+<style>
+:root{--primary:#E63946;--primary-light:#ff4d5a;--secondary:#1a2744;--secondary-light:#253556;--bg:#f5f6fa;--card-bg:#ffffff;--text:#333333;--text-light:#777777;--text-lighter:#aaaaaa;--border:#e8e8e8;--shadow:0 2px 12px rgba(0,0,0,0.08);--shadow-hover:0 6px 24px rgba(0,0,0,0.12);--radius:10px;--sidebar-width:240px;--topbar-height:56px;--bottomnav-height:60px;--transition:all .3s ease}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Hiragino Sans GB','Microsoft YaHei','Helvetica Neue',sans-serif;background:var(--bg);color:var(--text);line-height:1.6;overflow-x:hidden}
+a{text-decoration:none;color:inherit}
+ul{list-style:none}
+img{max-width:100%;display:block}
+button{cursor:pointer;border:none;background:none;font-family:inherit}
+input,textarea,select{font-family:inherit}
+
+/* ===== Layout ===== */
+#app{display:flex;min-height:100vh}
+#sidebar{position:fixed;left:0;top:0;bottom:0;width:var(--sidebar-width);background:var(--secondary);color:#fff;display:flex;flex-direction:column;z-index:1000;transition:transform .3s ease;overflow-y:auto;overflow-x:hidden}
+#sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:999}
+#main-content{margin-left:var(--sidebar-width);flex:1;min-height:100vh;padding-top:var(--topbar-height)}
+
+/* ===== Sidebar ===== */
+.sidebar-logo{padding:28px 24px 20px;border-bottom:1px solid rgba(255,255,255,.08)}
+.sidebar-logo h2{font-size:22px;font-weight:700;letter-spacing:2px}
+.sidebar-logo p{font-size:12px;color:rgba(255,255,255,.5);margin-top:2px}
+.sidebar-nav{flex:1;padding:12px 0}
+.nav-link{display:flex;align-items:center;padding:12px 24px;color:rgba(255,255,255,.7);font-size:14px;transition:var(--transition);border-left:3px solid transparent;cursor:pointer}
+.nav-link:hover{color:#fff;background:rgba(255,255,255,.06)}
+.nav-link.active{color:#fff;background:rgba(230,57,70,.15);border-left-color:var(--primary)}
+.nav-icon{width:20px;margin-right:12px;text-align:center;font-size:15px;opacity:.7}
+.sidebar-footer{padding:20px 24px;border-top:1px solid rgba(255,255,255,.08);font-size:12px;color:rgba(255,255,255,.4);line-height:2}
+.sidebar-footer span{display:block}
+
+/* ===== Top Bar ===== */
+#top-bar{position:fixed;top:0;right:0;left:var(--sidebar-width);height:var(--topbar-height);background:var(--card-bg);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 24px;z-index:900;box-shadow:0 1px 4px rgba(0,0,0,.04)}
+#hamburger-btn{display:none;font-size:22px;color:var(--secondary);padding:8px}
+.top-bar-search{display:flex;align-items:center;background:var(--bg);border-radius:20px;padding:8px 16px;width:320px;max-width:50%}
+.top-bar-search input{border:none;background:none;outline:none;width:100%;font-size:13px;color:var(--text)}
+.top-bar-search input::placeholder{color:var(--text-lighter)}
+.top-bar-right{display:flex;align-items:center;gap:16px}
+#mobile-search-btn{display:none;font-size:20px;color:var(--text-light)}
+
+/* ===== Page Container ===== */
+#page-container{padding:24px;max-width:1200px;margin:0 auto}
+
+/* ===== Section Title ===== */
+.section-title{font-size:20px;font-weight:700;color:var(--secondary);margin-bottom:16px;display:flex;align-items:center;justify-content:space-between}
+.section-title .more-link{font-size:13px;color:var(--text-light);font-weight:400;cursor:pointer}
+.section-title .more-link:hover{color:var(--primary)}
+
+/* ===== Carousel ===== */
+.carousel{position:relative;border-radius:var(--radius);overflow:hidden;margin-bottom:32px;height:320px;background:var(--secondary)}
+.carousel-slide{position:absolute;inset:0;opacity:0;transition:opacity .8s ease;background-size:cover;background-position:center}
+.carousel-slide.active{opacity:1}
+.carousel-slide::after{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(26,39,68,.75) 0%,rgba(26,39,68,.3) 100%)}
+.carousel-content{position:absolute;bottom:48px;left:40px;z-index:2;color:#fff;max-width:600px}
+.carousel-content h2{font-size:28px;font-weight:700;margin-bottom:8px;text-shadow:0 2px 8px rgba(0,0,0,.3)}
+.carousel-content p{font-size:14px;opacity:.9}
+.carousel-arrow{position:absolute;top:50%;transform:translateY(-50%);z-index:3;width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.2);backdrop-filter:blur(4px);color:#fff;font-size:18px;display:flex;align-items:center;justify-content:center;transition:var(--transition);cursor:pointer}
+.carousel-arrow:hover{background:rgba(255,255,255,.4)}
+.carousel-prev{left:16px}
+.carousel-next{right:16px}
+.carousel-dots{position:absolute;bottom:16px;right:40px;z-index:3;display:flex;gap:8px}
+.carousel-dot{width:8px;height:8px;border-radius:4px;background:rgba(255,255,255,.4);cursor:pointer;transition:var(--transition)}
+.carousel-dot.active{width:24px;background:#fff}
+
+/* ===== Article Cards ===== */
+.article-card{background:var(--card-bg);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow);transition:var(--transition);cursor:pointer}
+.article-card:hover{transform:translateY(-4px);box-shadow:var(--shadow-hover)}
+.article-card-img{height:180px;overflow:hidden;position:relative}
+.article-card-img img{width:100%;height:100%;object-fit:cover;transition:transform .3s}
+.article-card:hover .article-card-img img{transform:scale(1.05)}
+.article-card-body{padding:16px}
+.article-card-body h3{font-size:15px;font-weight:600;margin-bottom:8px;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.article-card-body p{font-size:13px;color:var(--text-light);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin-bottom:12px}
+.article-card-meta{display:flex;align-items:center;justify-content:space-between;font-size:12px;color:var(--text-lighter)}
+.article-card-tags{display:flex;gap:6px;flex-wrap:wrap}
+.tag{display:inline-block;padding:3px 10px;background:var(--bg);border-radius:12px;font-size:12px;color:var(--text-light);transition:var(--transition)}
+.tag:hover,.tag.active{background:var(--primary);color:#fff;cursor:pointer}
+.tag-outline{border:1px solid var(--border);background:transparent}
+.category-tag{display:inline-block;padding:3px 10px;border-radius:12px;font-size:12px;color:var(--primary);background:rgba(230,57,70,.08);font-weight:500}
+
+/* ===== Card Grid ===== */
+.card-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+.card-grid-2{grid-template-columns:repeat(2,1fr)}
+
+/* ===== Resource Cards ===== */
+.resource-card{background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08);transition:transform .2s,box-shadow .2s;cursor:pointer;position:relative}
+.resource-card:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(0,0,0,0.12)}
+.resource-card .card-img-wrap{position:relative;width:100%;padding-top:60%;overflow:hidden}
+.resource-card .card-img-wrap img{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover}
+.resource-card .discount-badge{position:absolute;top:8px;left:0;background:#E63946;color:#fff;padding:4px 10px;border-radius:0 12px 12px 0;font-size:12px;font-weight:600;z-index:1}
+.resource-card .featured-badge{position:absolute;top:8px;left:0;z-index:1}
+.resource-card .featured-badge.has-discount{left:auto;right:8px}
+.resource-card .featured-badge.no-discount{left:0;border-radius:0 12px 12px 0}
+.resource-card .access-badge{position:absolute;bottom:8px;right:8px;background:rgba(0,0,0,0.7);color:#fff;padding:3px 8px;border-radius:4px;font-size:11px;z-index:1}
+.resource-card .card-info{padding:12px 14px 14px}
+.resource-card .card-title{font-size:15px;font-weight:600;color:#333;margin:0 0 8px;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.resource-card .card-meta{display:flex;align-items:center;gap:6px;margin-bottom:6px;font-size:12px;color:#999}
+.resource-card .stars{color:#FADB14;font-size:12px;letter-spacing:1px}
+.resource-card .card-rating{font-size:13px;color:#333;font-weight:500}
+.resource-card .card-sold{color:#999}
+.resource-card .card-price-row{display:flex;align-items:baseline;gap:8px;margin-bottom:8px}
+.resource-card .price-current{font-size:20px;font-weight:700;color:#1a1a1a}
+.resource-card .price-original{font-size:13px;color:#bbb;text-decoration:line-through}
+.resource-card .price-saved{font-size:12px;color:#E63946;font-weight:500}
+.resource-card .card-tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.resource-card .tag-pill{padding:3px 10px;border-radius:12px;font-size:11px;background:#FFF1F0;color:#E63946;border:1px solid #FFE0DE}
+.resource-card .btn-detail{width:100%;padding:8px 0;border:1px solid #e0e0e0;border-radius:6px;background:#fff;color:#666;font-size:13px;cursor:pointer;text-align:center}
+
+/* ===== Resource Grid ===== */
+.resource-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.btn{display:inline-flex;align-items:center;justify-content:center;padding:8px 20px;border-radius:20px;font-size:13px;font-weight:500;transition:var(--transition);cursor:pointer;border:none}
+.btn-primary{background:var(--primary);color:#fff}
+.btn-primary:hover{background:var(--primary-light);transform:translateY(-1px)}
+.btn-outline{border:1px solid var(--primary);color:var(--primary);background:transparent}
+.btn-outline:hover{background:var(--primary);color:#fff}
+.btn-sm{padding:5px 14px;font-size:12px}
+
+/* ===== Tag Cloud ===== */
+.tag-cloud{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:32px}
+.tag-cloud .tag{padding:6px 16px;font-size:13px;border-radius:16px}
+.tag-cloud .tag:hover{background:var(--primary);color:#fff}
+
+/* ===== Filter Bar ===== */
+.filter-bar{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:24px}
+.filter-btn{padding:8px 20px;border-radius:20px;font-size:13px;background:var(--card-bg);color:var(--text-light);border:1px solid var(--border);cursor:pointer;transition:var(--transition)}
+.filter-btn.active,.filter-btn:hover{background:var(--primary);color:#fff;border-color:var(--primary)}
+
+/* ===== Filter Tabs (Category) ===== */
+.filter-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+.filter-tabs input[type="button"]{padding:6px 16px;border:1px solid #ddd;border-radius:20px;background:#fff;color:#333;font-size:13px;cursor:pointer;transition:var(--transition)}
+.filter-tabs input[type="button"].active{background:#333;color:#fff;border-color:#333}
+.filter-tabs input[type="button"]:hover{border-color:#999}
+
+/* ===== Filter Tag Pills ===== */
+.filter-tag-pill{padding:4px 12px;border:1px solid #eee;border-radius:12px;background:#f8f8f8;color:#666;font-size:12px;cursor:pointer;transition:var(--transition)}
+.filter-tag-pill.active{background:#E63946;color:#fff;border-color:#E63946}
+.filter-tag-pill:hover{border-color:#E63946}
+
+/* ===== Tag Pill (Article/Resource card) ===== */
+.tag-pill{padding:3px 10px;border-radius:12px;font-size:11px;background:#FFF1F0;color:#E63946;border:1px solid #FFE0DE}
+.article-card-tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+
+/* ===== Sort Bar ===== */
+.sort-bar{display:flex;align-items:center;gap:8px;margin-bottom:16px}
+.sort-btn{padding:4px 12px;border:1px solid #eee;border-radius:12px;background:#f8f8f8;color:#666;font-size:12px;cursor:pointer;transition:var(--transition)}
+.sort-btn.active{background:#333;color:#fff;border-color:#333}
+.sort-btn:hover{border-color:#999}
+
+/* ===== Article Detail ===== */
+.article-detail-header{margin-bottom:24px}
+.article-detail-header h1{font-size:28px;font-weight:700;color:var(--secondary);line-height:1.4;margin-bottom:12px}
+.article-detail-meta{display:flex;align-items:center;gap:20px;font-size:13px;color:var(--text-light);flex-wrap:wrap}
+.article-detail-meta .like-btn{display:flex;align-items:center;gap:4px;cursor:pointer;color:var(--text-light);transition:var(--transition)}
+.article-detail-meta .like-btn:hover,.article-detail-meta .like-btn.liked{color:var(--primary)}
+.article-detail-content{font-size:15px;line-height:1.8;color:var(--text)}
+.article-detail-content p{margin-bottom:16px}
+.article-detail-content h2{font-size:20px;font-weight:600;margin:24px 0 12px;color:var(--secondary)}
+.article-detail-content h3{font-size:17px;font-weight:600;margin:20px 0 10px;color:var(--secondary)}
+.article-detail-content ul,.article-detail-content ol{margin:12px 0 16px 20px}
+.article-detail-content li{margin-bottom:6px}
+.article-detail-content img{border-radius:var(--radius);margin:16px 0}
+.back-btn{display:inline-flex;align-items:center;gap:6px;color:var(--text-light);font-size:14px;cursor:pointer;margin-bottom:20px;transition:var(--transition)}
+.back-btn:hover{color:var(--primary)}
+
+/* ===== Article Detail Layout (Toutiao-style) ===== */
+.article-detail-layout{display:flex;max-width:1100px;margin:0 auto;gap:20px;padding:20px}
+.article-left-bar{position:sticky;top:80px;flex:0 0 50px;height:fit-content;display:flex;flex-direction:column;align-items:center;gap:20px;padding-top:60px;align-self:flex-start}
+.article-left-bar .action-btn{display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;color:#666;font-size:11px;transition:var(--transition)}
+.article-left-bar .action-btn:hover{color:#333}
+.article-left-bar .action-btn.active{color:#E63946}
+.article-left-bar .action-btn .icon{width:24px;height:24px;display:flex;align-items:center;justify-content:center}
+.article-left-bar .action-btn .icon svg{width:22px;height:22px;fill:none;stroke:#666;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.article-left-bar .action-btn:hover .icon svg{stroke:#333}
+.article-left-bar .action-btn.active .icon svg{stroke:#E63946;fill:#E63946}
+.article-center{flex:1;max-width:680px}
+.article-right-bar{position:sticky;top:80px;flex:0 0 280px;height:fit-content;align-self:flex-start}
+.recommend-section h4{margin:0 0 12px;font-size:16px;font-weight:600;color:var(--secondary)}
+.recommend-item{display:flex;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);transition:var(--transition)}
+.recommend-item:last-child{border-bottom:none}
+.recommend-item:hover .recommend-title{color:var(--primary)}
+.recommend-cover{flex:0 0 80px;height:60px;border-radius:6px;overflow:hidden}
+.recommend-cover img{width:100%;height:100%;object-fit:cover}
+.recommend-info{flex:1;min-width:0}
+.recommend-title{font-size:13px;font-weight:500;color:var(--text);line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin-bottom:4px}
+.recommend-meta{font-size:11px;color:var(--text-lighter)}
+
+/* Article paywall overlay */
+.article-paywall{position:relative;margin-top:20px}
+.article-paywall-overlay{position:absolute;bottom:0;left:0;right:0;height:200px;background:linear-gradient(transparent,rgba(255,255,255,.9));display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding-bottom:24px;z-index:1}
+.article-paywall-overlay .paywall-text{font-size:14px;color:var(--text-light);margin-bottom:12px}
+.article-paywall-overlay .paywall-btn{padding:10px 32px;background:var(--primary);color:#fff;border-radius:24px;font-size:14px;font-weight:500;cursor:pointer;transition:var(--transition)}
+.article-paywall-overlay .paywall-btn:hover{background:var(--primary-light);transform:translateY(-1px)}
+
+@media(max-width:900px){
+  .article-detail-layout{flex-direction:column;padding:0}
+  .article-left-bar{flex-direction:row;position:static;order:-1;padding-top:0;justify-content:center;gap:24px;padding-bottom:16px;border-bottom:1px solid var(--border);margin-bottom:20px}
+  .article-right-bar{position:static;order:1}
+}
+
+/* ===== Resource Detail ===== */
+.resource-detail-layout{display:flex;gap:24px;max-width:900px;margin:0 auto 24px}
+.resource-detail-left{flex:0 0 400px}
+.resource-detail-right{flex:1}
+.resource-detail-cover-wrap{position:relative;border-radius:12px;overflow:hidden;margin-bottom:0}
+.resource-detail-cover-wrap .discount-badge{position:absolute;top:12px;left:0;background:#E63946;color:#fff;font-size:14px;padding:5px 12px;border-radius:0 12px 12px 0;font-weight:600;z-index:1}
+.resource-detail-cover-wrap .featured-badge{position:absolute;top:12px;right:12px;background:#FF9800;color:#fff;font-size:12px;padding:4px 10px;border-radius:10px;font-weight:600;z-index:1}
+.resource-detail-cover-wrap .access-badge{position:absolute;bottom:12px;right:12px;background:rgba(0,0,0,0.7);color:#fff;padding:4px 10px;border-radius:4px;font-size:12px;z-index:1}
+.resource-detail-cover{width:100%;aspect-ratio:3/4;object-fit:cover;display:block}
+.resource-detail-info{background:#fff;border-radius:12px;padding:28px;box-shadow:0 2px 8px rgba(0,0,0,0.08)}
+.resource-detail-info h1{font-size:22px;font-weight:700;color:#1a2744;margin-bottom:8px;line-height:1.4}
+.resource-detail-info .detail-desc{font-size:14px;color:#777;margin-bottom:16px;line-height:1.6}
+.resource-detail-info .rating-row{display:flex;align-items:center;gap:6px;margin-bottom:12px;font-size:14px;color:#999}
+.resource-detail-info .rating-stars{color:#FADB14;font-size:16px;letter-spacing:1px}
+.resource-detail-info .card-rating{font-size:15px;color:#333;font-weight:500}
+.resource-detail-info .card-sold{color:#999}
+.resource-detail-info .price-row{display:flex;align-items:baseline;gap:12px;margin-bottom:16px}
+.resource-detail-info .price-current{font-size:28px;font-weight:700;color:#1a1a1a}
+.resource-detail-info .price-original{font-size:16px;color:#bbb;text-decoration:line-through}
+.resource-detail-info .price-saved{font-size:13px;color:#E63946;font-weight:500}
+.resource-detail-tags{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.resource-detail-tags .tag-pill{padding:3px 10px;border-radius:12px;font-size:11px;background:#FFF1F0;color:#E63946;border:1px solid #FFE0DE}
+.get-resource-btn{padding:14px 48px;font-size:16px;font-weight:600;border-radius:28px;background:var(--primary);color:#fff;cursor:pointer;border:none;transition:var(--transition);display:inline-block}
+.get-resource-btn:hover{background:var(--primary-light);transform:translateY(-2px);box-shadow:0 8px 24px rgba(230,57,70,.3)}
+@media(max-width:768px){
+  .resource-detail-layout{flex-direction:column;gap:16px}
+  .resource-detail-left{flex:none;width:100%}
+}
+
+/* ===== Album ===== */
+.album-group-card{background:var(--card-bg);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow);transition:var(--transition);cursor:pointer;position:relative}
+.album-group-card:hover{transform:translateY(-4px);box-shadow:var(--shadow-hover)}
+.album-group-card img{width:100%;height:240px;object-fit:cover;transition:transform .3s}
+.album-group-card:hover img{transform:scale(1.05)}
+.album-group-overlay{position:absolute;bottom:0;left:0;right:0;padding:20px;background:linear-gradient(transparent,rgba(0,0,0,.7));color:#fff}
+.album-group-overlay h3{font-size:18px;font-weight:600}
+.album-group-overlay p{font-size:13px;opacity:.8}
+.photo-grid{columns:3;column-gap:16px}
+.photo-item{break-inside:avoid;margin-bottom:16px;border-radius:var(--radius);overflow:hidden;cursor:pointer;position:relative;transition:var(--transition)}
+.photo-item:hover{opacity:.85}
+.photo-item img{width:100%;display:block}
+
+/* ===== Lightbox ===== */
+#lightbox{display:none;position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:2000;align-items:center;justify-content:center}
+#lightbox.show{display:flex}
+#lightbox img{max-width:90vw;max-height:85vh;object-fit:contain;border-radius:4px}
+.lightbox-close{position:absolute;top:20px;right:24px;color:#fff;font-size:28px;cursor:pointer;z-index:3;width:40px;height:40px;display:flex;align-items:center;justify-content:center}
+.lightbox-nav{position:absolute;top:50%;transform:translateY(-50%);color:#fff;font-size:36px;cursor:pointer;padding:16px;z-index:3;opacity:.6;transition:var(--transition)}
+.lightbox-nav:hover{opacity:1}
+.lightbox-prev{left:16px}
+.lightbox-next{right:16px}
+.lightbox-counter{position:absolute;bottom:20px;left:50%;transform:translateX(-50%);color:rgba(255,255,255,.7);font-size:14px}
+
+/* ===== Member Page ===== */
+.vip-banner{background:linear-gradient(135deg,var(--secondary) 0%,var(--primary) 100%);border-radius:var(--radius);padding:40px;color:#fff;text-align:center;margin-bottom:32px}
+.vip-banner h2{font-size:28px;font-weight:700;margin-bottom:8px}
+.vip-banner p{font-size:14px;opacity:.9}
+.pricing-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-bottom:40px}
+.pricing-card{background:var(--card-bg);border-radius:var(--radius);padding:32px 24px;text-align:center;box-shadow:var(--shadow);transition:var(--transition);position:relative;overflow:hidden}
+.pricing-card:hover{transform:translateY(-6px);box-shadow:var(--shadow-hover)}
+.pricing-card.featured{border:2px solid var(--primary)}
+.pricing-card.featured::before{content:'推荐';position:absolute;top:16px;right:-28px;background:var(--primary);color:#fff;font-size:12px;padding:4px 32px;transform:rotate(45deg)}
+.pricing-icon{font-size:36px;margin-bottom:12px}
+.pricing-card h3{font-size:18px;font-weight:600;margin-bottom:4px}
+.pricing-label{display:inline-block;padding:3px 12px;background:rgba(230,57,70,.08);color:var(--primary);font-size:12px;border-radius:10px;margin-bottom:12px}
+.pricing-card .price{font-size:36px;font-weight:700;color:var(--primary);margin-bottom:4px}
+.pricing-card .price span{font-size:14px;font-weight:400;color:var(--text-light)}
+.pricing-features{text-align:left;margin:20px 0}
+.pricing-features li{padding:6px 0;font-size:13px;color:var(--text-light);display:flex;align-items:center;gap:8px}
+.pricing-features li::before{content:'✓';color:var(--primary);font-weight:700;flex-shrink:0}
+
+/* ===== FAQ Accordion ===== */
+.faq-list{margin-bottom:32px}
+.faq-item{border-radius:8px;margin-bottom:8px;overflow:hidden}
+.faq-question{padding:14px 16px;background:#F8F9FA;font-weight:600;cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-size:14px;color:var(--text);transition:var(--transition)}
+.faq-question:hover{background:#f0f0f0}
+.faq-arrow{transition:transform .3s;font-size:12px;color:var(--text-lighter)}
+.faq-item.active .faq-arrow{transform:rotate(180deg)}
+.faq-answer{padding:14px 16px;background:#fff;font-weight:400;color:#666;display:none;border:1px solid #f0f0f0;border-top:none;font-size:13px;line-height:1.8}
+.faq-item.active .faq-answer{display:block}
+
+/* ===== Benefits ===== */
+.benefits-section{margin-bottom:32px}
+.benefits-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.benefit-item{background:var(--card-bg);border-radius:var(--radius);padding:24px 16px;text-align:center;box-shadow:var(--shadow)}
+.benefit-icon{font-size:32px;margin-bottom:8px}
+.benefit-item h4{font-size:14px;font-weight:600;margin-bottom:4px}
+.benefit-item p{font-size:12px;color:var(--text-light)}
+
+/* ===== About Page ===== */
+.about-hero{background:linear-gradient(135deg,var(--secondary),var(--secondary-light));border-radius:var(--radius);padding:48px;color:#fff;margin-bottom:32px}
+.about-hero h1{font-size:28px;font-weight:700;margin-bottom:12px}
+.about-hero p{font-size:14px;opacity:.9;line-height:1.8;max-width:700px}
+.story-card{background:var(--card-bg);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow);margin-bottom:16px}
+.story-card h3{font-size:16px;font-weight:600;color:var(--secondary);margin-bottom:8px}
+.story-card p{font-size:13px;color:var(--text-light);line-height:1.8}
+.values-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-bottom:32px}
+.value-card{background:var(--card-bg);border-radius:var(--radius);padding:24px;text-align:center;box-shadow:var(--shadow)}
+.value-card h4{font-size:16px;font-weight:600;color:var(--primary);margin-bottom:8px}
+.value-card p{font-size:13px;color:var(--text-light);line-height:1.6}
+.contact-info-box{background:var(--card-bg);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow);margin-bottom:32px}
+.contact-info-box h3{font-size:18px;font-weight:600;margin-bottom:16px;color:var(--secondary)}
+.contact-row{display:flex;align-items:center;gap:12px;padding:10px 0;font-size:14px;color:var(--text-light);border-bottom:1px solid var(--border)}
+.contact-row:last-child{border-bottom:none}
+.contact-label{font-weight:500;color:var(--text);min-width:60px}
+
+/* ===== Message Board ===== */
+.message-board{background:var(--card-bg);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow)}
+.message-board h3{font-size:18px;font-weight:600;margin-bottom:16px;color:var(--secondary)}
+.msg-form{margin-bottom:24px}
+.msg-form input,.msg-form textarea{width:100%;padding:12px 16px;border:1px solid var(--border);border-radius:var(--radius);font-size:14px;margin-bottom:12px;outline:none;transition:var(--transition)}
+.msg-form input:focus,.msg-form textarea:focus{border-color:var(--primary)}
+.msg-form textarea{height:100px;resize:vertical}
+.msg-list .msg-item{padding:16px 0;border-bottom:1px solid var(--border)}
+.msg-item:last-child{border-bottom:none}
+.msg-item .msg-name{font-size:14px;font-weight:600;color:var(--secondary)}
+.msg-item .msg-time{font-size:12px;color:var(--text-lighter);margin-left:8px}
+.msg-item .msg-text{font-size:14px;color:var(--text);margin-top:6px;line-height:1.6}
+
+/* ===== QR Modal ===== */
+#qr-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:2000;align-items:center;justify-content:center}
+#qr-modal.show{display:flex}
+.qr-modal-content{background:var(--card-bg);border-radius:var(--radius);padding:32px;text-align:center;max-width:340px;width:90%;position:relative;animation:modalIn .3s ease}
+@keyframes modalIn{from{transform:scale(.9);opacity:0}to{transform:scale(1);opacity:1}}
+.qr-modal-content h3{font-size:18px;font-weight:600;color:var(--secondary);margin-bottom:16px}
+.qr-modal-img{width:200px;height:200px;margin:0 auto 16px;background:var(--bg);border-radius:var(--radius);display:flex;align-items:center;justify-content:center;overflow:hidden}
+.qr-modal-img img{width:100%;height:100%;object-fit:contain}
+.qr-modal-img .qr-placeholder{color:var(--text-lighter);font-size:14px}
+.qr-modal-desc{font-size:13px;color:var(--text-light);margin-bottom:20px;line-height:1.6}
+
+/* ===== Delivery Modal ===== */
+#delivery-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:2000;align-items:center;justify-content:center}
+#delivery-modal.show{display:flex}
+.delivery-modal-content{background:var(--card-bg);border-radius:var(--radius);padding:32px;text-align:center;max-width:380px;width:90%;position:relative;animation:modalIn .3s ease}
+.delivery-success-icon{width:60px;height:60px;border-radius:50%;background:#f6ffed;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:28px;color:#52c41a}
+.delivery-modal-content h3{font-size:20px;font-weight:700;color:var(--secondary);margin-bottom:4px}
+.delivery-modal-content .delivery-subtitle{font-size:14px;color:var(--text-light);margin-bottom:8px}
+.delivery-modal-content .delivery-desc{font-size:13px;color:var(--text-lighter);margin-bottom:16px}
+.delivery-link-box{background:#f5f5f5;border-radius:8px;padding:12px 16px;margin-bottom:8px;word-break:break-all;font-size:13px;color:var(--text);text-align:left;cursor:pointer}
+.delivery-link-box a{color:var(--primary);text-decoration:underline}
+.delivery-password-box{font-size:13px;color:var(--text-light);margin-bottom:16px}
+.delivery-password-box span{font-weight:600;color:var(--text)}
+.delivery-modal-actions{display:flex;gap:10px;justify-content:center}
+.delivery-modal-actions input[type="button"]{flex:1;padding:10px;border-radius:20px;font-size:14px;font-weight:500;cursor:pointer;border:none;transition:var(--transition)}
+
+/* ===== Search Results ===== */
+.search-bar-page{display:flex;gap:12px;margin-bottom:24px}
+.search-bar-page input{flex:1;padding:12px 20px;border:1px solid var(--border);border-radius:24px;font-size:14px;outline:none;background:var(--card-bg);transition:var(--transition)}
+.search-bar-page input:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(230,57,70,.1)}
+.search-bar-page input[type="button"]{padding:12px 28px;background:var(--primary);color:#fff;border:none;border-radius:24px;font-size:14px;font-weight:500;cursor:pointer;transition:var(--transition)}
+.search-bar-page input[type="button"]:hover{background:var(--primary-light)}
+.search-result-header{font-size:14px;color:var(--text-light);margin-bottom:20px}
+
+/* ===== Loading ===== */
+.loading-placeholder{display:flex;align-items:center;justify-content:center;padding:40px;color:var(--text-lighter);font-size:14px}
+.skeleton{background:linear-gradient(90deg,var(--bg) 25%,#eee 50%,var(--bg) 75%);background-size:200% 100%;animation:shimmer 1.5s infinite;border-radius:var(--radius)}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+
+/* ===== Empty State ===== */
+.empty-state{text-align:center;padding:60px 20px;color:var(--text-lighter)}
+.empty-state .empty-icon{font-size:48px;margin-bottom:12px}
+.empty-state p{font-size:14px}
+
+/* ===== Toast ===== */
+.toast{position:fixed;top:80px;left:50%;transform:translateX(-50%);background:var(--secondary);color:#fff;padding:12px 24px;border-radius:8px;font-size:14px;z-index:3000;opacity:0;transition:opacity .3s;pointer-events:none}
+.toast.show{opacity:1}
+
+/* ===== Bottom Nav (Mobile) ===== */
+#bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;height:var(--bottomnav-height);background:var(--card-bg);border-top:1px solid var(--border);z-index:900;justify-content:space-around;align-items:center}
+.bottom-nav-item{display:flex;flex-direction:column;align-items:center;gap:2px;color:var(--text-lighter);font-size:10px;cursor:pointer;transition:var(--transition);padding:4px 8px}
+.bottom-nav-item.active{color:var(--primary)}
+.bottom-nav-item .bnav-icon{font-size:20px}
+
+/* ===== Scrollbar ===== */
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:rgba(0,0,0,.15);border-radius:3px}
+
+
+
+
+/* ===== Contact Grid (3 cols) ===== */
+.contact-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.contact-card{text-align:center;padding:20px;background:#f8f9fa;border-radius:12px}
+.contact-card .icon{width:40px;height:40px;border-radius:50%;margin:0 auto 8px;object-fit:cover}
+.contact-card .platform{font-size:12px;color:#999}
+.contact-card .account{font-size:14px;font-weight:600;color:#333;margin-top:4px}
+/* ===== Album Grid (6 cols, 9:16) ===== */
+.album-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:12px}
+.album-card{cursor:pointer;transition:var(--transition)}
+.album-card:hover{transform:translateY(-4px)}
+.album-card .album-cover{aspect-ratio:9/16;object-fit:cover;border-radius:8px;width:100%}
+.album-card .album-name{font-size:12px;text-align:center;margin-top:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* ===== Comment Section ===== */
+.comment-section{margin-top:40px;padding-top:24px;border-top:1px solid var(--border)}
+.comment-section h3{font-size:18px;font-weight:600;color:var(--secondary);margin-bottom:16px}
+.comment-input-area{margin-bottom:24px}
+.comment-input-area textarea{width:100%;padding:12px 16px;border:1px solid var(--border);border-radius:var(--radius);font-size:14px;height:100px;resize:vertical;outline:none;transition:var(--transition)}
+.comment-input-area textarea:focus{border-color:var(--primary)}
+.comment-input-area input[type="button"]{margin-top:10px;padding:8px 24px;background:var(--primary);color:#fff;border:none;border-radius:20px;font-size:13px;cursor:pointer;transition:var(--transition)}
+.comment-input-area input[type="button"]:hover{background:var(--primary-light)}
+.comment-list .comment-item{display:flex;gap:12px;padding:16px 0;border-bottom:1px solid var(--border)}
+.comment-list .comment-item:last-child{border-bottom:none}
+.comment-avatar{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:bold;font-size:14px;flex-shrink:0}
+.comment-body{flex:1}
+.comment-meta{display:flex;align-items:center;gap:8px;margin-bottom:4px}
+.comment-nickname{font-size:14px;font-weight:600;color:var(--secondary)}
+.comment-time{font-size:12px;color:var(--text-lighter)}
+.comment-pinned{font-size:11px;background:var(--primary);color:#fff;padding:1px 6px;border-radius:4px}
+.comment-text{font-size:14px;color:var(--text);line-height:1.6}
+/* ===== Announcement Bar ===== */
+.announcement-bar{background:#FFF1F0;overflow:hidden;white-space:nowrap;padding:8px 0;border-bottom:1px solid #FFE8E5}
+.announcement-bar .scroll-wrap{display:inline-block;animation:scroll-left 20s linear infinite}
+.announcement-bar .scroll-wrap span{margin-right:60px;font-size:13px;color:#E63946}
+@keyframes scroll-left{0%{transform:translateX(100%)}100%{transform:translateX(-100%)}}
+
+/* ===== Responsive ===== */
+@media(max-width:1024px){
+  .card-grid{grid-template-columns:repeat(2,1fr)}
+  .resource-grid{grid-template-columns:repeat(2,1fr)}
+  .pricing-grid{grid-template-columns:repeat(2,1fr)}
+  .pricing-grid .pricing-card:last-child{grid-column:span 2;max-width:400px;justify-self:center}
+  .benefits-grid{grid-template-columns:repeat(2,1fr)}
+  .photo-grid{columns:2}
+  .values-grid{grid-template-columns:repeat(2,1fr)}
+  .album-grid{grid-template-columns:repeat(4,1fr)}
+}
+@media(max-width:768px){
+  #sidebar{transform:translateX(-100%)}
+  #sidebar.open{transform:translateX(0)}
+  #sidebar-overlay.show{display:block}
+  #main-content{margin-left:0;padding-bottom:var(--bottomnav-height)}
+  #top-bar{left:0}
+  #hamburger-btn{display:block}
+  #mobile-search-btn{display:block}
+  .top-bar-search{display:none}
+  #bottom-nav{display:flex}
+  .card-grid,.pricing-grid,.benefits-grid,.values-grid{grid-template-columns:1fr}
+  .pricing-grid .pricing-card:last-child{grid-column:auto;max-width:none}
+  .carousel{height:220px}
+  .carousel-content h2{font-size:20px}
+  .carousel-content{left:20px;bottom:32px}
+  .carousel-arrow{width:32px;height:32px;font-size:14px}
+  #page-container{padding:16px}
+
+  .resource-detail-cover{height:240px}
+  .vip-banner{padding:28px 20px}
+  .vip-banner h2{font-size:22px}
+  .photo-grid{columns:2;column-gap:10px}
+  .photo-item{margin-bottom:10px}
+  .about-hero{padding:32px 24px}
+  .about-hero h1{font-size:22px}
+  .album-grid{grid-template-columns:repeat(3,1fr);gap:12px}
+  .contact-grid{grid-template-columns:repeat(3,1fr);gap:8px}
+  .contact-card{padding:14px 8px}
+  .contact-card .icon{width:32px;height:32px}
+  .contact-card .account{font-size:12px}
+  .qr-modal-content{max-width:300px;padding:24px 16px}
+}
+@media(max-width:480px){
+  .card-grid{grid-template-columns:1fr}
+  .resource-grid{grid-template-columns:1fr}
+  .filter-bar{gap:8px}
+  .filter-btn{padding:6px 14px;font-size:12px}
+  .carousel{height:180px}
+  .carousel-content h2{font-size:17px}
+  .tag-cloud .tag{padding:5px 12px;font-size:12px}
+  .album-grid{grid-template-columns:repeat(2,1fr);gap:10px}
+  .contact-grid{grid-template-columns:repeat(3,1fr);gap:6px}
+  .contact-card{padding:10px 4px}
+  .comment-section{padding-top:16px}
+  .comment-input-area textarea{height:80px}
+}
+</style>
+<script data-preview-injected src="https://lf3-static.bytednsdoc.com/obj/eden-cn/8011eh7nupenuvonuhd/previewer-tools.de3cd6a1.umd.js"></script></head>
+<body>
+<div id="app">
+  <!-- Sidebar -->
+  <div id="sidebar">
+    <div class="sidebar-logo" id="sidebarLogo"><h2>艾优社</h2><p>资源馆</p></div>
+    <nav class="sidebar-nav" id="sidebar-nav">
+      <a class="nav-link active" data-page="home" onclick="navigateTo('home')">
+        <span class="nav-icon">&#9750;</span>我的主页
+      </a>
+      <a class="nav-link" data-page="news" onclick="navigateTo('news')">
+        <span class="nav-icon">&#9998;</span>业内资讯
+      </a>
+      <a class="nav-link" data-page="resources" onclick="navigateTo('resources')">
+        <span class="nav-icon">&#9830;</span>资源列表
+      </a>
+      <a class="nav-link" data-page="albums" onclick="navigateTo('albums')">
+        <span class="nav-icon">&#9733;</span>相册中心
+      </a>
+      <a class="nav-link" data-page="member" onclick="navigateTo('member')">
+        <span class="nav-icon">&#9829;</span>会员中心
+      </a>
+      <a class="nav-link" data-page="about" onclick="navigateTo('about')">
+        <span class="nav-icon">&#8505;</span>关于我们
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      <span>微信: aiyoushe_vip</span>
+      <span>邮箱: hello@aiyoushe.com</span>
+      <span>QQ: 123456789</span>
+    </div>
+  </div>
+  <div id="sidebar-overlay" onclick="closeSidebar()"></div>
+
+  <!-- Main Content -->
+  <div id="main-content">
+    <div id="top-bar">
+      <span id="hamburger-btn" onclick="toggleSidebar()">&#9776;</span>
+      <div class="top-bar-search">
+        <input type="text" id="top-search-input" placeholder="搜索文章、资源..." onkeydown="if(event.keyCode===13)doTopSearch()">
+      </div>
+      <div class="top-bar-right">
+        <span id="mobile-search-btn" onclick="navigateTo('search')">&#128269;</span>
+      </div>
+    </div>
+    <div id="announcementBar" class="announcement-bar" style="display:none;">
+      <div class="scroll-wrap" id="announcementScroll"></div>
+    </div>
+    <div id="page-container"></div>
+  </div>
+
+  <!-- Bottom Nav (Mobile) -->
+  <div id="bottom-nav">
+    <div class="bottom-nav-item active" data-page="home" onclick="navigateTo('home')">
+      <span class="bnav-icon">&#9750;</span><span>主页</span>
+    </div>
+    <div class="bottom-nav-item" data-page="news" onclick="navigateTo('news')">
+      <span class="bnav-icon">&#9998;</span><span>资讯</span>
+    </div>
+    <div class="bottom-nav-item" data-page="resources" onclick="navigateTo('resources')">
+      <span class="bnav-icon">&#9830;</span><span>资源</span>
+    </div>
+    <div class="bottom-nav-item" data-page="albums" onclick="navigateTo('albums')">
+      <span class="bnav-icon">&#9733;</span><span>相册</span>
+    </div>
+    <div class="bottom-nav-item" data-page="member" onclick="navigateTo('member')">
+      <span class="bnav-icon">&#9829;</span><span>会员</span>
+    </div>
+  </div>
+</div>
+
+<!-- QR Modal -->
+<div id="qr-modal">
+  <div class="qr-modal-content" onclick="event.stopPropagation()">
+    <h3>扫码联系客服购买</h3>
+    <div class="qr-modal-img" id="qr-modal-img">
+      <span class="qr-placeholder">二维码加载中...</span>
+    </div>
+    <div class="qr-modal-desc">微信扫描上方二维码，联系客服了解详情并完成购买</div>
+    <input type="button" class="btn btn-primary" style="width:100%;padding:10px" value="关闭" onclick="hideQRModal()">
+  </div>
+</div>
+
+<!-- Delivery Modal -->
+<div id="delivery-modal" onclick="hideDeliveryModal()">
+  <div class="delivery-modal-content" onclick="event.stopPropagation()">
+    <div class="delivery-success-icon">&#10003;</div>
+    <h3 id="delivery-title">获取资源成功</h3>
+    <div class="delivery-subtitle" id="delivery-subtitle">获取链接成功</div>
+    <div class="delivery-desc" id="delivery-desc">资源链接已准备就绪，点击下方按钮获取</div>
+    <div class="delivery-link-box" id="delivery-link-box"></div>
+    <div class="delivery-password-box" id="delivery-password-box"></div>
+    <div class="delivery-modal-actions">
+      <input type="button" style="background:var(--primary);color:#fff" value="复制链接" onclick="copyDeliveryLink()">
+      <input type="button" style="background:var(--bg);color:var(--text)" value="关闭" onclick="hideDeliveryModal()">
+    </div>
+  </div>
+</div>
+
+<!-- Lightbox -->
+<div id="lightbox" onclick="closeLightbox()">
+  <span class="lightbox-close" onclick="closeLightbox()">&times;</span>
+  <span class="lightbox-nav lightbox-prev" onclick="event.stopPropagation();lightboxNav(-1)">&#10094;</span>
+  <img id="lightbox-img" src="" alt="" onclick="event.stopPropagation()">
+  <span class="lightbox-nav lightbox-next" onclick="event.stopPropagation();lightboxNav(1)">&#10095;</span>
+  <div class="lightbox-counter" id="lightbox-counter"></div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+/* ========================================
+   默认数据
+   ======================================== */
+var DEFAULT_DATA = {
+  carousel: [
+    { id: 'c1', image: 'https://picsum.photos/seed/aiyoubanner1/1200/400', title: '加入艾优社，开启创意之旅', desc: '汇聚海量设计资源，助力你的每一个创意项目' },
+    { id: 'c2', image: 'https://picsum.photos/seed/aiyoubanner2/1200/400', title: '精选资源，每日更新', desc: '专业团队精心筛选，品质有保障' },
+    { id: 'c3', image: 'https://picsum.photos/seed/aiyoubanner3/1200/400', title: '会员专属，海量资源任你选', desc: '开通VIP会员，畅享全站资源无限下载' }
+  ],
+  articles: [
+    {
+      id: 'a1', title: '2024年AI设计工具趋势报告', summary: '深度解读人工智能时代下设计工具的变革方向，从Midjourney到Adobe Firefly，AI正在重塑设计师的工作流程。',
+      cover: 'https://picsum.photos/seed/aiarticle1/600/360', date: '2024-12-15', views: 3286, likes: 218, featured: true,
+      tags: ['AI', '设计', '趋势'], category: '编辑精选',
+      content: '<p>随着人工智能技术的飞速发展，AI设计工具已经成为创意行业不可或缺的重要组成部分。从Midjourney到DALL-E，从Stable Diffusion到Adobe Firefly，这些工具正在深刻地改变设计师的工作方式和工作效率。</p><h2>AI辅助设计的普及化</h2><p>2024年，AI辅助设计工具的使用率大幅提升。越来越多的设计师开始在日常工作中融入AI技术，从概念草图到最终成品，AI工具贯穿了整个设计流程。Midjourney V6的发布更是将AI图像生成的质量提升到了新的高度，生成的图像几乎可以媲美专业摄影师的作品。</p><h2>实时协作与AI的结合</h2><p>Figma和Canva等设计平台纷纷引入AI功能，让团队协作更加高效。设计师可以借助AI快速生成设计方案，与团队成员实时协作，大大缩短了设计周期。Adobe Firefly的集成让Photoshop用户可以直接在熟悉的界面中使用AI功能，降低了学习成本。</p><h2>设计师的新角色</h2><p>AI并不会取代设计师，而是改变了设计师的角色。未来的设计师需要掌握AI工具的使用方法，学会与AI协作，将创意思维与技术能力相结合。设计师将成为AI的"导演"，引导AI生成符合需求的设计方案。</p><p>总的来说，AI设计工具的发展为设计行业带来了巨大的机遇。拥抱AI、善用AI的设计师将在未来的竞争中占据优势地位。</p>'
+    },
+    {
+      id: 'a2', title: '品牌视觉升级完全指南', summary: '从品牌定位到视觉落地，手把手教你完成一次完整的品牌视觉升级，让你的品牌焕然一新。',
+      cover: 'https://picsum.photos/seed/aiarticle2/600/360', date: '2024-12-10', views: 2541, likes: 186, featured: true,
+      tags: ['品牌', '设计', '营销'], category: '编辑精选',
+      content: '<p>品牌视觉升级是企业发展的必经之路。一个优秀的品牌视觉体系不仅能够提升品牌形象，还能增强用户的认知度和忠诚度。本文将从品牌定位、视觉设计、落地执行三个维度，为你提供一份完整的品牌视觉升级指南。</p><h2>第一步：明确品牌定位</h2><p>在进行视觉升级之前，首先需要明确品牌的核心定位。你的品牌目标用户是谁？品牌的核心价值主张是什么？品牌个性是怎样的？这些问题的答案将决定你的视觉设计方向。</p><h2>第二步：构建视觉体系</h2><p>品牌视觉体系包括Logo设计、色彩方案、字体选择、图形元素等。建议选择2-3种主色调，搭配1-2种辅助色。字体方面，中文建议选择思源系列或方正系列，英文推荐使用Montserrat、Inter等现代无衬线字体。</p><h2>第三步：多场景落地</h2><p>视觉体系确定后，需要在各个场景中统一落地应用。包括名片、信封信纸、宣传册、网站、社交媒体、产品包装等。确保所有触点的视觉呈现保持一致性，这样才能建立强大的品牌认知。</p>'
+    },
+    {
+      id: 'a3', title: '高效远程办公资源合集', summary: '精选50+远程办公必备工具和资源，涵盖协作、沟通、项目管理、时间管理等各个方面。',
+      cover: 'https://picsum.photos/seed/aiarticle3/600/360', date: '2024-12-08', views: 4102, likes: 312, featured: true,
+      tags: ['办公', '效率', '工具'], category: '本周推荐',
+      content: '<p>远程办公已经成为现代工作方式的重要组成部分。无论你是自由职业者、创业者还是企业员工，拥有合适的工具和资源都能大大提升你的工作效率。本文精选了50+远程办公必备资源，帮助你打造高效的工作环境。</p><h2>团队协作工具</h2><p>在远程办公中，团队协作是最重要的环节之一。飞书、钉钉、企业微信是国内最主流的协作平台，集成了即时通讯、视频会议、文档协作等功能。Notion和语雀则更适合知识管理和文档协作。</p><h2>项目管理工具</h2><p>Trello以其直观的看板视图著称，适合小型项目的管理。Jira则是软件开发团队的首选，功能强大且可定制。Teambition和Worktile是国内优秀的选择，更贴合中国用户的使用习惯。</p><h2>时间管理技巧</h2><p>远程办公最大的挑战之一就是时间管理。建议使用番茄工作法，每25分钟专注工作，休息5分钟。Forest和潮汐是两款优秀的专注力应用，帮助你养成专注工作的好习惯。</p>'
+    },
+    {
+      id: 'a4', title: '如何打造个人IP：从0到1的完整路线', summary: '个人IP是当下的热门话题，本文将从定位、内容、运营三个层面，为你提供打造个人IP的系统方法论。',
+      cover: 'https://picsum.photos/seed/aiarticle4/600/360', date: '2024-12-05', views: 5673, likes: 425, featured: false,
+      tags: ['IP', '运营', '营销'], category: '本周推荐',
+      content: '<p>在信息爆炸的时代，个人IP已经成为差异化竞争的核心武器。一个强有力的个人IP不仅能帮你获得更多机会，还能建立持久的商业价值。本文将从三个层面为你拆解个人IP的打造路径。</p><h2>精准定位</h2><p>个人IP打造的第一步是明确自己的定位。你希望在什么领域成为专家？你的目标受众是谁？你的独特价值是什么？回答好这三个问题，你的IP定位就有了清晰的方向。</p><h2>内容输出</h2><p>内容是个人IP的基石。选择你擅长的内容形式（图文、视频、音频），在合适的平台持续输出高质量内容。记住，一致性比完美更重要，持续输出才能积累影响力。</p>'
+    },
+    {
+      id: 'a5', title: '短视频运营必备的10个工具推荐', summary: '从脚本创作到视频剪辑，从数据分析到素材管理，全面覆盖短视频运营的各个环节。',
+      cover: 'https://picsum.photos/seed/aiarticle5/600/360', date: '2024-12-02', views: 3891, likes: 267, featured: false,
+      tags: ['视频', '运营', '工具'], category: '本周推荐',
+      content: '<p>短视频已经成为内容创业的重要赛道。要在激烈的竞争中脱颖而出，除了优质的内容创意，高效的运营工具也至关重要。本文精选了10个短视频运营必备工具，帮助你提升运营效率。</p><h2>视频剪辑工具</h2><p>剪映是目前最受欢迎的短视频剪辑工具，功能强大且操作简单，适合新手和专业用户。Premiere Pro则是专业视频剪辑的首选，支持更多高级功能。DaVinci Resolve以其强大的调色功能闻名，且免费版本功能已经很完善。</p><h2>数据分析工具</h2><p>飞瓜数据和新抖是两款专业的短视频数据分析平台，可以帮你追踪竞品动态、分析热门趋势、优化内容策略。</p>'
+    },
+    {
+      id: 'a6', title: '2024年社交媒体营销策略深度解析', summary: '从平台选择到内容策略，从用户运营到转化变现，全面解读社交媒体营销的核心策略。',
+      cover: 'https://picsum.photos/seed/aiarticle6/600/360', date: '2024-11-28', views: 2218, likes: 156, featured: false,
+      tags: ['营销', '社交媒体', '策略'], category: '编辑精选',
+      content: '<p>社交媒体营销在2024年迎来了新的变革。算法升级、内容形态丰富、用户行为变化，这些都要求营销人员不断调整策略。本文将深入解析2024年社交媒体营销的核心策略。</p><h2>多平台矩阵策略</h2><p>不要把所有鸡蛋放在一个篮子里。建议构建"公域+私域"的多平台矩阵，在抖音、小红书、微博等公域平台获客，通过微信生态沉淀私域流量。每个平台的运营策略应有所差异，内容形式和风格要适配平台特性。</p>'
+    },
+    {
+      id: 'a7', title: '设计师必备的免费字体资源推荐', summary: '精选20款高质量免费商用字体，涵盖中英文，让你的设计作品更加出彩。',
+      cover: 'https://picsum.photos/seed/aiarticle7/600/360', date: '2024-11-25', views: 6234, likes: 489, featured: false,
+      tags: ['字体', '设计', '资源'], category: '编辑精选',
+      content: '<p>字体是设计中最重要的元素之一。一款优秀的字体能够极大地提升设计作品的品质感。本文精选了20款高质量免费商用字体，帮助你丰富设计素材库。</p><h2>中文字体推荐</h2><p>思源黑体和思源宋体是Google和Adobe联合开发的开源字体，质量极高且完全免费商用。阿里巴巴普惠体是阿里团队出品，风格现代且支持多语言。站酷系列字体也是国内设计师的常用选择。</p><h2>英文字体推荐</h2><p>Montserrat是一款优雅的无衬线字体，适合品牌设计和海报设计。Inter是UI设计中常用的字体，可读性极佳。Playfair Display则是一款经典衬线字体，适合用于标题和强调文字。</p>'
+    },
+    {
+      id: 'a8', title: '从零开始学习UI设计的5个关键步骤', summary: '为想要转行或自学UI设计的朋友提供清晰的学习路径，从基础理论到实战项目全覆盖。',
+      cover: 'https://picsum.photos/seed/aiarticle8/600/360', date: '2024-11-20', views: 4456, likes: 334, featured: false,
+      tags: ['UI', '设计', '教程'], category: '技术干货',
+      content: '<p>UI设计是近年来最热门的设计方向之一。如果你想从零开始学习UI设计，本文将为你提供一条清晰的学习路径，帮助你系统性地掌握UI设计的核心技能。</p><h2>第一步：学习设计基础</h2><p>在开始UI设计之前，需要掌握一些基本的设计理论。包括色彩理论、排版原则、构图方法、视觉层次等。这些基础知识将帮助你做出更好的设计决策。</p><h2>第二步：掌握设计工具</h2><p>Figma是目前最主流的UI设计工具，免费且功能强大。建议从Figma开始学习，掌握组件设计、自动布局、原型交互等核心功能。</p><h2>第三步：学习设计规范</h2><p>了解iOS和Material Design的设计规范，掌握平台特定的设计模式和交互规范。这将确保你的设计符合用户的使用习惯。</p>'
+    },
+    {
+      id: 'a9', title: '内容创业者的素材管理方法论', summary: '建立高效的素材管理系统，让你的创作流程更加顺畅，不再为找不到素材而烦恼。',
+      cover: 'https://picsum.photos/seed/aiarticle9/600/360', date: '2024-11-18', views: 1876, likes: 143, featured: false,
+      tags: ['素材', '效率', '运营'], category: '技术干货',
+      content: '<p>对于内容创业者来说，素材管理是一项容易被忽视但极其重要的工作。良好的素材管理系统能够大幅提升创作效率，减少重复劳动。本文将分享一套经过实践验证的素材管理方法论。</p><h2>分类体系设计</h2><p>建立一套清晰的分类体系是素材管理的第一步。建议按照"大类-中类-小类"的三级结构进行分类，例如"图片-人物-商务场景"。标签系统也非常重要，一张素材可以有多个标签，方便交叉检索。</p><h2>命名规范</h2><p>统一的文件命名规范是高效检索的基础。建议采用"日期_类型_描述_版本"的命名格式，例如"20241215_photo_product_v2"。这样即使不打开文件，也能快速了解其内容。</p>'
+    }
+  ],
+  resources: [
+    { id: 'r1', title: '高端PPT模板合集', desc: '500+精心设计的高端PPT模板，适用于商业汇报、产品发布、年终总结等场景。', cover: 'https://picsum.photos/seed/aires1/600/400', tags: ['PPT', '模板', '办公'], category: '设计资源', price: 29.9, originalPrice: 99, rating: 4.8, sold: 1256, featured: true, accessLevel: 1, deliveryLink: 'https://example.com/dl/ppt', deliveryPassword: 'ppt2024', hidden: false },
+    { id: 'r2', title: '商业摄影素材包', desc: '1000+高清商业摄影素材，涵盖人物、产品、场景等多种类型，支持商用。', cover: 'https://picsum.photos/seed/aires2/600/400', tags: ['摄影', '素材', '商用'], category: '摄影素材', price: 49.9, originalPrice: 199, rating: 4.9, sold: 892, featured: true, accessLevel: 2, deliveryLink: 'https://example.com/dl/photo', deliveryPassword: 'photo2024', hidden: false },
+    { id: 'r3', title: 'UI设计组件库', desc: '完整的UI设计组件库，包含2000+组件，兼容Figma和Sketch，大幅提升设计效率。', cover: 'https://picsum.photos/seed/aires3/600/400', tags: ['UI', '组件', 'Figma'], category: '设计资源', price: 0, originalPrice: 0, rating: 4.7, sold: 2341, featured: false, accessLevel: 0, deliveryLink: 'https://example.com/dl/ui', deliveryPassword: '', hidden: false },
+    { id: 'r4', title: '视频剪辑素材包', desc: '包含转场特效、标题动画、背景音乐、音效等视频剪辑必备素材。', cover: 'https://picsum.photos/seed/aires4/600/400', tags: ['视频', '剪辑', '特效'], category: '视频素材', price: 39.9, originalPrice: 149, rating: 4.6, sold: 678, featured: false, accessLevel: 1, deliveryLink: 'https://example.com/dl/video', deliveryPassword: 'video2024', hidden: false },
+    { id: 'r5', title: '字体资源大礼包', desc: '200+精选字体，涵盖中文、英文、日文、韩文，均支持免费商用。', cover: 'https://picsum.photos/seed/aires5/600/400', tags: ['字体', '免费', '商用'], category: '字体资源', price: 0, originalPrice: 0, rating: 4.5, sold: 3456, featured: false, accessLevel: 0, deliveryLink: 'https://example.com/dl/font', deliveryPassword: '', hidden: false },
+    { id: 'r6', title: '品牌VI设计模板', desc: '50+品牌VI设计模板，包含Logo、名片、信封、文件夹等完整VI体系。', cover: 'https://picsum.photos/seed/aires6/600/400', tags: ['品牌', 'VI', '模板'], category: '设计资源', price: 19.9, originalPrice: 79, rating: 4.8, sold: 445, featured: false, accessLevel: 1, deliveryLink: 'https://example.com/dl/vi', deliveryPassword: 'vi2024', hidden: false },
+    { id: 'r7', title: '社交媒体素材包', desc: '专为社交媒体运营设计的素材包，包含各平台封面模板、话题图、互动图等。', cover: 'https://picsum.photos/seed/aires7/600/400', tags: ['社交', '媒体', '素材'], category: '运营工具', price: 15.9, originalPrice: 59, rating: 4.4, sold: 1102, featured: false, accessLevel: 1, deliveryLink: 'https://example.com/dl/social', deliveryPassword: 'social2024', hidden: false },
+    { id: 'r8', title: '电商运营工具集', desc: '电商运营必备工具合集，包含数据分析模板、运营计划表、客户管理工具等。', cover: 'https://picsum.photos/seed/aires8/600/400', tags: ['电商', '运营', '工具'], category: '运营工具', price: 0, originalPrice: 0, rating: 4.3, sold: 567, featured: false, accessLevel: 0, deliveryLink: 'https://example.com/dl/ecom', deliveryPassword: '', hidden: false }
+  ],
+  albums: [
+    {
+      id: 'ag1', name: '设计灵感', cover: 'https://picsum.photos/seed/aialbum1/800/500', desc: '汇聚全球优秀设计作品',
+      subAlbums: [
+        { id: 'sa1-1', name: '品牌设计案例', cover: 'https://picsum.photos/seed/aisub1/600/400', photos: [
+          { id: 'p1', url: 'https://picsum.photos/seed/aip1/800/600', title: '某咖啡品牌VI设计' },
+          { id: 'p2', url: 'https://picsum.photos/seed/aip2/600/800', title: '科技公司Logo集合' },
+          { id: 'p3', url: 'https://picsum.photos/seed/aip3/800/500', title: '餐饮品牌包装设计' },
+          { id: 'p4', url: 'https://picsum.photos/seed/aip4/700/700', title: '运动品牌视觉系统' },
+          { id: 'p5', url: 'https://picsum.photos/seed/aip5/800/550', title: '文创品牌IP设计' }
+        ]},
+        { id: 'sa1-2', name: 'UI界面设计', cover: 'https://picsum.photos/seed/aisub2/600/400', photos: [
+          { id: 'p6', url: 'https://picsum.photos/seed/aip6/800/600', title: '金融App界面设计' },
+          { id: 'p7', url: 'https://picsum.photos/seed/aip7/600/800', title: '电商平台首页设计' },
+          { id: 'p8', url: 'https://picsum.photos/seed/aip8/800/500', title: '健康管理App设计' },
+          { id: 'p9', url: 'https://picsum.photos/seed/aip9/700/700', title: '旅行App界面设计' }
+        ]}
+      ]
+    },
+    {
+      id: 'ag2', name: '活动花絮', cover: 'https://picsum.photos/seed/aialbum2/800/500', desc: '记录每一次精彩活动',
+      subAlbums: [
+        { id: 'sa2-1', name: '线下沙龙活动', cover: 'https://picsum.photos/seed/aisub3/600/400', photos: [
+          { id: 'p10', url: 'https://picsum.photos/seed/aip10/800/600', title: '设计分享沙龙现场' },
+          { id: 'p11', url: 'https://picsum.photos/seed/aip11/600/800', title: '嘉宾演讲精彩瞬间' },
+          { id: 'p12', url: 'https://picsum.photos/seed/aip12/800/500', title: '互动交流环节' },
+          { id: 'p13', url: 'https://picsum.photos/seed/aip13/700/700', title: '活动现场全景' },
+          { id: 'p14', url: 'https://picsum.photos/seed/aip14/800/550', title: '合影留念' }
+        ]},
+        { id: 'sa2-2', name: '团队建设活动', cover: 'https://picsum.photos/seed/aisub4/600/400', photos: [
+          { id: 'p15', url: 'https://picsum.photos/seed/aip15/800/600', title: '户外拓展训练' },
+          { id: 'p16', url: 'https://picsum.photos/seed/aip16/600/800', title: '团队协作挑战' },
+          { id: 'p17', url: 'https://picsum.photos/seed/aip17/800/500', title: '创意工坊活动' }
+        ]}
+      ]
+    },
+    {
+      id: 'ag3', name: '作品展示', cover: 'https://picsum.photos/seed/aialbum3/800/500', desc: '会员优秀作品精选',
+      subAlbums: [
+        { id: 'sa3-1', name: '会员优秀作品', cover: 'https://picsum.photos/seed/aisub5/600/400', photos: [
+          { id: 'p18', url: 'https://picsum.photos/seed/aip18/800/600', title: '优秀海报设计' },
+          { id: 'p19', url: 'https://picsum.photos/seed/aip19/600/800', title: '创意插画作品' },
+          { id: 'p20', url: 'https://picsum.photos/seed/aip20/800/500', title: '品牌视觉作品' },
+          { id: 'p21', url: 'https://picsum.photos/seed/aip21/700/700', title: '网页设计作品' },
+          { id: 'p22', url: 'https://picsum.photos/seed/aip22/800/550', title: '摄影作品' },
+          { id: 'p23', url: 'https://picsum.photos/seed/aip23/800/600', title: '包装设计作品' }
+        ]},
+        { id: 'sa3-2', name: '精选推荐', cover: 'https://picsum.photos/seed/aisub6/600/400', photos: [
+          { id: 'p24', url: 'https://picsum.photos/seed/aip24/800/600', title: '月度最佳设计' },
+          { id: 'p25', url: 'https://picsum.photos/seed/aip25/600/800', title: '编辑精选作品' },
+          { id: 'p26', url: 'https://picsum.photos/seed/aip26/800/500', title: '年度优秀作品' }
+        ]}
+      ]
+    }
+  ],
+  announcements: [
+    { id: 'ann1', title: '艾优社资源馆正式上线', content: '经过精心筹备，艾优社资源馆正式上线啦！海量优质资源等你来探索。', date: '2024-12-01' },
+    { id: 'ann2', title: '双十二会员特惠活动', content: '双十二期间，开通VIP会员享受限时折扣，低至5折！', date: '2024-12-10' }
+  ],
+  categories: ['全部', '设计资源', '摄影素材', '视频素材', '字体资源', '运营工具'],
+  tags: ['设计', '资源', 'AI', '营销', '品牌', '字体', '视频', '摄影', 'UI', '运营', '办公', '素材', '模板', '工具', '技巧', 'PPT', '免费', '商用'],
+  featuredCats: ['全部精选', '本周推荐', '编辑精选', '技术干货'],
+  messages: [
+    { id: 'm1', name: '小明', text: '资源很丰富，非常实用！', time: '2024-12-14 10:30' },
+    { id: 'm2', name: '设计师小王', text: '会员开通后确实值得，推荐给大家。', time: '2024-12-13 15:22' },
+    { id: 'm3', name: '李同学', text: '希望能增加更多UI设计相关的资源。', time: '2024-12-12 09:15' }
+  ],
+  contact_html: '',
+  contact_list: [
+    { platform: '微信', account: 'aiyoushe_vip', icon: '' },
+    { platform: '邮箱', account: 'hello@aiyoushe.com', icon: '' },
+    { platform: 'QQ', account: '123456789', icon: '' }
+  ],
+  pricing_html: '',
+  benefits_html: '',
+  profile_data: {},
+  vip_banner: { title: '开通会员，畅享全站资源', desc: '海量设计素材、模板资源、课程教程，VIP会员无限下载' },
+  about_data: {
+    intro: '艾优社资源馆是一个专注于创意资源共享的平台，致力于为设计师、运营人员和内容创作者提供高质量的素材资源和行业资讯。我们相信，好的资源能够激发更大的创造力。',
+    stories: [
+      { title: '从一个小群到万人社区', content: '艾优社最初只是一个由几位设计师组成的小型微信群，大家分享设计资源和行业心得。随着越来越多的朋友加入，我们逐渐发展成为一个拥有数万成员的创意社区。在这个过程中，我们始终保持着分享和互助的初心。' },
+      { title: '资源馆的诞生', content: '为了更好地组织和管理海量的设计资源，我们决定创建艾优社资源馆。这个平台汇聚了团队成员多年积累的优质资源，经过精心分类和筛选，为用户提供一站式的资源获取体验。' }
+    ],
+    values: [
+      { title: '品质至上', desc: '每一份资源都经过严格筛选，确保质量和实用性' },
+      { title: '持续更新', desc: '每周更新资源库，紧跟行业发展趋势' },
+      { title: '社区互助', desc: '倡导分享精神，建立互助共赢的创意社区' }
+    ],
+    contact: { wechat: 'aiyoushe_vip', email: 'hello@aiyoushe.com', qq: '123456789' }
+  },
+  qr_code: ''
+};
+
+/* ========================================
+   应用状态
+   ======================================== */
+var appState = {
+  currentPage: 'home',
+  currentArticleId: null,
+  currentResourceId: null,
+  currentAlbumGroupId: null,
+  currentSubAlbumId: null,
+  searchQuery: '',
+  selectedNewsCat: '全部精选',
+  selectedResCat: '全部',
+  selectedCategory: '',
+  selectedTag: '',
+  articleSort: 'latest',
+  selectedResCategory: '',
+  selectedResTag: '',
+  resourceSort: 'latest',
+  likedArticles: {},
+  firebaseReady: false,
+  carouselIndex: 0
+};
+
+
+var NICKNAMES = ['快乐的小星星', '勇敢的探险家', '温柔的海风', '聪明的熊猫', '活泼的小兔子', '善良的天使', '可爱的小猫咪', '勤劳的小蜜蜂', '自由的小鸟', '乐观的向日葵', '神秘的黑猫', '快乐的小青蛙', '温暖的小太阳', '机智的小狐狸', '善良的小白兔'];
+var AVATAR_COLORS = ['#E63946', '#457B9D', '#2A9D8F', '#E9C46A', '#F4A261', '#264653', '#E76F51', '#606C38', '#283618', '#DDA15E', '#BC6C25', '#023047', '#219EBC', '#8ECAE6', '#FB8500'];
+
+function getRandomNickname() {
+  return NICKNAMES[Math.floor(Math.random() * NICKNAMES.length)];
+}
+
+function getRandomColor() {
+  return AVATAR_COLORS[Math.floor(Math.random() * AVATAR_COLORS.length)];
+}
+/* ========================================
+   Firebase 配置（请替换为你的配置）
+   ======================================== */
+var firebaseConfig = {
+  apiKey: "AIzaSyCHsEjQ5bSvjBWsCU6JsKvzYSyr1Mz3JuM",
+  authDomain: "aiyoushe2.firebaseapp.com",
+  databaseURL: "https://aiyoushe2-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "aiyoushe2",
+  storageBucket: "aiyoushe2.firebasestorage.app",
+  messagingSenderId: "1023331806331",
+  appId: "1:1023331806331:web:839e730bc52e93b6bc46de"
+};
+
+var db = null;
+var carouselTimer = null;
+var lightboxPhotos = [];
+var lightboxIndex = 0;
+
+/* ========================================
+   工具函数
+   ======================================== */
+function $(id) { return document.getElementById(id); }
+function qs(sel) { return document.querySelector(sel); }
+function qsa(sel) { return document.querySelectorAll(sel); }
+
+function showToast(msg) {
+  var t = $('toast');
+  t.textContent = msg;
+  t.className = 'toast show';
+  setTimeout(function() { t.className = 'toast'; }, 2500);
+}
+
+function formatNumber(n) {
+  if (n >= 10000) return (n / 10000).toFixed(1) + 'w';
+  if (n >= 1000) return (n / 1000).toFixed(1) + 'k';
+  return String(n);
+}
+
+function getData(key) {
+  return DEFAULT_DATA[key] || [];
+}
+
+function findArticle(id) {
+  var articles = getData('articles');
+  for (var i = 0; i < articles.length; i++) {
+    if (articles[i].id === id) return articles[i];
+  }
+  return null;
+}
+
+function findResource(id) {
+  var resources = getData('resources');
+  for (var i = 0; i < resources.length; i++) {
+    if (resources[i].id === id) return resources[i];
+  }
+  return null;
+}
+
+function findAlbumGroup(id) {
+  var albums = getData('albums');
+  for (var i = 0; i < albums.length; i++) {
+    if (albums[i].id === id) return albums[i];
+  }
+  return null;
+}
+
+function findSubAlbum(groupId, subId) {
+  var group = findAlbumGroup(groupId);
+  if (!group || !group.subAlbums) return null;
+  for (var i = 0; i < group.subAlbums.length; i++) {
+    if (group.subAlbums[i].id === subId) return group.subAlbums[i];
+  }
+  return null;
+}
+
+/* ========================================
+   Firebase 初始化
+   ======================================== */
+function initFirebase() {
+  try {
+    if (typeof firebase === 'undefined') {
+      console.log('Firebase SDK 未加载，使用默认数据');
+      return;
+    }
+    firebase.initializeApp(firebaseConfig);
+    db = firebase.database();
+    console.log('Firebase 初始化成功');
+    listenFirebase();
+  } catch (e) {
+    console.log('Firebase 初始化失败，使用默认数据:', e.message);
+  }
+}
+
+function listenFirebase() {
+  if (!db) return;
+  var paths = [
+    'articles', 'resources', 'albums', 'announcements',
+    'categories', 'tags', 'featuredCats', 'messages',
+    'contact_html', 'contact_list', 'pricing_html', 'benefits_html',
+    'profile_data', 'vip_banner', 'about_data', 'qr_code',
+    'carousel'
+  ];
+
+  for (var i = 0; i < paths.length; i++) {
+    (function(path) {
+      var ref = db.ref('site/' + path);
+      ref.on('value', function(snapshot) {
+        var val = snapshot.val();
+        if (val !== null) {
+          if (Array.isArray(val)) {
+            DEFAULT_DATA[path] = val;
+          } else if (typeof val === 'object' && path !== 'messages') {
+            DEFAULT_DATA[path] = val;
+          } else if (path === 'messages') {
+            DEFAULT_DATA[path] = val;
+          }
+          if (!appState.firebaseReady) {
+            appState.firebaseReady = true;
+          }
+          renderCurrentPage();
+          if (path === 'announcements') loadAnnouncements();
+          if (path === 'profile_data') loadProfile();
+        }
+      }, function(err) {
+        console.log('Firebase 监听 ' + path + ' 失败:', err.message);
+      });
+    })(paths[i]);
+  }
+}
+
+/* ========================================
+   导航
+   ======================================== */
+function navigateTo(page, params) {
+  stopCarousel();
+  appState.currentPage = page;
+  if (params) {
+    for (var key in params) {
+      appState[key] = params[key];
+    }
+  }
+  renderCurrentPage();
+  updateNavActive();
+  closeSidebar();
+  window.scrollTo(0, 0);
+}
+
+function updateNavActive() {
+  var links = qsa('.nav-link');
+  var bnavItems = qsa('.bottom-nav-item');
+  var page = appState.currentPage;
+  var map = {
+    'home': 'home', 'news': 'news', 'resources': 'resources',
+    'albums': 'albums', 'album-detail': 'albums', 'sub-album': 'albums',
+    'member': 'member', 'about': 'about', 'search': 'home'
+  };
+  var activePage = map[page] || page;
+
+  for (var i = 0; i < links.length; i++) {
+    if (links[i].getAttribute('data-page') === activePage) {
+      links[i].className = 'nav-link active';
+    } else {
+      links[i].className = 'nav-link';
+    }
+  }
+  for (var j = 0; j < bnavItems.length; j++) {
+    if (bnavItems[j].getAttribute('data-page') === activePage) {
+      bnavItems[j].className = 'bottom-nav-item active';
+    } else {
+      bnavItems[j].className = 'bottom-nav-item';
+    }
+  }
+}
+
+function toggleSidebar() {
+  $('sidebar').className = $('sidebar').className ? '' : 'open';
+  $('sidebar-overlay').className = $('sidebar-overlay').className ? '' : 'show';
+}
+
+function closeSidebar() {
+  $('sidebar').className = '';
+  $('sidebar-overlay').className = '';
+}
+
+/* ========================================
+   页面渲染
+   ======================================== */
+function renderCurrentPage() {
+  var container = $('page-container');
+  var html = '';
+  switch (appState.currentPage) {
+    case 'home': html = renderHome(); break;
+    case 'news': html = renderNews(); break;
+    case 'article-detail': html = renderArticleDetail(); break;
+    case 'resources': html = renderResources(); break;
+    case 'resource-detail': html = renderResourceDetail(); break;
+    case 'albums': html = renderAlbums(); break;
+    case 'album-detail': html = renderAlbumDetail(); break;
+    case 'sub-album': html = renderSubAlbum(); break;
+    case 'member': html = renderMember(); break;
+    case 'about': html = renderAbout(); break;
+    case 'search': html = renderSearchPage(); break;
+    default: html = renderHome();
+  }
+  container.innerHTML = html;
+  if (appState.currentPage === 'home') startCarousel();
+  if (appState.currentPage === 'article-detail' && appState.currentArticleId) loadComments('article', appState.currentArticleId);
+  if (appState.currentPage === 'resource-detail' && appState.currentResourceId) loadComments('resource', appState.currentResourceId);
+  if (appState.currentPage === 'about') showUserLevel();
+}
+
+/* ---------- 首页 ---------- */
+function renderHome() {
+  var articles = getData('articles');
+  var resources = getData('resources');
+  var tags = getData('tags');
+  var carousel = getData('carousel');
+  var featured = [];
+  var resList = resources.slice(0, 6);
+  var tagCloudHtml = '';
+  var i, a, r;
+
+  for (i = 0; i < articles.length; i++) {
+    if (articles[i].featured) featured.push(articles[i]);
+    if (featured.length >= 3) break;
+  }
+
+  /* 轮播 */
+  var carouselHtml = '<div class="carousel" id="carousel">';
+  for (i = 0; i < carousel.length; i++) {
+    var active = i === appState.carouselIndex ? ' active' : '';
+    carouselHtml += '<div class="carousel-slide' + active + '" style="background-image:url(\'' + carousel[i].image + '\')">' +
+      '<div class="carousel-content"><h2>' + carousel[i].title + '</h2><p>' + carousel[i].desc + '</p></div></div>';
+  }
+  carouselHtml += '<span class="carousel-arrow carousel-prev" onclick="carouselGo(-1)">&#10094;</span>';
+  carouselHtml += '<span class="carousel-arrow carousel-next" onclick="carouselGo(1)">&#10095;</span>';
+  carouselHtml += '<div class="carousel-dots">';
+  for (i = 0; i < carousel.length; i++) {
+    var dotActive = i === appState.carouselIndex ? ' active' : '';
+    carouselHtml += '<span class="carousel-dot' + dotActive + '" onclick="carouselGoTo(' + i + ')"></span>';
+  }
+  carouselHtml += '</div></div>';
+
+  /* 精选文章 */
+  var articlesHtml = '<div class="section-title"><span>精选文章</span><span class="more-link" onclick="navigateTo(\'news\')">查看更多 &raquo;</span></div>';
+  articlesHtml += '<div class="card-grid" style="margin-bottom:32px">';
+  for (i = 0; i < featured.length; i++) {
+    a = featured[i];
+    articlesHtml += renderArticleCard(a);
+  }
+  articlesHtml += '</div>';
+
+  /* 精选资源 */
+  var resourcesHtml = '<div class="section-title"><span>精选资源</span><span class="more-link" onclick="navigateTo(\'resources\')">查看更多 &raquo;</span></div>';
+  resourcesHtml += '<div class="resource-grid" style="margin-bottom:32px">';
+  for (i = 0; i < resList.length; i++) {
+    r = resList[i];
+    resourcesHtml += renderResourceCard(r);
+  }
+  resourcesHtml += '</div>';
+
+  /* 热门标签 */
+  var topTags = tags.slice(0, 12);
+  for (i = 0; i < topTags.length; i++) {
+    tagCloudHtml += '<span class="tag tag-outline" onclick="navigateTo(\'resources\',{selectedResCat:\'' + topTags[i] + '\'})">' + topTags[i] + '</span>';
+  }
+  var tagsHtml = '<div class="section-title"><span>热门标签</span></div><div class="tag-cloud">' + tagCloudHtml + '</div>';
+
+  return carouselHtml + articlesHtml + resourcesHtml + tagsHtml;
+}
+
+function renderArticleCard(a) {
+  var tagsHtml = '';
+  for (var j = 0; j < (a.tags || []).length; j++) {
+    tagsHtml += '<span class="tag">' + a.tags[j] + '</span>';
+  }
+  return '<div class="article-card" onclick="navigateTo(\'article-detail\',{currentArticleId:\'' + a.id + '\'})">' +
+    '<div class="article-card-img"><img src="' + a.cover + '" alt="' + a.title + '" loading="lazy"></div>' +
+    '<div class="article-card-body">' +
+    '<h3>' + a.title + '</h3>' +
+    '<p>' + a.summary + '</p>' +
+    '<div class="article-card-meta"><div class="article-card-tags">' + tagsHtml + '</div>' +
+    '<div><span>' + a.date + '</span> &middot; <span>' + formatNumber(a.views) + '阅读</span></div>' +
+    '</div></div></div>';
+}
+
+function renderResourceCard(r) {
+  /* 隐藏的资源不显示 */
+  if (r.hidden) return '';
+
+  /* 标签 */
+  var tagsHtml = '';
+  for (var j = 0; j < (r.tags || []).length; j++) {
+    tagsHtml += '<span class="tag-pill">' + r.tags[j] + '</span>';
+  }
+
+  /* 折扣角标 */
+  var discountBadge = '';
+  var discount = 0;
+  if (r.originalPrice && r.originalPrice > 0 && r.price < r.originalPrice) {
+    discount = Math.round((1 - r.price / r.originalPrice) * 100);
+    if (discount === 100) {
+      discountBadge = '<span class="discount-badge">免费</span>';
+    } else {
+      discountBadge = '<span class="discount-badge">-' + discount + '%</span>';
+    }
+  }
+
+  /* 精选标签 */
+  var featuredBadge = '';
+  if (r.featured) {
+    var featCls = discountBadge ? 'featured-badge has-discount' : 'featured-badge no-discount';
+    featuredBadge = '<span class="' + featCls + '" style="background:#FF9800;color:#fff;font-size:10px;padding:3px 8px;border-radius:10px;font-weight:600">精选</span>';
+  }
+
+  /* 权限标签 */
+  var accessBadge = '';
+  var accessLabels = {0: '免费', 1: 'V1体验', 2: 'V2普通', 3: 'V3高级'};
+  if (r.accessLevel !== undefined && r.accessLevel !== null) {
+    accessBadge = '<span class="access-badge">' + (accessLabels[r.accessLevel] || '免费') + '</span>';
+  }
+
+  /* 星级 */
+  var starsHtml = renderStars(r.rating || 0);
+
+  /* 价格 */
+  var priceHtml = '';
+  if (r.price > 0 && r.originalPrice > 0 && r.originalPrice > r.price) {
+    var saved = (r.originalPrice - r.price).toFixed(1);
+    priceHtml = '<span class="price-current">&yen;' + r.price.toFixed(1) + '</span>' +
+      '<span class="price-original">&yen;' + r.originalPrice.toFixed(1) + '</span>' +
+      '<span class="price-saved">已省 &yen;' + saved + '</span>';
+  } else if (r.price > 0) {
+    priceHtml = '<span class="price-current">&yen;' + r.price.toFixed(1) + '</span>';
+  } else {
+    priceHtml = '<span class="price-current" style="color:#52c41a">免费</span>';
+  }
+
+  var soldText = r.sold ? '已售 ' + formatNumber(r.sold) : '';
+
+  return '<div class="resource-card" onclick="navigateTo(\'resource-detail\',{currentResourceId:\'' + r.id + '\'})">' +
+    '<div class="card-img-wrap">' + discountBadge + featuredBadge + '<img src="' + r.cover + '" alt="' + r.title + '" loading="lazy">' + accessBadge + '</div>' +
+    '<div class="card-info">' +
+    '<div class="card-title">' + r.title + '</div>' +
+    '<div class="card-meta"><span class="stars">' + starsHtml + '</span><span class="card-rating">' + (r.rating || 0).toFixed(1) + '</span>' + (soldText ? '<span class="card-sold" style="margin-left:auto">' + soldText + '</span>' : '') + '</div>' +
+    '<div class="card-price-row">' + priceHtml + '</div>' +
+    '<div class="card-tags">' + tagsHtml + '</div>' +
+    '<input type="button" class="btn-detail" value="查看详情" onclick="event.stopPropagation();navigateTo(\'resource-detail\',{currentResourceId:\'' + r.id + '\'})">' +
+    '</div></div>';
+}
+
+function renderStars(rating) {
+  var full = Math.floor(rating);
+  var half = (rating - full) >= 0.5 ? 1 : 0;
+  var empty = 5 - full - half;
+  var html = '';
+  var i;
+  for (i = 0; i < full; i++) html += '&#9733;';
+  for (i = 0; i < half; i++) html += '&#9734;';
+  for (i = 0; i < empty; i++) html += '&#9734;';
+  return html;
+}
+
+/* ---------- 轮播控制 ---------- */
+function startCarousel() {
+  stopCarousel();
+  carouselTimer = setInterval(function() { carouselGo(1); }, 4000);
+}
+
+function stopCarousel() {
+  if (carouselTimer) { clearInterval(carouselTimer); carouselTimer = null; }
+}
+
+function carouselGo(dir) {
+  var carousel = getData('carousel');
+  if (!carousel.length) return;
+  appState.carouselIndex = (appState.carouselIndex + dir + carousel.length) % carousel.length;
+  updateCarouselUI();
+  stopCarousel();
+  startCarousel();
+}
+
+function carouselGoTo(idx) {
+  appState.carouselIndex = idx;
+  updateCarouselUI();
+  stopCarousel();
+  startCarousel();
+}
+
+function updateCarouselUI() {
+  var slides = document.querySelectorAll('.carousel-slide');
+  var dots = document.querySelectorAll('.carousel-dot');
+  for (var i = 0; i < slides.length; i++) {
+    if (i === appState.carouselIndex) {
+      slides[i].className = 'carousel-slide active';
+      if (dots[i]) dots[i].className = 'carousel-dot active';
+    } else {
+      slides[i].className = 'carousel-slide';
+      if (dots[i]) dots[i].className = 'carousel-dot';
+    }
+  }
+}
+
+/* ---------- 业内资讯 ---------- */
+/* ---------- 自动提取分类和标签 ---------- */
+function extractCategories(items) {
+  var cats = [];
+  var seen = {};
+  for (var i = 0; i < items.length; i++) {
+    var cat = items[i].category || items[i].articleCat || '';
+    if (cat && !seen[cat]) {
+      seen[cat] = true;
+      cats.push(cat);
+    }
+  }
+  return cats;
+}
+
+function extractTags(items) {
+  var tags = [];
+  var seen = {};
+  for (var i = 0; i < items.length; i++) {
+    var t = items[i].tags || [];
+    for (var j = 0; j < t.length; j++) {
+      if (t[j] && !seen[t[j]]) {
+        seen[t[j]] = true;
+        tags.push(t[j]);
+      }
+    }
+  }
+  return tags;
+}
+
+/* ---------- 筛选和排序 ---------- */
+function filterByCategory(cat) {
+  appState.selectedCategory = (cat === '全部') ? '' : cat;
+  renderCurrentPage();
+}
+
+function filterByTag(tag) {
+  appState.selectedTag = (tag === '全部') ? '' : tag;
+  renderCurrentPage();
+}
+
+function sortArticles(type) {
+  appState.articleSort = type;
+  renderCurrentPage();
+}
+
+/* ---------- 业内资讯页 ---------- */
+function renderNews() {
+  var articles = getData('articles') || [];
+  articles = articles.filter(function(a) { return !a.hidden; });
+
+  /* 自动提取分类和标签 */
+  var categories = ['全部'].concat(extractCategories(articles));
+  var tags = ['全部'].concat(extractTags(articles));
+
+  var i, a, html = '';
+
+  /* 分类筛选按钮 */
+  html += '<div class="filter-tabs">';
+  for (i = 0; i < categories.length; i++) {
+    var isActive = (appState.selectedCategory === categories[i]) || (!appState.selectedCategory && categories[i] === '全部');
+    var cls = isActive ? 'filter-tab active' : 'filter-tab';
+    html += '<input type="button" class="' + cls + '" value="' + categories[i] + '" onclick="filterByCategory(\'' + categories[i] + '\')">';
+  }
+  html += '</div>';
+
+  /* 标签筛选按钮 */
+  html += '<div class="filter-tags" style="display:flex;flex-wrap:wrap;gap:8px;margin:12px 0;">';
+  for (i = 0; i < tags.length; i++) {
+    var isTagActive = (appState.selectedTag === tags[i]) || (!appState.selectedTag && tags[i] === '全部');
+    var tagCls = isTagActive ? 'filter-tag-pill active' : 'filter-tag-pill';
+    html += '<input type="button" class="' + tagCls + '" value="' + tags[i] + '" onclick="filterByTag(\'' + tags[i] + '\')">';
+  }
+  html += '</div>';
+
+  /* 排序按钮 */
+  html += '<div class="sort-bar">';
+  html += '<span style="font-size:13px;color:#999;">排序：</span>';
+  var sortOptions = [
+    {key: 'latest', label: '最新发布'},
+    {key: 'views', label: '最多阅读'},
+    {key: 'likes', label: '最多点赞'}
+  ];
+  for (i = 0; i < sortOptions.length; i++) {
+    var sortCls = (appState.articleSort === sortOptions[i].key) ? 'sort-btn active' : 'sort-btn';
+    html += '<input type="button" class="' + sortCls + '" value="' + sortOptions[i].label + '" onclick="sortArticles(\'' + sortOptions[i].key + '\')">';
+  }
+  html += '</div>';
+
+  /* 过滤 */
+  var filtered = articles.filter(function(a) {
+    if (appState.selectedCategory && (a.category || a.articleCat) !== appState.selectedCategory) return false;
+    if (appState.selectedTag) {
+      var t = a.tags || [];
+      if (t.indexOf(appState.selectedTag) === -1) return false;
+    }
+    return true;
+  });
+
+  /* 排序 */
+  if (appState.articleSort === 'views') {
+    filtered.sort(function(a, b) { return (b.views || 0) - (a.views || 0); });
+  } else if (appState.articleSort === 'likes') {
+    filtered.sort(function(a, b) { return (b.likes || 0) - (a.likes || 0); });
+  } else {
+    filtered.sort(function(a, b) { return (b.date || '').localeCompare(a.date || ''); });
+  }
+
+  /* 文章列表 */
+  html += '<div class="card-grid">';
+  for (i = 0; i < filtered.length; i++) {
+    a = filtered[i];
+    var catTag = (a.category || a.articleCat) ? '<span class="category-tag" style="margin-right:8px">' + (a.category || a.articleCat) + '</span>' : '';
+    var tagsHtml = '';
+    if (a.tags && a.tags.length) {
+      tagsHtml = '<div class="article-card-tags">';
+      for (var j = 0; j < a.tags.length; j++) {
+        tagsHtml += '<span class="tag-pill">' + a.tags[j] + '</span>';
+      }
+      tagsHtml += '</div>';
+    }
+    html += '<div class="article-card" onclick="navigateTo(\'article-detail\',{currentArticleId:\'' + a.id + '\'})">' +
+      '<div class="article-card-img"><img src="' + a.cover + '" alt="' + a.title + '" loading="lazy"></div>' +
+      '<div class="article-card-body">' +
+      catTag +
+      '<h3>' + a.title + '</h3>' +
+      '<p>' + a.summary + '</p>' +
+      tagsHtml +
+      '<div class="article-card-meta"><span>' + a.date + '</span><span>' + formatNumber(a.views) + '阅读</span><span style="color:var(--primary)">' + formatNumber(a.likes) + '赞</span></div>' +
+      '</div></div>';
+  }
+  html += '</div>';
+
+  if (filtered.length === 0) {
+    html += '<div class="empty-state"><div class="empty-icon">&#128221;</div><p>暂无匹配的文章</p></div>';
+  }
+
+  return html;
+}
+
+function renderArticleTags(tags) {
+  if (!tags || !tags.length) return '';
+  var html = '';
+  for (var i = 0; i < tags.length; i++) {
+    html += '<span class="tag">' + tags[i] + '</span>';
+  }
+  return html;
+}
+
+/* ---------- 文章详情 ---------- */
+function renderArticleDetail() {
+  var article = findArticle(appState.currentArticleId);
+  if (!article) return '<div class="empty-state"><div class="empty-icon">&#128221;</div><p>文章不存在</p></div>';
+
+  var liked = appState.likedArticles[article.id] ? ' liked' : '';
+  var tagsHtml = renderArticleTags(article.tags);
+  var likeCount = article.likes + (appState.likedArticles[article.id] ? 1 : 0);
+  var comments = DEFAULT_DATA['comments_article'] || [];
+  var commentCount = comments.length;
+  var hasAccess = canViewArticle(article);
+
+  /* Breadcrumb */
+  var html = '<span class="back-btn" onclick="navigateTo(\'news\')">&laquo; 返回资讯列表</span>';
+
+  /* Three-column layout */
+  html += '<div class="article-detail-layout">';
+
+  /* Left bar: actions */
+  html += '<div class="article-left-bar">';
+  /* 点赞 - 竖大拇指 */
+  html += '<div class="action-btn' + liked + '" onclick="toggleLike(\'' + article.id + '\')">';
+  html += '<span class="icon"><svg viewBox="0 0 24 24"><path d="M7 11V13H14L12 22H10L11.5 16H7C5.9 16 5 15.1 5 14V11C5 9.9 5.9 9 7 9H11L12 2H14V9H18C19.1 9 20 9.9 20 11V14C20 15.1 19.1 16 18 16H14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M7 11H11V9H7C5.9 9 5 9.9 5 11V14C5 15.1 5.9 16 7 16H11.5L10 22H12L14 13H7V11Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>';
+  html += '<span>' + formatNumber(likeCount) + '</span>';
+  html += '</div>';
+  /* 评论 - 双气泡 */
+  html += '<div class="action-btn" onclick="document.getElementById(\'articleComments\')&&document.getElementById(\'articleComments\').scrollIntoView({behavior:\'smooth\'})">';
+  html += '<span class="icon"><svg viewBox="0 0 24 24"><path d="M21 12C21 13.1 20.1 14 19 14H6L2 18V4C2 2.9 2.9 2 4 2H19C20.1 2 21 2.9 21 4V12Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 10H16M8 6H13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span>';
+  html += '<span>' + commentCount + '</span>';
+  html += '</div>';
+  /* 收藏 - 五角星 */
+  html += '<div class="action-btn' + (appState.favoritedArticles && appState.favoritedArticles[article.id] ? ' active' : '') + '" onclick="toggleFavorite(\'' + article.id + '\')">';
+  html += '<span class="icon"><svg viewBox="0 0 24 24"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>';
+  html += '<span>收藏</span>';
+  html += '</div>';
+  /* 分享 - 三点连线 */
+  html += '<div class="action-btn" onclick="copyArticleLink(\'' + article.id + '\')">';
+  html += '<span class="icon"><svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="2" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="6" cy="12" r="2" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="18" cy="19" r="2" fill="none" stroke="currentColor" stroke-width="1.8"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span>';
+  html += '<span>分享</span>';
+  html += '</div>';
+  html += '</div>';
+
+  /* Center: article content */
+  html += '<div class="article-center">';
+  html += '<div class="article-detail-header">';
+  html += '<h1>' + article.title + '</h1>';
+  html += '<div class="article-detail-meta">';
+  html += '<span>' + article.date + '</span>';
+  html += '<span>' + formatNumber(article.views) + '阅读</span>';
+  if (article.category) html += '<span class="category-tag">' + article.category + '</span>';
+  html += '</div>';
+  if (tagsHtml) html += '<div style="margin-top:12px">' + tagsHtml + '</div>';
+  html += '</div>';
+
+  if (hasAccess) {
+    html += '<div class="article-detail-content">' + (article.content || '<p>暂无内容</p>') + '</div>';
+  } else {
+    /* Show summary + paywall */
+    var summaryText = article.summary || '';
+    html += '<div class="article-detail-content">' + (summaryText ? '<p>' + summaryText + '</p>' : '') + '</div>';
+    html += '<div class="article-paywall">';
+    html += '<div class="article-detail-content" style="filter:blur(5px);user-select:none;pointer-events:none">' + (article.content || '<p>暂无内容</p>') + '</div>';
+    html += '<div class="article-paywall-overlay">';
+    html += '<div class="paywall-text">开通会员查看完整内容</div>';
+    html += '<div class="paywall-btn" onclick="showVIPQRModal()">立即开通</div>';
+    html += '</div></div>';
+  }
+
+  /* Comments */
+  html += renderComments('article', article.id);
+  html += '</div>';
+
+  /* Right bar: recommended articles */
+  html += '<div class="article-right-bar">';
+  html += renderRecommendedArticles(article.id);
+  html += '</div>';
+
+  html += '</div>';
+  return html;
+}
+
+function renderRecommendedArticles(excludeId) {
+  var articles = getData('articles');
+  var featured = articles.filter(function(a) { return a.featured && !a.hidden && a.id !== excludeId; });
+  featured = featured.slice(0, 8);
+  var html = '<div class="recommend-section">';
+  html += '<h4>精选推荐</h4>';
+  featured.forEach(function(a) {
+    var cover = a.cover || 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2280%22 height=%2260%22%3E%3Crect fill=%22%23eee%22 width=%2280%22 height=%2260%22/%3E%3C/svg%3E';
+    html += '<a class="recommend-item" href="#article-' + a.id + '" onclick="navigateTo(\'article-detail\',{currentArticleId:\'' + a.id + '\'})">';
+    html += '<div class="recommend-cover"><img src="' + cover + '" alt="" loading="lazy"></div>';
+    html += '<div class="recommend-info"><div class="recommend-title">' + a.title + '</div>';
+    html += '<div class="recommend-meta">' + (a.date || '') + ' &middot; ' + (a.views || 0) + '阅读</div></div>';
+    html += '</a>';
+  });
+  html += '</div>';
+  return html;
+}
+
+function copyArticleLink(articleId) {
+  var url = window.location.href.split('#')[0] + '#article-' + articleId;
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(url).then(function() {
+      showToast('链接已复制');
+    });
+  } else {
+    var textarea = document.createElement('textarea');
+    textarea.value = url;
+    textarea.style.position = 'fixed';
+    textarea.style.opacity = '0';
+    document.body.appendChild(textarea);
+    textarea.select();
+    try {
+      document.execCommand('copy');
+      showToast('链接已复制');
+    } catch(e) {
+      showToast('复制失败，请手动复制');
+    }
+    document.body.removeChild(textarea);
+  }
+}
+
+function toggleFavorite(articleId) {
+  if (!appState.favoritedArticles) appState.favoritedArticles = {};
+  if (appState.favoritedArticles[articleId]) {
+    delete appState.favoritedArticles[articleId];
+    showToast('已取消收藏');
+  } else {
+    appState.favoritedArticles[articleId] = true;
+    showToast('已收藏');
+  }
+  renderCurrentPage();
+}
+
+function toggleLike(articleId) {
+  if (appState.likedArticles[articleId]) {
+    delete appState.likedArticles[articleId];
+  } else {
+    appState.likedArticles[articleId] = true;
+    showToast('感谢您的点赞！');
+  }
+  renderCurrentPage();
+}
+
+function filterResByCategory(cat) {
+  appState.selectedResCategory = (cat === '全部') ? '' : cat;
+  renderCurrentPage();
+}
+
+function filterResByTag(tag) {
+  appState.selectedResTag = (tag === '全部') ? '' : tag;
+  renderCurrentPage();
+}
+
+function sortResources(type) {
+  appState.resourceSort = type;
+  renderCurrentPage();
+}
+
+/* ---------- 资源列表 ---------- */
+function renderResources() {
+  var resources = getData('resources') || [];
+  resources = resources.filter(function(r) { return !r.hidden; });
+
+  /* 自动提取分类和标签 */
+  var resCategories = ['全部'].concat(extractCategories(resources));
+  var resTags = ['全部'].concat(extractTags(resources));
+
+  var html = '';
+
+  /* 搜索框 */
+  html += '<div class="search-bar-page">';
+  html += '<input type="text" id="res-search-input" placeholder="搜索资源..." value="' + (appState.searchQuery || '') + '" onkeydown="if(event.keyCode===13){appState.searchQuery=this.value;renderCurrentPage()}">';
+  html += '<input type="button" class="btn btn-primary" value="搜索" onclick="appState.searchQuery=document.getElementById(\'res-search-input\').value;renderCurrentPage()">';
+  html += '</div>';
+
+  /* 分类筛选按钮 */
+  html += '<div class="filter-tabs">';
+  for (var i = 0; i < resCategories.length; i++) {
+    var isCatActive = (appState.selectedResCategory === resCategories[i]) || (!appState.selectedResCategory && resCategories[i] === '全部');
+    var cls = isCatActive ? 'filter-tab active' : 'filter-tab';
+    html += '<input type="button" class="' + cls + '" value="' + resCategories[i] + '" onclick="filterResByCategory(\'' + resCategories[i] + '\')">';
+  }
+  html += '</div>';
+
+  /* 标签筛选按钮 */
+  html += '<div class="filter-tags" style="display:flex;flex-wrap:wrap;gap:8px;margin:12px 0;">';
+  for (i = 0; i < resTags.length; i++) {
+    var isResTagActive = (appState.selectedResTag === resTags[i]) || (!appState.selectedResTag && resTags[i] === '全部');
+    var tagCls = isResTagActive ? 'filter-tag-pill active' : 'filter-tag-pill';
+    html += '<input type="button" class="' + tagCls + '" value="' + resTags[i] + '" onclick="filterResByTag(\'' + resTags[i] + '\')">';
+  }
+  html += '</div>';
+
+  /* 排序按钮 */
+  html += '<div class="sort-bar">';
+  html += '<span style="font-size:13px;color:#999;">排序：</span>';
+  var sortOpts = [
+    {key: 'latest', label: '最新发布'},
+    {key: 'views', label: '最多阅读'},
+    {key: 'likes', label: '最多点赞'}
+  ];
+  for (i = 0; i < sortOpts.length; i++) {
+    var sortCls = ((appState.resourceSort || 'latest') === sortOpts[i].key) ? 'sort-btn active' : 'sort-btn';
+    html += '<input type="button" class="' + sortCls + '" value="' + sortOpts[i].label + '" onclick="sortResources(\'' + sortOpts[i].key + '\')">';
+  }
+  html += '</div>';
+
+  /* 过滤 */
+  var query = (appState.searchQuery || '').toLowerCase();
+  var filtered = resources.filter(function(r) {
+    if (appState.selectedResCategory && (r.category || r.articleCat) !== appState.selectedResCategory) return false;
+    if (appState.selectedResTag) {
+      var t = r.tags || [];
+      if (t.indexOf(appState.selectedResTag) === -1) return false;
+    }
+    var matchSearch = !query || r.title.toLowerCase().indexOf(query) >= 0 || (r.desc || '').toLowerCase().indexOf(query) >= 0;
+    return matchSearch;
+  });
+
+  /* 排序 */
+  if ((appState.resourceSort || 'latest') === 'views') {
+    filtered.sort(function(a, b) { return (b.views || 0) - (a.views || 0); });
+  } else if ((appState.resourceSort || 'latest') === 'likes') {
+    filtered.sort(function(a, b) { return (b.likes || 0) - (a.likes || 0); });
+  } else {
+    filtered.sort(function(a, b) { return (b.date || '').localeCompare(a.date || ''); });
+  }
+
+  html += '<div class="resource-grid">';
+  for (var m = 0; m < filtered.length; m++) {
+    html += renderResourceCard(filtered[m]);
+  }
+  html += '</div>';
+
+  if (filtered.length === 0) {
+    html += '<div class="empty-state"><div class="empty-icon">&#128230;</div><p>暂无匹配的资源</p></div>';
+  }
+
+  return html;
+}
+
+/* ---------- 资源详情 ---------- */
+function renderResourceDetail() {
+  var resource = findResource(appState.currentResourceId);
+  if (!resource) return '<div class="empty-state"><div class="empty-icon">&#128230;</div><p>资源不存在</p></div>';
+
+  var html = '<span class="back-btn" onclick="navigateTo(\'resources\')">&laquo; 返回资源列表</span>';
+  html += '<div class="resource-detail-layout">';
+
+  /* 左侧封面 */
+  html += '<div class="resource-detail-left">';
+  html += '<div class="resource-detail-cover-wrap">';
+  var discountBadge = '';
+  if (resource.originalPrice && resource.originalPrice > 0 && resource.price < resource.originalPrice) {
+    var discount = Math.round((1 - resource.price / resource.originalPrice) * 100);
+    if (discount === 100) {
+      discountBadge = '<span class="discount-badge">免费</span>';
+    } else {
+      discountBadge = '<span class="discount-badge">-' + discount + '%</span>';
+    }
+  }
+  var featuredBadge = resource.featured ? '<span class="featured-badge">精选</span>' : '';
+  var accessBadge = '';
+  var accessLabels = {0: '免费', 1: 'V1体验', 2: 'V2普通', 3: 'V3高级'};
+  if (resource.accessLevel !== undefined && resource.accessLevel !== null) {
+    accessBadge = '<span class="access-badge">' + (accessLabels[resource.accessLevel] || '免费') + '</span>';
+  }
+  html += discountBadge + featuredBadge;
+  html += '<img class="resource-detail-cover" src="' + resource.cover + '" alt="' + resource.title + '">';
+  html += accessBadge + '</div></div>';
+
+  /* 右侧信息 */
+  html += '<div class="resource-detail-right">';
+  html += '<div class="resource-detail-info">';
+  html += '<h1>' + resource.title + '</h1>';
+  var starsHtml = renderStars(resource.rating || 0);
+  var soldText = resource.sold ? '已售 ' + formatNumber(resource.sold) : '';
+  html += '<div class="rating-row"><span class="rating-stars">' + starsHtml + '</span><span class="card-rating">' + (resource.rating || 0).toFixed(1) + '</span>' + (soldText ? '<span class="card-sold" style="margin-left:auto">' + soldText + '</span>' : '') + '</div>';
+
+  var priceHtml = '';
+  if (resource.price > 0 && resource.originalPrice > 0 && resource.originalPrice > resource.price) {
+    var saved = (resource.originalPrice - resource.price).toFixed(1);
+    priceHtml = '<div class="price-row"><span class="price-current">&yen;' + resource.price.toFixed(1) + '</span><span class="price-original">&yen;' + resource.originalPrice.toFixed(1) + '</span><span class="price-saved">已省 &yen;' + saved + '</span></div>';
+  } else if (resource.price > 0) {
+    priceHtml = '<div class="price-row"><span class="price-current">&yen;' + resource.price.toFixed(1) + '</span></div>';
+  } else {
+    priceHtml = '<div class="price-row"><span class="price-current" style="color:#52c41a">免费</span></div>';
+  }
+  html += priceHtml;
+
+  html += '<div class="resource-detail-tags">';
+  for (var i = 0; i < (resource.tags || []).length; i++) {
+    html += '<span class="tag-pill">' + resource.tags[i] + '</span>';
+  }
+  html += '</div>';
+  html += '<div class="detail-desc">' + resource.desc + '</div>';
+  html += '<input type="button" class="get-resource-btn" value="获取资源" onclick="handleGetResource(findResource(\'' + resource.id + '\'))">';
+  html += '</div></div>';
+  html += '</div>';
+  html += renderComments('resource', resource.id);
+  return html;
+}
+
+/* ---------- 相册中心 ---------- */
+function renderAlbums() {
+  var albums = getData('albums');
+  var html = '<div class="section-title"><span>相册分组</span></div>';
+  html += '<div class="album-grid">';
+
+  var accessLabels = {0: '免费', 1: 'V1体验', 2: 'V2普通', 3: 'V3高级'};
+  for (var i = 0; i < albums.length; i++) {
+    var g = albums[i];
+    var count = (g.subAlbums || []).length;
+    var photoCount = 0;
+    for (var j = 0; j < (g.subAlbums || []).length; j++) {
+      photoCount += (g.subAlbums[j].photos || []).length;
+    }
+    var accessBadge = '';
+    if (g.accessLevel !== undefined && g.accessLevel !== null && g.accessLevel > 0) {
+      accessBadge = '<span style="position:absolute;bottom:8px;right:8px;background:rgba(0,0,0,0.7);color:#fff;padding:3px 8px;border-radius:4px;font-size:11px;z-index:1">' + (accessLabels[g.accessLevel] || '免费') + '</span>';
+    }
+    html += '<div class="album-card" style="position:relative" onclick="navigateTo(\'album-detail\',{currentAlbumGroupId:\'' + g.id + '\'})">' +
+      '<img class="album-cover" src="' + g.cover + '" alt="' + g.name + '" loading="lazy">' +
+      '<div class="album-name">' + g.name + '</div>' +
+      accessBadge +
+      '</div>';
+  }
+  html += '</div>';
+  return html;
+}
+
+function renderAlbumDetail() {
+  var group = findAlbumGroup(appState.currentAlbumGroupId);
+  if (!group) return '<div class="empty-state"><p>相册不存在</p></div>';
+
+  var html = '<span class="back-btn" onclick="navigateTo(\'albums\')">&laquo; 返回相册中心</span>';
+  html += '<div class="section-title"><span>' + group.name + '</span></div>';
+
+  if (!canViewAlbum(group)) {
+    html += '<div class="empty-state" style="padding:80px 20px">';
+    html += '<div style="font-size:48px;margin-bottom:16px">&#128274;</div>';
+    html += '<p style="font-size:16px;color:var(--text);margin-bottom:20px">开通会员查看相册内容</p>';
+    html += '<input type="button" class="btn btn-primary" style="padding:12px 40px;font-size:15px" value="立即开通" onclick="showVIPQRModal()">';
+    html += '</div>';
+    return html;
+  }
+
+  html += '<div class="album-grid">';
+
+  for (var i = 0; i < (group.subAlbums || []).length; i++) {
+    var sa = group.subAlbums[i];
+    var photoCount = (sa.photos || []).length;
+    html += '<div class="album-card" onclick="navigateTo(\'sub-album\',{currentAlbumGroupId:\'' + group.id + '\',currentSubAlbumId:\'' + sa.id + '\'})">' +
+      '<img class="album-cover" src="' + sa.cover + '" alt="' + sa.name + '" loading="lazy">' +
+      '<div class="album-name">' + sa.name + '</div>' +
+      '</div>';
+  }
+  html += '</div>';
+  return html;
+}
+
+function renderSubAlbum() {
+  var group = findAlbumGroup(appState.currentAlbumGroupId);
+  if (!group) return navigateTo('albums'), '';
+  var subAlbum = findSubAlbum(appState.currentAlbumGroupId, appState.currentSubAlbumId);
+  if (!subAlbum) return navigateTo('album-detail', { currentAlbumGroupId: appState.currentAlbumGroupId }), '';
+
+  var html = '<span class="back-btn" onclick="navigateTo(\'album-detail\',{currentAlbumGroupId:\'' + group.id + '\'})">&laquo; 返回' + group.name + '</span>';
+  html += '<div class="section-title"><span>' + subAlbum.name + '</span><span style="font-size:13px;color:var(--text-light);font-weight:400">' + (subAlbum.photos || []).length + '张照片</span></div>';
+  html += '<div class="photo-grid">';
+
+  for (var i = 0; i < (subAlbum.photos || []).length; i++) {
+    var p = subAlbum.photos[i];
+    var photoSrc = (typeof p === 'string') ? p : (p.url || p.src || '');
+    var photoAlt = (typeof p === 'string') ? '' : (p.title || '');
+    html += '<div class="photo-item" onclick="openLightbox(' + i + ')">' +
+      '<img src="' + photoSrc + '" alt="' + photoAlt + '" loading="lazy">' +
+      '</div>';
+  }
+  html += '</div>';
+  return html;
+}
+
+/* ---------- Lightbox ---------- */
+function openLightbox(index) {
+  var group = findAlbumGroup(appState.currentAlbumGroupId);
+  if (!group) return;
+  var subAlbum = findSubAlbum(appState.currentAlbumGroupId, appState.currentSubAlbumId);
+  if (!subAlbum) return;
+
+  lightboxPhotos = subAlbum.photos || [];
+  lightboxIndex = index;
+  updateLightbox();
+  $('lightbox').className = 'lightbox show';
+  document.body.style.overflow = 'hidden';
+}
+
+function closeLightbox() {
+  $('lightbox').className = 'lightbox';
+  document.body.style.overflow = '';
+}
+
+function lightboxNav(dir) {
+  if (!lightboxPhotos.length) return;
+  lightboxIndex = (lightboxIndex + dir + lightboxPhotos.length) % lightboxPhotos.length;
+  updateLightbox();
+}
+
+function updateLightbox() {
+  if (!lightboxPhotos[lightboxIndex]) return;
+  var p = lightboxPhotos[lightboxIndex];
+  var photoSrc = (typeof p === 'string') ? p : (p.url || p.src || '');
+  var photoAlt = (typeof p === 'string') ? '' : (p.title || '');
+  $('lightbox-img').src = photoSrc;
+  $('lightbox-img').alt = photoAlt;
+  $('lightbox-counter').textContent = (lightboxIndex + 1) + ' / ' + lightboxPhotos.length;
+}
+
+/* ---------- 会员中心 ---------- */
+function renderMember() {
+  var vipData = getData('vip_banner') || {};
+  var messages = getData('messages') || [];
+  var html = '';
+
+  /* VIP Banner */
+  html += '<div class="vip-banner">';
+  html += '<h2>' + (vipData.title || '开通会员，畅享全站资源') + '</h2>';
+  html += '<p>' + (vipData.desc || '海量设计素材、模板资源、课程教程，VIP会员无限下载') + '</p>';
+  html += '<div style="margin-top:16px"><input type="button" class="btn btn-primary" style="padding:12px 40px;font-size:16px;border-radius:28px;background:rgba(255,255,255,.2);border:2px solid #fff;color:#fff" value="立即开通" onclick="showVIPQRModal()"></div>';
+  html += '</div>';
+
+  /* 定价卡片 */
+  var plans = [
+    { icon: '&#9733;', name: '体验会员', price: '¥9.9', period: '/月', label: '尝鲜体验', features: ['每月下载10个资源', '基础素材库访问', '社区交流权限', '邮件客服支持'] },
+    { icon: '&#9829;', name: '普通会员', price: '¥199', period: '/年', label: '超值推荐', featured: true, features: ['无限下载全部资源', '高级素材库访问', '专属设计模板', '优先客服响应', '每月新品抢先看'] },
+    { icon: '&#9830;', name: '高级会员', price: '¥999', period: '/年', label: '尊享旗舰', features: ['全部普通会员权益', '一对一专属顾问', '定制资源需求', '线下活动优先报名', '商业授权许可', '团队共享权限'] }
+  ];
+
+  html += '<div class="section-title"><span>会员套餐</span></div>';
+  html += '<div class="pricing-grid">';
+  for (var i = 0; i < plans.length; i++) {
+    var p = plans[i];
+    var featured = p.featured ? ' featured' : '';
+    var featList = '';
+    for (var j = 0; j < p.features.length; j++) {
+      featList += '<li>' + p.features[j] + '</li>';
+    }
+    html += '<div class="pricing-card' + featured + '">' +
+      '<div class="pricing-icon">' + p.icon + '</div>' +
+      '<h3>' + p.name + '</h3>' +
+      '<span class="pricing-label">' + p.label + '</span>' +
+      '<div class="price">' + p.price + '<span>' + p.period + '</span></div>' +
+      '<ul class="pricing-features">' + featList + '</ul>' +
+      '<input type="button" class="btn btn-primary" style="width:100%;padding:10px;margin-top:8px" value="立即开通" onclick="showQRModal()">' +
+      '</div>';
+  }
+  html += '</div>';
+
+  /* 会员权益 */
+  html += '<div class="section-title"><span>会员权益</span></div>';
+  html += '<div class="benefits-grid" style="margin-bottom:32px">';
+  var benefits = [
+    { icon: '&#128230;', title: '海量资源', desc: '数千优质设计资源' },
+    { icon: '&#9889;', title: '极速下载', desc: '不限速直接下载' },
+    { icon: '&#128172;', title: '专属客服', desc: '一对一优先服务' },
+    { icon: '&#128197;', title: '持续更新', desc: '每周新增精选内容' }
+  ];
+  for (var b = 0; b < benefits.length; b++) {
+    html += '<div class="benefit-item"><div class="benefit-icon">' + benefits[b].icon + '</div><h4>' + benefits[b].title + '</h4><p>' + benefits[b].desc + '</p></div>';
+  }
+  html += '</div>';
+
+  /* FAQ */
+  var faqs = [
+    { q: '会员资源可以商用吗？', a: '体验会员和普通会员的资源仅限个人学习和非商业用途。高级会员可获得商业授权许可，用于商业项目。具体授权范围请咨询客服。' },
+    { q: '开通会员后多久可以使用？', a: '付款完成后立即生效，您可以马上开始下载和使用全站资源。会员有效期从开通之日起计算。' },
+    { q: '可以退款吗？', a: '体验会员（月付）不支持退款。普通会员和高级会员在开通后7天内，如未下载超过5个资源，可申请全额退款。' },
+    { q: '支持哪些支付方式？', a: '目前支持微信支付和支付宝。请联系客服获取付款链接。' },
+    { q: '团队成员可以共享会员吗？', a: '高级会员支持最多5人团队共享权限。普通会员仅限个人使用，不可共享账号。' }
+  ];
+
+  html += '<div class="section-title"><span>常见问题</span></div>';
+  html += '<div class="faq-list">';
+  for (var f = 0; f < faqs.length; f++) {
+    html += '<div class="faq-item">' +
+      '<div class="faq-question" onclick="toggleFAQ(this)">' + faqs[f].q + '<span class="faq-arrow">&#9660;</span></div>' +
+      '<div class="faq-answer">' + faqs[f].a + '</div>' +
+      '</div>';
+  }
+  html += '</div>';
+
+  return html;
+}
+
+function toggleFAQ(el) {
+  var item = el.parentElement;
+  if (item.className.indexOf('active') >= 0) {
+    item.className = 'faq-item';
+  } else {
+    item.className = 'faq-item active';
+  }
+}
+
+/* ---------- 关于我们 ---------- */
+function renderAbout() {
+  var about = getData('about_data') || {};
+  var contact = about.contact || {};
+  var html = '';
+
+  /* 品牌介绍 */
+  html += '<div class="about-hero">';
+  html += '<h1>关于艾优社</h1>';
+  html += '<p>' + (about.intro || '艾优社资源馆是一个专注于创意资源共享的平台，致力于为设计师、运营人员和内容创作者提供高质量的素材资源和行业资讯。') + '</p>';
+  html += '</div>';
+
+  /* 团队故事 */
+  var stories = about.stories || DEFAULT_DATA.about_data.stories;
+  if (stories.length) {
+    html += '<div class="section-title"><span>团队故事</span></div>';
+    for (var i = 0; i < stories.length; i++) {
+      html += '<div class="story-card"><h3>' + stories[i].title + '</h3><p>' + stories[i].content + '</p></div>';
+    }
+  }
+
+  /* 核心价值观 */
+  var values = about.values || DEFAULT_DATA.about_data.values;
+  if (values.length) {
+    html += '<div class="section-title"><span>核心价值观</span></div>';
+    html += '<div class="values-grid">';
+    for (var j = 0; j < values.length; j++) {
+      html += '<div class="value-card"><h4>' + values[j].title + '</h4><p>' + values[j].desc + '</p></div>';
+    }
+    html += '</div>';
+  }
+
+  /* 联系方式 */
+  html += '<div class="contact-info-box">';
+  html += '<h3>联系方式</h3>';
+  html += '<div class="contact-grid">';
+  var contactList = getData('contact_list') || [];
+  if (contactList.length) {
+    for (var ci = 0; ci < contactList.length; ci++) {
+      var cc = contactList[ci];
+      var iconHtml = cc.icon ? '<img class="icon" src="' + cc.icon + '" alt="' + cc.platform + '">' : '<div class="icon" style="width:40px;height:40px;border-radius:50%;background:var(--bg);display:flex;align-items:center;justify-content:center;margin:0 auto 8px;font-size:20px;color:var(--text-light)">&#128172;</div>';
+      html += '<div class="contact-card">' + iconHtml + '<div class="platform">' + cc.platform + '</div><div class="account">' + cc.account + '</div></div>';
+    }
+  } else {
+    html += '<div class="contact-card"><div class="icon" style="width:40px;height:40px;border-radius:50%;background:var(--bg);display:flex;align-items:center;justify-content:center;margin:0 auto 8px;font-size:20px;color:var(--text-light)">&#128172;</div><div class="platform">微信</div><div class="account">' + (contact.wechat || 'aiyoushe_vip') + '</div></div>';
+    html += '<div class="contact-card"><div class="icon" style="width:40px;height:40px;border-radius:50%;background:var(--bg);display:flex;align-items:center;justify-content:center;margin:0 auto 8px;font-size:20px;color:var(--text-light)">&#9993;</div><div class="platform">邮箱</div><div class="account">' + (contact.email || 'hello@aiyoushe.com') + '</div></div>';
+    html += '<div class="contact-card"><div class="icon" style="width:40px;height:40px;border-radius:50%;background:var(--bg);display:flex;align-items:center;justify-content:center;margin:0 auto 8px;font-size:20px;color:var(--text-light)">&#128101;</div><div class="platform">QQ</div><div class="account">' + (contact.qq || '123456789') + '</div></div>';
+  }
+  html += '</div></div>';
+
+  /* 留言板 */
+  var messages = getData('messages') || [];
+  html += '<div class="message-board">';
+  html += '<h3>留言板</h3>';
+  html += '<div class="msg-form">';
+  html += '<textarea id="msg-content" placeholder="写下您的留言..." maxlength="500"></textarea>';
+  html += '<input type="button" class="btn btn-primary" value="发送留言" onclick="sendMessage()" style="width:100%">';
+  html += '</div>';
+  html += '<div class="msg-list">';
+  for (var k = messages.length - 1; k >= 0; k--) {
+    var m = messages[k];
+    var color = m.avatarColor || getRandomColor();
+    var initial = (m.nickname || m.name || '?').charAt(0);
+    html += '<div class="msg-item" style="display:flex;gap:10px;align-items:flex-start"><div style="width:36px;height:36px;border-radius:50%;background:' + color + ';display:flex;align-items:center;justify-content:center;color:#fff;font-weight:bold;font-size:14px;flex-shrink:0">' + initial + '</div><div style="flex:1"><div><span class="msg-name">' + escapeHtml(m.nickname || m.name || '匿名') + '</span><span class="msg-time">' + (m.time || '') + '</span></div><div class="msg-text">' + escapeHtml(m.text) + '</div></div></div>';
+  }
+  html += '</div></div>';
+
+  /* 指令码激活 */
+  html += '<div class="contact-info-box">';
+  html += '<h3>激活指令码</h3>';
+  html += '<div style="display:flex;gap:8px;margin-bottom:8px">';
+  html += '<input type="text" id="codeInput" placeholder="输入指令码" style="flex:1;padding:10px 16px;border:1px solid var(--border);border-radius:var(--radius);font-size:14px;outline:none">';
+  html += '<input type="button" class="btn btn-primary" value="激活" onclick="activateCode()">';
+  html += '</div>';
+  html += '<div id="codeResult" style="font-size:12px;color:#999;margin-top:4px"></div>';
+  html += '<div id="userLevelDisplay" style="font-size:12px;color:#666;margin-top:8px"></div>';
+  html += '</div>';
+
+  return html;
+}
+
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function sendMessage() {
+  var contentEl = $('msg-content');
+  if (!contentEl) return;
+  var text = contentEl.value.trim();
+  if (!text) { showToast('请输入留言内容'); return; }
+
+  var now = new Date();
+  var timeStr = now.getFullYear() + '-' +
+    padZero(now.getMonth() + 1) + '-' + padZero(now.getDate()) + ' ' +
+    padZero(now.getHours()) + ':' + padZero(now.getMinutes());
+
+  var msg = { id: 'msg_' + Date.now(), nickname: getRandomNickname(), avatarColor: getRandomColor(), text: text, time: timeStr };
+
+  if (!DEFAULT_DATA.messages) DEFAULT_DATA.messages = [];
+  DEFAULT_DATA.messages.push(msg);
+
+  if (db) {
+    db.ref('site/messages').push(msg);
+  }
+
+  contentEl.value = '';
+  showToast('留言发送成功！');
+  renderCurrentPage();
+}
+
+function padZero(n) { return n < 10 ? '0' + n : '' + n; }
+
+/* ---------- 搜索页 ---------- */
+function renderSearchPage() {
+  var query = (appState.searchQuery || '').toLowerCase();
+  var html = '';
+
+  html += '<div class="search-bar-page">';
+  html += '<input type="text" id="page-search-input" placeholder="搜索文章、资源..." value="' + escapeAttr(appState.searchQuery || '') + '" onkeydown="if(event.keyCode===13){appState.searchQuery=this.value;renderCurrentPage()}">';
+  html += '<input type="button" class="btn btn-primary" value="搜索" onclick="appState.searchQuery=document.getElementById(\'page-search-input\').value;renderCurrentPage()">';
+  html += '</div>';
+
+  if (!query) {
+    return html;
+  }
+
+  /* 搜索文章 */
+  var articles = getData('articles');
+  var res = getData('resources');
+  var artResults = [];
+  var resResults = [];
+
+  for (var i = 0; i < articles.length; i++) {
+    var a = articles[i];
+    if (a.title.toLowerCase().indexOf(query) >= 0 ||
+        a.summary.toLowerCase().indexOf(query) >= 0 ||
+        (a.tags && a.tags.join(',').toLowerCase().indexOf(query) >= 0)) {
+      artResults.push(a);
+    }
+  }
+  for (var j = 0; j < res.length; j++) {
+    var r = res[j];
+    if (r.title.toLowerCase().indexOf(query) >= 0 ||
+        r.desc.toLowerCase().indexOf(query) >= 0 ||
+        (r.tags && r.tags.join(',').toLowerCase().indexOf(query) >= 0)) {
+      resResults.push(r);
+    }
+  }
+
+  html += '<div class="search-result-header">找到 ' + (artResults.length + resResults.length) + ' 个结果</div>';
+
+  if (artResults.length) {
+    html += '<div class="section-title"><span>文章 (' + artResults.length + ')</span></div>';
+    html += '<div class="card-grid" style="margin-bottom:32px">';
+    for (var k = 0; k < artResults.length; k++) {
+      html += renderArticleCard(artResults[k]);
+    }
+    html += '</div>';
+  }
+
+  if (resResults.length) {
+    html += '<div class="section-title"><span>资源 (' + resResults.length + ')</span></div>';
+    html += '<div class="card-grid" style="margin-bottom:32px">';
+    for (var m = 0; m < resResults.length; m++) {
+      html += renderResourceCard(resResults[m]);
+    }
+    html += '</div>';
+  }
+
+  if (!artResults.length && !resResults.length) {
+    html += '<div class="empty-state"><div class="empty-icon">&#128269;</div><p>未找到相关内容，请尝试其他关键词</p></div>';
+  }
+
+  return html;
+}
+
+function escapeAttr(str) {
+  return escapeHtml(str);
+}
+
+function doTopSearch() {
+  var input = $('top-search-input');
+  if (input) {
+    appState.searchQuery = input.value.trim();
+    navigateTo('search');
+  }
+}
+
+
+function showVIPQRModal() {
+  var modal = $('qr-modal');
+  var imgContainer = $('qr-modal-img');
+  var qrData = getData('qr_code');
+
+  if (qrData) {
+    imgContainer.innerHTML = '<img src="' + qrData + '" alt="客服二维码">';
+  } else {
+    imgContainer.innerHTML = '<div style="width:180px;height:180px;background:linear-gradient(135deg,#f0f0f0,#ddd);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-direction:column;color:var(--text-lighter)"><div style="font-size:48px;margin-bottom:8px">&#9638;</div><div style="font-size:12px">二维码加载中</div></div>';
+  }
+
+  // Update modal title to "立即开通"
+  var titleEl = modal.querySelector('.qr-modal-content h3');
+  if (titleEl) titleEl.textContent = '立即开通';
+
+  var descEl = modal.querySelector('.qr-modal-desc');
+  if (descEl) descEl.textContent = '扫描二维码，联系客服立即开通VIP会员';
+
+  modal.className = 'qr-modal show';
+  document.body.style.overflow = 'hidden';
+}
+/* ========================================
+   二维码弹窗
+   ======================================== */
+function showQRModal() {
+  var modal = $('qr-modal');
+  var imgContainer = $('qr-modal-img');
+  var qrData = getData('qr_code');
+
+  if (qrData) {
+    imgContainer.innerHTML = '<img src="' + qrData + '" alt="客服二维码">';
+  } else {
+    imgContainer.innerHTML = '<div style="width:180px;height:180px;background:linear-gradient(135deg,#f0f0f0,#ddd);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-direction:column;color:var(--text-lighter)"><div style="font-size:48px;margin-bottom:8px">&#9638;</div><div style="font-size:12px">二维码加载中</div></div>';
+  }
+
+  modal.className = 'qr-modal show';
+  document.body.style.overflow = 'hidden';
+}
+
+function hideQRModal() {
+  $('qr-modal').className = 'qr-modal';
+  document.body.style.overflow = '';
+}
+
+/* ========================================
+   权限控制
+   ======================================== */
+function canViewArticle(article) {
+  if (!article.accessLevel || article.accessLevel === 0) return true;
+  var userLevel = getUserAccessLevel();
+  return userLevel >= article.accessLevel;
+}
+
+function canViewAlbum(album) {
+  if (!album.accessLevel || album.accessLevel === 0) return true;
+  var userLevel = getUserAccessLevel();
+  return userLevel >= album.accessLevel;
+}
+
+/* ========================================
+   资源获取与交付弹窗
+   ======================================== */
+function getUserAccessLevel() {
+  var level = localStorage.getItem('aiyoushe_user_level');
+  return level ? parseInt(level) : 0;
+}
+
+function handleGetResource(resource) {
+  if (!resource) return;
+  var userLevel = getUserAccessLevel();
+  var accessLevel = resource.accessLevel !== undefined ? resource.accessLevel : 0;
+
+  if (accessLevel === 0) {
+    showDeliveryModal(resource);
+  } else if (userLevel >= accessLevel) {
+    showDeliveryModal(resource);
+  } else {
+    showVIPQRModal();
+  }
+}
+
+function showDeliveryModal(resource) {
+  var modal = $('delivery-modal');
+  var linkBox = $('delivery-link-box');
+  var passwordBox = $('delivery-password-box');
+
+  if (resource.deliveryLink) {
+    linkBox.innerHTML = '<a href="' + resource.deliveryLink + '" target="_blank" rel="noopener">' + resource.deliveryLink + '</a>';
+  } else {
+    linkBox.innerHTML = '<span style="color:var(--text-lighter)">暂无交付链接</span>';
+  }
+
+  if (resource.deliveryPassword) {
+    passwordBox.innerHTML = '链接密码：<span>' + resource.deliveryPassword + '</span>';
+  } else {
+    passwordBox.innerHTML = '';
+  }
+
+  modal.className = 'delivery-modal show';
+  document.body.style.overflow = 'hidden';
+}
+
+function hideDeliveryModal() {
+  var modal = $('delivery-modal');
+  if (modal) {
+    modal.className = 'delivery-modal';
+    document.body.style.overflow = '';
+  }
+}
+
+var _deliveryLink = '';
+function copyDeliveryLink() {
+  var linkBox = $('delivery-link-box');
+  if (!linkBox) return;
+  var link = linkBox.textContent || linkBox.innerText || '';
+  _deliveryLink = link.trim();
+  if (!_deliveryLink) { showToast('没有可复制的链接'); return; }
+
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(_deliveryLink).then(function() {
+      showToast('链接已复制到剪贴板');
+    }).catch(function() {
+      fallbackCopy(_deliveryLink);
+    });
+  } else {
+    fallbackCopy(_deliveryLink);
+  }
+}
+
+function fallbackCopy(text) {
+  var ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.position = 'fixed';
+  ta.style.left = '-9999px';
+  document.body.appendChild(ta);
+  ta.select();
+  try {
+    document.execCommand('copy');
+    showToast('链接已复制到剪贴板');
+  } catch (e) {
+    showToast('复制失败，请手动复制');
+  }
+  document.body.removeChild(ta);
+}
+
+/* ========================================
+   指令码激活
+   ======================================== */
+function activateCode() {
+  var codeInput = document.getElementById('codeInput');
+  var codeResult = document.getElementById('codeResult');
+  var code = codeInput ? codeInput.value.trim() : '';
+  if (!code) { showToast('请输入指令码'); return; }
+  if (codeResult) codeResult.textContent = '验证中...';
+
+  if (!db) {
+    if (codeResult) codeResult.textContent = '网络未连接，无法验证指令码';
+    return;
+  }
+
+  db.ref('/site/codes').once('value', function(snap) {
+    var val = snap.val();
+    var codes = [];
+    if (Array.isArray(val)) {
+      codes = val;
+    } else if (typeof val === 'object' && val !== null) {
+      for (var k in val) {
+        if (val.hasOwnProperty(k)) { codes.push(val[k]); }
+      }
+    }
+    var found = false;
+    for (var i = 0; i < codes.length; i++) {
+      var c = codes[i];
+      if (c.code === code && !c.used) {
+        found = true;
+        var ip = 'unknown';
+        codes[i].used = true;
+        codes[i].usedAt = new Date().toISOString().split('T')[0];
+        codes[i].ip = ip;
+        db.ref('/site/codes').set(codes);
+        localStorage.setItem('aiyoushe_user_level', String(c.level));
+        localStorage.setItem('aiyoushe_code', code);
+        showUserLevel();
+        var levelNames = ['免费用户', '体验会员', '普通会员', '高级会员'];
+        showToast('激活成功！您已成为' + (levelNames[c.level] || '免费用户'));
+        if (codeResult) codeResult.textContent = '激活成功！';
+        if (codeInput) codeInput.value = '';
+        break;
+      }
+    }
+    if (!found) {
+      showToast('指令码无效或已被使用');
+      if (codeResult) codeResult.textContent = '指令码无效或已被使用';
+    }
+  }, function(err) {
+    if (codeResult) codeResult.textContent = '验证失败，请稍后再试';
+    console.log('指令码验证失败:', err.message);
+  });
+}
+
+function showUserLevel() {
+  var level = getUserAccessLevel();
+  var names = ['免费用户', '体验会员 V1', '普通会员 V2', '高级会员 V3'];
+  var el = document.getElementById('userLevelDisplay');
+  if (el) {
+    el.textContent = '当前权限：' + names[level];
+    el.style.color = level > 0 ? '#E63946' : '#999';
+  }
+}
+
+
+/* ========================================
+   公告栏
+   ======================================== */
+function loadAnnouncements() {
+  var announcements = getData('announcements');
+  var bar = $('announcementBar');
+  var scrollWrap = $('announcementScroll');
+  if (!bar || !scrollWrap) return;
+  if (!announcements || !announcements.length) {
+    bar.style.display = 'none';
+    return;
+  }
+  var html = '';
+  for (var i = 0; i < announcements.length; i++) {
+    var ann = announcements[i];
+    html += '<span>' + escapeHtml(ann.content || ann.title || '') + '</span>';
+  }
+  scrollWrap.innerHTML = html;
+  bar.style.display = 'block';
+}
+
+/* ========================================
+   评论功能
+   ======================================== */
+function renderComments(type, id) {
+  var comments = DEFAULT_DATA['comments_' + type] || [];
+  if (!comments.length) comments = [];
+  var html = '<div class="comment-section" id="' + type + 'Comments">';
+  html += '<h3>评论</h3>';
+  html += '<div class="comment-input-area">';
+  html += '<textarea id="' + type + 'CommentInput" placeholder="写下你的评论..."></textarea>';
+  html += '<input type="button" value="发表评论" onclick="submitComment(\'' + type + '\',\'' + id + '\')">';
+  html += '</div>';
+  html += '<div class="comment-list" id="' + type + 'CommentList">';
+
+  // Sort: pinned first, then by time desc
+  var sorted = comments.slice().sort(function(a, b) {
+    if (a.pinned && !b.pinned) return -1;
+    if (!a.pinned && b.pinned) return 1;
+    return (b.time || '').localeCompare(a.time || '');
+  });
+
+  for (var i = 0; i < sorted.length; i++) {
+    var c = sorted[i];
+    var color = c.avatarColor || '#E63946';
+    var initial = (c.nickname || '?').charAt(0);
+    var pinnedTag = c.pinned ? '<span class="comment-pinned">置顶</span>' : '';
+    html += '<div class="comment-item">';
+    html += '<div class="comment-avatar" style="background:' + color + '">' + initial + '</div>';
+    html += '<div class="comment-body">';
+    html += '<div class="comment-meta"><span class="comment-nickname">' + escapeHtml(c.nickname || '匿名') + '</span><span class="comment-time">' + (c.time || '') + '</span>' + pinnedTag + '</div>';
+    html += '<div class="comment-text">' + escapeHtml(c.text) + '</div>';
+    html += '</div></div>';
+  }
+  html += '</div></div>';
+  return html;
+}
+
+function loadComments(type, id) {
+  if (!db) return;
+  var ref = db.ref('site/comments/' + type + '/' + id);
+  ref.on('value', function(snap) {
+    var val = snap.val();
+    if (val !== null) {
+      var arr = [];
+      if (Array.isArray(val)) {
+        arr = val;
+      } else if (typeof val === 'object') {
+        for (var k in val) { if (val.hasOwnProperty(k)) { arr.push(val[k]); } }
+      }
+      DEFAULT_DATA['comments_' + type] = arr;
+      // Re-render comment section only
+      var listEl = $(type + 'CommentList');
+      if (listEl) {
+        var section = listEl.closest('.comment-section');
+        if (section) {
+          section.outerHTML = renderComments(type, id);
+        }
+      }
+    }
+  });
+}
+
+function submitComment(type, id) {
+  var inputEl = $(type + 'CommentInput');
+  if (!inputEl) return;
+  var text = inputEl.value.trim();
+  if (!text) { showToast('请输入评论内容'); return; }
+
+  var now = new Date();
+  var timeStr = now.getFullYear() + '-' +
+    padZero(now.getMonth() + 1) + '-' + padZero(now.getDate()) + ' ' +
+    padZero(now.getHours()) + ':' + padZero(now.getMinutes());
+
+  var comment = {
+    id: 'c_' + Date.now(),
+    nickname: getRandomNickname(),
+    avatarColor: getRandomColor(),
+    text: text,
+    time: timeStr,
+    pinned: false
+  };
+
+  if (!DEFAULT_DATA['comments_' + type]) DEFAULT_DATA['comments_' + type] = [];
+  DEFAULT_DATA['comments_' + type].push(comment);
+
+  if (db) {
+    db.ref('site/comments/' + type + '/' + id).push(comment);
+  }
+
+  inputEl.value = '';
+  showToast('评论发表成功！');
+  renderCurrentPage();
+}
+
+/* ========================================
+   平台头像和名称
+   ======================================== */
+function loadProfile() {
+  var data = getData('profile_data') || {};
+  var name = data.title || '艾优社';
+  var subtitle = data.subtitle || '资源馆';
+  var avatar = data.avatar || '';
+  var sidebarLogo = document.getElementById('sidebarLogo');
+  if (sidebarLogo) {
+    if (avatar) {
+      sidebarLogo.innerHTML = '<div style="display:flex;align-items:center;gap:10px">' +
+        '<img src="' + avatar + '" style="width:36px;height:36px;border-radius:50%;object-fit:cover;">' +
+        '<div><div style="font-size:18px;font-weight:700;letter-spacing:1px">' + name + '</div>' +
+        '<div style="font-size:12px;color:rgba(255,255,255,.5);margin-top:2px">' + subtitle + '</div></div></div>';
+    } else {
+      sidebarLogo.innerHTML = '<div style="display:flex;align-items:center;gap:10px">' +
+        '<div style="width:36px;height:36px;border-radius:50%;background:#E63946;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:bold;font-size:16px;flex-shrink:0">' + name.charAt(0) + '</div>' +
+        '<div><div style="font-size:18px;font-weight:700;letter-spacing:1px">' + name + '</div>' +
+        '<div style="font-size:12px;color:rgba(255,255,255,.5);margin-top:2px">' + subtitle + '</div></div></div>';
+    }
+  }
+}
+/* ========================================
+   全局事件
+   ======================================== */
+function setupGlobalEvents() {
+  /* ESC 关闭弹窗 */
+  document.addEventListener('keydown', function(e) {
+    if (e.keyCode === 27) {
+      hideQRModal();
+      hideDeliveryModal();
+      closeLightbox();
+    }
+  });
+
+  /* 点击弹窗背景关闭 */
+  $('qr-modal').addEventListener('click', function(e) {
+    if (e.target === this) hideQRModal();
+  });
+
+  /* 阻止二维码弹窗内容区点击冒泡 */
+  var qrContent = qs('.qr-modal-content');
+  if (qrContent) {
+    qrContent.addEventListener('click', function(e) { e.stopPropagation(); });
+  }
+}
+
+/* ========================================
+   初始化
+   ======================================== */
+function initApp() {
+  initFirebase();
+  setupGlobalEvents();
+  renderCurrentPage();
+  loadAnnouncements();
+  loadProfile();
+  showUserLevel();
+}
+
+/* 页面加载完成后初始化 */
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initApp);
+} else {
+  initApp();
+}
+</script>
+</body>
+</html>
