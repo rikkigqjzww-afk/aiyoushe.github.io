@@ -1250,20 +1250,24 @@ function renderArticleDetail() {
 
   /* Left bar: actions */
   html += '<div class="article-left-bar">';
+  /* 点赞 - 竖大拇指 */
   html += '<div class="action-btn' + liked + '" onclick="toggleLike(\'' + article.id + '\')">';
-  html += '<span class="icon"><svg viewBox="0 0 24 24"><path d="M7 10v12M15 5v14M3 14h18M3 10h18"/></svg></span>';
+  html += '<span class="icon"><svg viewBox="0 0 24 24"><path d="M7 11V13H14L12 22H10L11.5 16H7C5.9 16 5 15.1 5 14V11C5 9.9 5.9 9 7 9H11L12 2H14V9H18C19.1 9 20 9.9 20 11V14C20 15.1 19.1 16 18 16H14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M7 11H11V9H7C5.9 9 5 9.9 5 11V14C5 15.1 5.9 16 7 16H11.5L10 22H12L14 13H7V11Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>';
   html += '<span>' + formatNumber(likeCount) + '</span>';
   html += '</div>';
+  /* 评论 - 双气泡 */
   html += '<div class="action-btn" onclick="document.getElementById(\'articleComments\')&&document.getElementById(\'articleComments\').scrollIntoView({behavior:\'smooth\'})">';
-  html += '<span class="icon"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>';
+  html += '<span class="icon"><svg viewBox="0 0 24 24"><path d="M21 12C21 13.1 20.1 14 19 14H6L2 18V4C2 2.9 2.9 2 4 2H19C20.1 2 21 2.9 21 4V12Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 10H16M8 6H13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span>';
   html += '<span>' + commentCount + '</span>';
   html += '</div>';
+  /* 收藏 - 五角星 */
   html += '<div class="action-btn' + (appState.favoritedArticles && appState.favoritedArticles[article.id] ? ' active' : '') + '" onclick="toggleFavorite(\'' + article.id + '\')">';
-  html += '<span class="icon"><svg viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg></span>';
+  html += '<span class="icon"><svg viewBox="0 0 24 24"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>';
   html += '<span>收藏</span>';
   html += '</div>';
+  /* 分享 - 三点连线 */
   html += '<div class="action-btn" onclick="copyArticleLink(\'' + article.id + '\')">';
-  html += '<span class="icon"><svg viewBox="0 0 24 24"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg></span>';
+  html += '<span class="icon"><svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="2" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="6" cy="12" r="2" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="18" cy="19" r="2" fill="none" stroke="currentColor" stroke-width="1.8"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span>';
   html += '<span>分享</span>';
   html += '</div>';
   html += '</div>';

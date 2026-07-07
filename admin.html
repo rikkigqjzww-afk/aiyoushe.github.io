@@ -142,16 +142,15 @@ table img{width:60px;height:40px;object-fit:cover;border-radius:4px;}
 .photo-grid .photo-item img{width:100%;height:100%;object-fit:cover;}
 .photo-grid .photo-item .photo-del{position:absolute;top:4px;right:4px;width:24px;height:24px;background:rgba(230,57,70,0.9);color:#fff;border:none;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;opacity:0;transition:opacity 0.2s;}
 .photo-grid .photo-item:hover .photo-del{opacity:1;}
-.photo-grid .photo-item.dragging{opacity:0.5;}
 
-/* Drag Handle & Sortable */
-.drag-handle{cursor:grab;color:#ccc;font-size:18px;padding:0 8px;user-select:none;-webkit-user-select:none;display:inline-flex;align-items:center;}
-.drag-handle:active{cursor:grabbing;}
-.album-group-item[draggable="true"]{transition:background 0.2s;}
-.album-group-item.dragging{opacity:0.5;background:#f0f0f0;}
-.res-card.dragging{opacity:0.5;}
-table tbody tr[draggable="true"]{transition:background 0.2s;}
-table tbody tr.dragging{opacity:0.5;background:#f0f0f0;}
+/* Move Buttons */
+.btn-move{padding:2px 8px;font-size:14px;font-weight:bold;background:#f0f0f0;border:1px solid #ddd;border-radius:4px;cursor:pointer;color:#666;line-height:1;}
+.btn-move:hover{background:#e0e0e0;color:#333;}
+.photo-grid .photo-item .photo-move-btns{position:absolute;bottom:4px;left:50%;transform:translateX(-50%);display:flex;gap:4px;opacity:0;transition:opacity 0.2s;}
+.photo-grid .photo-item:hover .photo-move-btns{opacity:1;}
+.photo-move-btn{padding:2px 8px;font-size:14px;font-weight:bold;background:rgba(0,0,0,0.6);border:none;border-radius:4px;cursor:pointer;color:#fff;line-height:1;}
+.photo-move-btn:hover{background:rgba(0,0,0,0.8);}
+
 
 /* Tags Input */
 .tags-display{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;}
@@ -1322,238 +1321,41 @@ function getEditorContent(id) {
   return el ? el.innerHTML : '';
 }
 
-// ==================== Drag & Drop Sort Utility ====================
-function getDragAfterElement(container, y) {
-  var draggableElements = [];
-  var children = container.children;
-  for (var i = 0; i < children.length; i++) {
-    if (children[i].getAttribute('draggable') === 'true') {
-      draggableElements.push(children[i]);
-    }
-  }
-  var result = null;
-  for (var i = 0; i < draggableElements.length; i++) {
-    var box = draggableElements[i].getBoundingClientRect();
-    var offset = y - box.top - box.height / 2;
-    if (offset < 0 && offset < (result ? (y - result.getBoundingClientRect().top - result.getBoundingClientRect().height / 2) : Infinity)) {
-      result = draggableElements[i];
-    }
-  }
-  return result;
-}
+// ==================== Move Item (Up/Down) ====================
+function moveItem(dataKey, index, direction) {
+  var pathMap = {
+    'articles': '/site/articles',
+    'resources': '/site/resources',
+    'albums': '/site/albums',
+    'subAlbums': '/site/albums/' + currentAlbumIndex + '/subAlbums',
+    'photos': '/site/albums/' + currentAlbumIndex + '/subAlbums/' + currentSubAlbumIndex + '/photos'
+  };
+  var path = pathMap[dataKey];
+  if (!path) return;
 
-function initDragSort(containerEl, dataKey, saveCallback) {
-  if (!containerEl) return;
-  containerEl.addEventListener('dragstart', function(e) {
-    var target = e.target.closest('[draggable="true"]');
-    if (!target) return;
-    // Only allow drag from drag-handle
-    if (e.target.classList && !e.target.classList.contains('drag-handle') && !target.contains(e.target)) return;
-    e.dataTransfer.effectAllowed = 'move';
-    e.dataTransfer.setData('text/plain', '');
-    setTimeout(function() { target.classList.add('dragging'); }, 0);
-  });
-  containerEl.addEventListener('dragend', function(e) {
-    var target = e.target.closest('[draggable="true"]');
-    if (target) target.classList.remove('dragging');
-  });
-  containerEl.addEventListener('dragover', function(e) {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
-    var dragging = containerEl.querySelector('.dragging');
-    if (dragging) {
-      var afterElement = getDragAfterElement(containerEl, e.clientY);
-      if (afterElement) {
-        containerEl.insertBefore(dragging, afterElement);
+  db.ref(path).once('value', function(snap) {
+    var arr = toArray(snap.val());
+    var newIndex = index + direction;
+    if (newIndex < 0 || newIndex >= arr.length) return;
+
+    // Swap
+    var temp = arr[index];
+    arr[index] = arr[newIndex];
+    arr[newIndex] = temp;
+
+    db.ref(path).set(arr, function(err) {
+      if (!err) {
+        showToast('顺序已更新');
+        // Refresh the list
+        if (dataKey === 'articles') loadArticles();
+        else if (dataKey === 'resources') loadResources();
+        else if (dataKey === 'albums') loadAlbumGroups();
+        else if (dataKey === 'subAlbums') viewSubAlbums();
+        else if (dataKey === 'photos') loadAlbumPhotos();
       } else {
-        containerEl.appendChild(dragging);
+        showToast('更新失败');
       }
-    }
-  });
-  containerEl.addEventListener('drop', function(e) {
-    e.preventDefault();
-    // Read new order from DOM
-    var newOrder = [];
-    var allItems = containerEl.querySelectorAll('[data-key]');
-    for (var i = 0; i < allItems.length; i++) {
-      if (allItems[i].getAttribute('data-key')) {
-        newOrder.push(allItems[i].getAttribute('data-key'));
-      }
-    }
-    if (saveCallback) saveCallback(newOrder);
-  });
-  // Touch drag support
-  var touchStartY = 0;
-  var touchItem = null;
-  containerEl.addEventListener('touchstart', function(e) {
-    if (e.target.classList && e.target.classList.contains('drag-handle')) {
-      touchItem = e.target.closest('[draggable="true"]');
-      if (touchItem) {
-        touchStartY = e.touches[0].clientY;
-        touchItem.classList.add('dragging');
-      }
-    }
-  }, { passive: true });
-  containerEl.addEventListener('touchmove', function(e) {
-    if (touchItem) {
-      e.preventDefault();
-      var y = e.touches[0].clientY;
-      var afterElement = getDragAfterElement(containerEl, y);
-      if (afterElement) {
-        containerEl.insertBefore(touchItem, afterElement);
-      } else {
-        containerEl.appendChild(touchItem);
-      }
-    }
-  }, { passive: false });
-  containerEl.addEventListener('touchend', function() {
-    if (touchItem) {
-      touchItem.classList.remove('dragging');
-      // Read new order from DOM
-      var newOrder = [];
-      var allItems = containerEl.querySelectorAll('[data-key]');
-      for (var i = 0; i < allItems.length; i++) {
-        if (allItems[i].getAttribute('data-key')) {
-          newOrder.push(allItems[i].getAttribute('data-key'));
-        }
-      }
-      if (saveCallback) saveCallback(newOrder);
-      touchItem = null;
-    }
-  });
-}
-
-// ==================== Drag Sort Save Functions ====================
-function saveArticleOrder(newOrder) {
-  var keys = newOrder || [];
-  if (keys.length === 0) {
-    var tbody = document.getElementById('articlesList');
-    var rows = tbody.querySelectorAll('tr[draggable="true"]');
-    for (var i = 0; i < rows.length; i++) {
-      var k = rows[i].getAttribute('data-key');
-      if (k) keys.push(k);
-    }
-  }
-  var list = toArray(allData.articles || []);
-  var reordered = [];
-  for (var i = 0; i < keys.length; i++) {
-    for (var j = 0; j < list.length; j++) {
-      if ((list[j].id || list[j]._key) === keys[i]) {
-        reordered.push(list[j]);
-        break;
-      }
-    }
-  }
-  // Add any items not in the key list (shouldn't happen but safety)
-  for (var i = 0; i < list.length; i++) {
-    var found = false;
-    for (var j = 0; j < keys.length; j++) {
-      if ((list[i].id || list[i]._key) === keys[j]) { found = true; break; }
-    }
-    if (!found) reordered.push(list[i]);
-  }
-  saveData('articles', rebuildArray(reordered), function() {
-    showToast('文章排序已更新', 'success');
-    loadAllData();
-  });
-}
-
-function saveResourceOrder(newOrder) {
-  var keys = newOrder || [];
-  if (keys.length === 0) {
-    var container = document.getElementById('resourcesList');
-    var cards = container.querySelectorAll('.res-card[draggable="true"]');
-    for (var i = 0; i < cards.length; i++) {
-      var k = cards[i].getAttribute('data-key');
-      if (k) keys.push(k);
-    }
-  }
-  var list = toArray(allData.resources || []);
-  var reordered = [];
-  for (var i = 0; i < keys.length; i++) {
-    for (var j = 0; j < list.length; j++) {
-      if ((list[j].id || list[j]._key) === keys[i]) {
-        reordered.push(list[j]);
-        break;
-      }
-    }
-  }
-  for (var i = 0; i < list.length; i++) {
-    var found = false;
-    for (var j = 0; j < keys.length; j++) {
-      if ((list[i].id || list[i]._key) === keys[j]) { found = true; break; }
-    }
-    if (!found) reordered.push(list[i]);
-  }
-  saveData('resources', rebuildArray(reordered), function() {
-    showToast('资源排序已更新', 'success');
-    loadAllData();
-  });
-}
-
-function saveAlbumGroupOrder(newOrder) {
-  var keys = newOrder || [];
-  if (keys.length === 0) {
-    var container = document.getElementById('albumGroupsList');
-    var items = container.querySelectorAll('.album-group-item[draggable="true"]');
-    for (var i = 0; i < items.length; i++) {
-      var k = items[i].getAttribute('data-key');
-      if (k) keys.push(k);
-    }
-  }
-  var list = toArray(allData.albums || []);
-  var reordered = [];
-  for (var i = 0; i < keys.length; i++) {
-    for (var j = 0; j < list.length; j++) {
-      if ((list[j].id || list[j]._key) === keys[i]) {
-        reordered.push(list[j]);
-        break;
-      }
-    }
-  }
-  for (var i = 0; i < list.length; i++) {
-    var found = false;
-    for (var j = 0; j < keys.length; j++) {
-      if ((list[i].id || list[i]._key) === keys[j]) { found = true; break; }
-    }
-    if (!found) reordered.push(list[i]);
-  }
-  saveData('albums', rebuildArray(reordered), function() {
-    showToast('分组排序已更新', 'success');
-    loadAllData();
-  });
-}
-
-function saveSubAlbumOrder(newOrder) {
-  var keys = newOrder || [];
-  if (keys.length === 0) {
-    var container = document.getElementById('subAlbumsList');
-    var items = container.querySelectorAll('.album-group-item[draggable="true"]');
-    for (var i = 0; i < items.length; i++) {
-      var k = items[i].getAttribute('data-key');
-      if (k) keys.push(k);
-    }
-  }
-  var list = toArray(allData.albums || []);
-  for (var i = 0; i < list.length; i++) {
-    if ((list[i].id || list[i]._key) === currentAlbumGroup) {
-      var subs = list[i].subAlbums || [];
-      var reordered = [];
-      for (var j = 0; j < keys.length; j++) {
-        for (var k = 0; k < subs.length; k++) {
-          if (subs[k].id === keys[j]) {
-            reordered.push(subs[k]);
-            break;
-          }
-        }
-      }
-      list[i].subAlbums = reordered;
-      break;
-    }
-  }
-  saveData('albums', rebuildArray(list), function() {
-    showToast('子相册排序已更新', 'success');
-    loadAllData();
+    });
   });
 }
 
@@ -1638,21 +1440,22 @@ function loadArticles() {
     var hidden = a.hidden ? '<span style="color:#999;">[已隐藏]</span>' : '';
     var accessLevel = (a.accessLevel !== undefined) ? a.accessLevel : 0;
     var accessLabel = ['免费V0','体验V1','普通V2','高级V3'][accessLevel] || '免费V0';
-    html += '<tr draggable="true" data-key="' + aKey + '">' +
-      '<td><span class="drag-handle">&#8942;</span>' + (a.cover ? '<img src="' + a.cover + '">' : '-') + '</td>' +
+    var upBtn = (i > 0) ? '<input type="button" class="btn-sm btn-move" value="\u2191" title="\u4e0a\u79fb" onclick="moveItem(\'articles\',' + i + ',-1)">' : '';
+    var downBtn = (i < list.length - 1) ? '<input type="button" class="btn-sm btn-move" value="\u2193" title="\u4e0b\u79fb" onclick="moveItem(\'articles\',' + i + ',1)">' : '';
+    html += '<tr data-key="' + aKey + '">' +
+      '<td>' + (a.cover ? '<img src="' + a.cover + '">' : '-') + '</td>' +
       '<td>' + escapeHtml(a.title || '') + hidden + ' <span style="font-size:11px;color:#999;">[' + accessLabel + ']</span></td>' +
       '<td>' + escapeHtml(a.articleCat || '-') + '</td>' +
       '<td>' + formatDate(a.date) + '</td>' +
       '<td>' + (a.views || 0) + '</td>' +
       '<td>' + (a.likes || 0) + '</td>' +
-      '<td class="td-actions">' +
+      '<td class="td-actions">' + upBtn + downBtn +
         '<input type="button" class="btn-sm btn-edit" value="编辑" onclick="editArticle(\'' + aKey + '\')">' +
         '<input type="button" class="btn-sm ' + (a.hidden ? 'btn-success' : 'btn-warning') + '" value="' + (a.hidden ? '显示' : '隐藏') + '" onclick="toggleArticleHidden(\'' + aKey + '\')">' +
         '<input type="button" class="btn-sm btn-del" value="删除" onclick="deleteArticle(\'' + aKey + '\')">' +
       '</td></tr>';
   }
   tbody.innerHTML = html;
-  initDragSort(tbody.closest('tbody') || tbody, 'articles', function(order) { saveArticleOrder(order); });
 }
 
 function openArticleModal(articleId) {
@@ -1884,16 +1687,17 @@ function loadResources() {
       priceHtml += '<span class="res-orig-price">&yen;' + r.originalPrice + '</span>';
     }
     priceHtml += '</div>';
-    html += '<div class="res-card" draggable="true" data-key="' + (r.id || r._key || '') + '">' +
+    var resUpBtn = (i > 0) ? '<input type="button" class="btn-sm btn-move" value="\u2191" title="\u4e0a\u79fb" onclick="moveItem(\'resources\',' + i + ',-1)">' : '';
+    var resDownBtn = (i < list.length - 1) ? '<input type="button" class="btn-sm btn-move" value="\u2193" title="\u4e0b\u79fb" onclick="moveItem(\'resources\',' + i + ',1)">' : '';
+    html += '<div class="res-card" data-key="' + (r.id || r._key || '') + '">' +
       '<div class="res-card-cover">' +
-        '<span class="drag-handle" style="position:absolute;top:8px;right:40px;z-index:2;background:rgba(0,0,0,0.5);color:#fff;border-radius:4px;padding:2px 6px;font-size:16px;">&#8942;</span>' +
         coverImg + discount + accessBadge + hiddenBadge +
       '</div>' +
       '<div class="res-card-info">' +
         '<div class="res-card-title" title="' + escapeHtml(r.title || '') + '">' + escapeHtml(r.title || '无标题') + '</div>' +
         metaHtml +
         priceHtml +
-        '<div class="res-card-actions">' +
+        '<div class="res-card-actions">' + resUpBtn + resDownBtn +
           '<input type="button" class="btn-sm btn-edit" value="编辑" onclick="editResource(\'' + (r.id || r._key || '') + '\')">' +
           '<input type="button" class="btn-sm ' + (r.hidden ? 'btn-success' : 'btn-warning') + '" value="' + (r.hidden ? '显示' : '隐藏') + '" onclick="toggleResourceHidden(\'' + (r.id || r._key || '') + '\')">' +
           '<input type="button" class="btn-sm btn-del" value="删除" onclick="deleteResource(\'' + (r.id || r._key || '') + '\')">' +
@@ -1902,7 +1706,6 @@ function loadResources() {
     '</div>';
   }
   container.innerHTML = html;
-  initDragSort(container, 'resources', function(order) { saveResourceOrder(order); });
 }
 
 function openResourceModal(resId) {
@@ -2112,21 +1915,21 @@ function loadAlbumGroups() {
   var html = '';
   for (var i = 0; i < list.length; i++) {
     var g = list[i];
-    html += '<div class="album-group-item" draggable="true" data-key="' + (g.id || g._key || '') + '">' +
+    var grpUpBtn = (i > 0) ? '<input type="button" class="btn-sm btn-move" value="\u2191" title="\u4e0a\u79fb" onclick="moveItem(\'albums\',' + i + ',-1)">' : '';
+    var grpDownBtn = (i < list.length - 1) ? '<input type="button" class="btn-sm btn-move" value="\u2193" title="\u4e0b\u79fb" onclick="moveItem(\'albums\',' + i + ',1)">' : '';
+    html += '<div class="album-group-item" data-key="' + (g.id || g._key || '') + '">' +
       '<div style="display:flex;align-items:center;gap:12px;">' +
-        '<span class="drag-handle">&#8942;</span>' +
         (g.cover ? '<img src="' + g.cover + '" style="width:48px;height:48px;object-fit:cover;border-radius:6px;">' : '') +
         '<span class="group-name">' + escapeHtml(g.name || '未命名') + '</span>' +
         '<span style="color:#999;font-size:12px;">(' + (g.subAlbums ? g.subAlbums.length : 0) + '个子相册)</span>' +
       '</div>' +
-      '<div class="td-actions">' +
+      '<div class="td-actions">' + grpUpBtn + grpDownBtn +
         '<input type="button" class="btn-sm btn-edit" value="编辑" onclick="editAlbumGroup(\'' + (g.id || g._key || '') + '\')">' +
         '<input type="button" class="btn-sm btn-primary" value="查看子相册" onclick="viewSubAlbums(\'' + (g.id || g._key || '') + '\')">' +
         '<input type="button" class="btn-sm btn-del" value="删除" onclick="deleteAlbumGroup(\'' + (g.id || g._key || '') + '\')">' +
       '</div></div>';
   }
   container.innerHTML = html;
-  initDragSort(container, 'albums', function(order) { saveAlbumGroupOrder(order); });
 }
 
 function openAlbumGroupModal(groupId) {
@@ -2232,21 +2035,21 @@ function viewSubAlbums(groupId) {
   var html = '';
   for (var i = 0; i < subs.length; i++) {
     var s = subs[i];
-    html += '<div class="album-group-item" draggable="true" data-key="' + (s.id || '') + '">' +
+    var subUpBtn = (i > 0) ? '<input type="button" class="btn-sm btn-move" value="\u2191" title="\u4e0a\u79fb" onclick="moveItem(\'subAlbums\',' + i + ',-1)">' : '';
+    var subDownBtn = (i < subs.length - 1) ? '<input type="button" class="btn-sm btn-move" value="\u2193" title="\u4e0b\u79fb" onclick="moveItem(\'subAlbums\',' + i + ',1)">' : '';
+    html += '<div class="album-group-item" data-key="' + (s.id || '') + '">' +
       '<div style="display:flex;align-items:center;gap:12px;">' +
-        '<span class="drag-handle">&#8942;</span>' +
         (s.cover ? '<img src="' + s.cover + '" style="width:48px;height:48px;object-fit:cover;border-radius:6px;">' : '') +
         '<span class="group-name">' + escapeHtml(s.name || '未命名') + '</span>' +
         '<span style="color:#999;font-size:12px;">(' + (s.photos ? s.photos.length : 0) + '张照片)</span>' +
       '</div>' +
-      '<div class="td-actions">' +
+      '<div class="td-actions">' + subUpBtn + subDownBtn +
         '<input type="button" class="btn-sm btn-edit" value="编辑" onclick="editSubAlbum(\'' + (s.id || '') + '\')">' +
         '<input type="button" class="btn-sm btn-primary" value="查看照片" onclick="viewPhotos(\'' + (s.id || '') + '\')">' +
         '<input type="button" class="btn-sm btn-del" value="删除" onclick="deleteSubAlbum(\'' + (s.id || '') + '\')">' +
       '</div></div>';
   }
   container.innerHTML = html;
-  initDragSort(container, 'subAlbums', function(order) { saveSubAlbumOrder(order); });
 }
 
 function openSubAlbumModal(subId) {
@@ -2373,130 +2176,15 @@ function viewPhotos(subId) {
   }
   var html = '';
   for (var k = 0; k < photos.length; k++) {
-    html += '<div class="photo-item" draggable="true" data-index="' + k + '" data-photo-key="' + k + '">' +
+    var photoUpBtn = (k > 0) ? '<input type="button" class="photo-move-btn photo-up-btn" value="\u2191" title="\u4e0a\u79fb" onclick="moveItem(\'photos\',' + k + ',-1)">' : '';
+    var photoDownBtn = (k < photos.length - 1) ? '<input type="button" class="photo-move-btn photo-down-btn" value="\u2193" title="\u4e0b\u79fb" onclick="moveItem(\'photos\',' + k + ',1)">' : '';
+    html += '<div class="photo-item" data-index="' + k + '" data-photo-key="' + k + '">' +
       '<img src="' + photos[k] + '">' +
-      '<span class="drag-handle" style="position:absolute;top:4px;left:4px;z-index:2;background:rgba(0,0,0,0.5);color:#fff;border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-size:14px;">&#8942;</span>' +
       '<input type="button" class="photo-del" value="&times;" onclick="deletePhoto(' + k + ')">' +
+      '<div class="photo-move-btns">' + photoUpBtn + photoDownBtn + '</div>' +
     '</div>';
   }
   grid.innerHTML = html;
-  // Init photo drag sort with touch support
-  (function() {
-    var photoDragIdx = null;
-    var photoTouchItem = null;
-    var photoTouchStartY = 0;
-    grid.addEventListener('dragstart', function(e) {
-      var target = e.target.closest('.photo-item');
-      if (!target) return;
-      if (!e.target.classList.contains('drag-handle') && e.target !== target) return;
-      photoDragIdx = parseInt(target.getAttribute('data-photo-key'));
-      e.dataTransfer.effectAllowed = 'move';
-      e.dataTransfer.setData('text/plain', '');
-      setTimeout(function() { target.classList.add('dragging'); }, 0);
-    });
-    grid.addEventListener('dragend', function(e) {
-      var target = e.target.closest('.photo-item');
-      if (target) target.classList.remove('dragging');
-    });
-    grid.addEventListener('dragover', function(e) {
-      e.preventDefault();
-      e.dataTransfer.dropEffect = 'move';
-      var dragging = grid.querySelector('.photo-item.dragging');
-      if (dragging) {
-        var afterElement = getDragAfterElement(grid, e.clientY);
-        if (afterElement) grid.insertBefore(dragging, afterElement);
-        else grid.appendChild(dragging);
-      }
-    });
-    grid.addEventListener('drop', function(e) {
-      e.preventDefault();
-      if (photoDragIdx === null) return;
-      var items = grid.querySelectorAll('.photo-item');
-      var newOrder = [];
-      for (var i = 0; i < items.length; i++) {
-        newOrder.push(parseInt(items[i].getAttribute('data-photo-key')));
-      }
-      if (newOrder.length === 0) return;
-      var list = toArray(allData.albums || []);
-      for (var i = 0; i < list.length; i++) {
-        if ((list[i].id || list[i]._key) === currentAlbumGroup) {
-          var subs = list[i].subAlbums || [];
-          for (var j = 0; j < subs.length; j++) {
-            if (subs[j].id === currentSubAlbum) {
-              var photos = subs[j].photos || [];
-              var reordered = [];
-              for (var n = 0; n < newOrder.length; n++) {
-                reordered.push(photos[newOrder[n]]);
-              }
-              subs[j].photos = reordered;
-              break;
-            }
-          }
-          break;
-        }
-      }
-      saveData('albums', rebuildArray(list), function() {
-        showToast('照片排序已更新', 'success');
-        loadAllData();
-      });
-      photoDragIdx = null;
-    });
-    // Touch support for photos
-    grid.addEventListener('touchstart', function(e) {
-      if (e.target.classList && e.target.classList.contains('drag-handle')) {
-        photoTouchItem = e.target.closest('.photo-item');
-        if (photoTouchItem) {
-          photoTouchStartY = e.touches[0].clientY;
-          photoTouchItem.classList.add('dragging');
-        }
-      }
-    }, { passive: true });
-    grid.addEventListener('touchmove', function(e) {
-      if (photoTouchItem) {
-        e.preventDefault();
-        var y = e.touches[0].clientY;
-        var afterElement = getDragAfterElement(grid, y);
-        if (afterElement) grid.insertBefore(photoTouchItem, afterElement);
-        else grid.appendChild(photoTouchItem);
-      }
-    }, { passive: false });
-    grid.addEventListener('touchend', function() {
-      if (photoTouchItem) {
-        photoTouchItem.classList.remove('dragging');
-        // Trigger same reorder logic
-        var items = grid.querySelectorAll('.photo-item');
-        var newOrder = [];
-        for (var i = 0; i < items.length; i++) {
-          newOrder.push(parseInt(items[i].getAttribute('data-photo-key')));
-        }
-        if (newOrder.length > 0) {
-          var list = toArray(allData.albums || []);
-          for (var i = 0; i < list.length; i++) {
-            if ((list[i].id || list[i]._key) === currentAlbumGroup) {
-              var subs = list[i].subAlbums || [];
-              for (var j = 0; j < subs.length; j++) {
-                if (subs[j].id === currentSubAlbum) {
-                  var photos = subs[j].photos || [];
-                  var reordered = [];
-                  for (var n = 0; n < newOrder.length; n++) {
-                    reordered.push(photos[newOrder[n]]);
-                  }
-                  subs[j].photos = reordered;
-                  break;
-                }
-              }
-              break;
-            }
-          }
-          saveData('albums', rebuildArray(list), function() {
-            showToast('照片排序已更新', 'success');
-            loadAllData();
-          });
-        }
-        photoTouchItem = null;
-      }
-    });
-  })();
 }
 
 function uploadPhotos(input) {
