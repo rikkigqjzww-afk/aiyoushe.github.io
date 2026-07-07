@@ -1197,7 +1197,7 @@ function renderNews() {
   html += '<div class="card-grid">';
   for (i = 0; i < filtered.length; i++) {
     a = filtered[i];
-    var catTag = a.category ? '<span class="category-tag" style="margin-right:8px">' + a.category + '</span>' : '';
+    var catTag = (a.category || a.articleCat) ? '<span class="category-tag" style="margin-right:8px">' + (a.category || a.articleCat) + '</span>' : '';
     html += '<div class="article-card" onclick="navigateTo(\'article-detail\',{currentArticleId:\'' + a.id + '\'})">' +
       '<div class="article-card-img"><img src="' + a.cover + '" alt="' + a.title + '" loading="lazy"></div>' +
       '<div class="article-card-body">' +
