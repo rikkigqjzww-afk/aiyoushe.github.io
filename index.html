@@ -88,14 +88,23 @@ input,textarea,select{font-family:inherit}
 .card-grid-2{grid-template-columns:repeat(2,1fr)}
 
 /* ===== Resource Cards ===== */
-.resource-card{background:var(--card-bg);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow);transition:var(--transition);cursor:pointer}
+.resource-card{background:var(--card-bg);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow);transition:var(--transition);cursor:pointer;position:relative}
 .resource-card:hover{transform:translateY(-4px);box-shadow:var(--shadow-hover)}
 .resource-card-img{height:160px;overflow:hidden;position:relative;background:var(--bg)}
 .resource-card-img img{width:100%;height:100%;object-fit:cover;transition:transform .3s}
 .resource-card:hover .resource-card-img img{transform:scale(1.05)}
+.resource-card .discount-badge{position:absolute;top:8px;left:8px;background:var(--primary);color:#fff;font-size:11px;padding:3px 8px;border-radius:10px;font-weight:600;z-index:1}
+.resource-card .featured-badge{position:absolute;top:8px;right:8px;background:#FF9800;color:#fff;font-size:10px;padding:3px 8px;border-radius:10px;font-weight:600;z-index:1}
 .resource-card-body{padding:16px}
-.resource-card-body h3{font-size:15px;font-weight:600;margin-bottom:6px}
-.resource-card-body p{font-size:13px;color:var(--text-light);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin-bottom:12px}
+.resource-card-body h3{font-size:15px;font-weight:600;margin-bottom:6px;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.resource-card-body p{font-size:13px;color:var(--text-light);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin-bottom:8px}
+.resource-card .rating-row{display:flex;align-items:center;gap:4px;margin-bottom:6px;font-size:12px;color:var(--text-light)}
+.resource-card .rating-stars{color:#FF9800}
+.resource-card .sold-count{color:var(--text-lighter);font-size:12px}
+.resource-card .price-row{display:flex;align-items:baseline;gap:8px;margin-bottom:8px}
+.resource-card .price-now{font-size:18px;font-weight:700;color:#E63946}
+.resource-card .price-original{font-size:12px;color:#999;text-decoration:line-through}
+.resource-card .price-save{font-size:11px;color:#52c41a;background:#f6ffed;padding:2px 6px;border-radius:4px}
 .btn{display:inline-flex;align-items:center;justify-content:center;padding:8px 20px;border-radius:20px;font-size:13px;font-weight:500;transition:var(--transition);cursor:pointer;border:none}
 .btn-primary{background:var(--primary);color:#fff}
 .btn-primary:hover{background:var(--primary-light);transform:translateY(-1px)}
@@ -131,13 +140,29 @@ input,textarea,select{font-family:inherit}
 .back-btn:hover{color:var(--primary)}
 
 /* ===== Resource Detail ===== */
-.resource-detail-cover{width:100%;height:360px;object-fit:cover;border-radius:var(--radius);margin-bottom:24px}
+.resource-detail-layout{display:flex;gap:32px;margin-bottom:24px}
+.resource-detail-left{flex:0 0 400px;max-width:400px}
+.resource-detail-right{flex:1;min-width:0}
+.resource-detail-cover-wrap{position:relative;border-radius:var(--radius);overflow:hidden;margin-bottom:0}
+.resource-detail-cover-wrap .discount-badge{position:absolute;top:12px;left:12px;background:var(--primary);color:#fff;font-size:14px;padding:4px 12px;border-radius:12px;font-weight:600;z-index:1}
+.resource-detail-cover-wrap .hot-badge{position:absolute;top:12px;right:12px;background:#FF9800;color:#fff;font-size:12px;padding:4px 10px;border-radius:12px;font-weight:600;z-index:1}
+.resource-detail-cover{width:100%;aspect-ratio:3/4;object-fit:cover;display:block}
 .resource-detail-info{background:var(--card-bg);border-radius:var(--radius);padding:32px;box-shadow:var(--shadow);margin-bottom:24px}
 .resource-detail-info h1{font-size:24px;font-weight:700;color:var(--secondary);margin-bottom:8px}
-.resource-detail-info p{font-size:14px;color:var(--text-light);margin-bottom:16px}
+.resource-detail-info p{font-size:14px;color:var(--text-light);margin-bottom:16px;line-height:1.6}
+.resource-detail-info .rating-row{display:flex;align-items:center;gap:6px;margin-bottom:12px;font-size:14px;color:var(--text-light)}
+.resource-detail-info .rating-stars{color:#FF9800;font-size:16px}
+.resource-detail-info .price-row{display:flex;align-items:baseline;gap:12px;margin-bottom:16px}
+.resource-detail-info .price-now{font-size:28px;font-weight:700;color:#E63946}
+.resource-detail-info .price-original{font-size:16px;color:#999;text-decoration:line-through}
+.resource-detail-info .price-save{font-size:13px;color:#52c41a;background:#f6ffed;padding:4px 10px;border-radius:6px;font-weight:500}
 .resource-detail-tags{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}
 .get-resource-btn{padding:14px 48px;font-size:16px;font-weight:600;border-radius:28px;background:var(--primary);color:#fff;cursor:pointer;border:none;transition:var(--transition);display:inline-block}
 .get-resource-btn:hover{background:var(--primary-light);transform:translateY(-2px);box-shadow:0 8px 24px rgba(230,57,70,.3)}
+@media(max-width:768px){
+  .resource-detail-layout{flex-direction:column;gap:16px}
+  .resource-detail-left{flex:none;max-width:none}
+}
 
 /* ===== Album ===== */
 .album-group-card{background:var(--card-bg);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow);transition:var(--transition);cursor:pointer;position:relative}
@@ -240,6 +265,21 @@ input,textarea,select{font-family:inherit}
 .qr-modal-img .qr-placeholder{color:var(--text-lighter);font-size:14px}
 .qr-modal-desc{font-size:13px;color:var(--text-light);margin-bottom:20px;line-height:1.6}
 
+/* ===== Delivery Modal ===== */
+#delivery-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:2000;align-items:center;justify-content:center}
+#delivery-modal.show{display:flex}
+.delivery-modal-content{background:var(--card-bg);border-radius:var(--radius);padding:32px;text-align:center;max-width:380px;width:90%;position:relative;animation:modalIn .3s ease}
+.delivery-success-icon{width:60px;height:60px;border-radius:50%;background:#f6ffed;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:28px;color:#52c41a}
+.delivery-modal-content h3{font-size:20px;font-weight:700;color:var(--secondary);margin-bottom:4px}
+.delivery-modal-content .delivery-subtitle{font-size:14px;color:var(--text-light);margin-bottom:8px}
+.delivery-modal-content .delivery-desc{font-size:13px;color:var(--text-lighter);margin-bottom:16px}
+.delivery-link-box{background:#f5f5f5;border-radius:8px;padding:12px 16px;margin-bottom:8px;word-break:break-all;font-size:13px;color:var(--text);text-align:left;cursor:pointer}
+.delivery-link-box a{color:var(--primary);text-decoration:underline}
+.delivery-password-box{font-size:13px;color:var(--text-light);margin-bottom:16px}
+.delivery-password-box span{font-weight:600;color:var(--text)}
+.delivery-modal-actions{display:flex;gap:10px;justify-content:center}
+.delivery-modal-actions input[type="button"]{flex:1;padding:10px;border-radius:20px;font-size:14px;font-weight:500;cursor:pointer;border:none;transition:var(--transition)}
+
 /* ===== Search Results ===== */
 .search-bar-page{display:flex;gap:12px;margin-bottom:24px}
 .search-bar-page input{flex:1;padding:12px 20px;border:1px solid var(--border);border-radius:24px;font-size:14px;outline:none;background:var(--card-bg);transition:var(--transition)}
@@ -278,16 +318,16 @@ input,textarea,select{font-family:inherit}
 
 /* ===== Contact Grid (3 cols) ===== */
 .contact-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
-.contact-grid-item{background:var(--card-bg);border-radius:var(--radius);padding:20px;text-align:center;box-shadow:var(--shadow)}
-.contact-grid-item .contact-icon{font-size:28px;margin-bottom:8px}
-.contact-grid-item .contact-label{font-size:12px;color:var(--text-lighter);margin-bottom:4px}
-.contact-grid-item .contact-value{font-size:14px;font-weight:600;color:var(--text)}
-/* ===== Album Grid (4 cols, 9:16) ===== */
-.album-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.contact-card{text-align:center;padding:20px;background:#f8f9fa;border-radius:12px}
+.contact-card .icon{width:40px;height:40px;border-radius:50%;margin:0 auto 8px;object-fit:cover}
+.contact-card .platform{font-size:12px;color:#999}
+.contact-card .account{font-size:14px;font-weight:600;color:#333;margin-top:4px}
+/* ===== Album Grid (6 cols, 9:16) ===== */
+.album-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:12px}
 .album-card{cursor:pointer;transition:var(--transition)}
 .album-card:hover{transform:translateY(-4px)}
 .album-card .album-cover{aspect-ratio:9/16;object-fit:cover;border-radius:8px;width:100%}
-.album-card .album-name{margin-top:8px;font-size:13px;font-weight:600;color:var(--text);text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.album-card .album-name{font-size:12px;text-align:center;margin-top:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
 /* ===== Comment Section ===== */
 .comment-section{margin-top:40px;padding-top:24px;border-top:1px solid var(--border)}
@@ -320,6 +360,7 @@ input,textarea,select{font-family:inherit}
   .benefits-grid{grid-template-columns:repeat(2,1fr)}
   .photo-grid{columns:2}
   .values-grid{grid-template-columns:repeat(2,1fr)}
+  .album-grid{grid-template-columns:repeat(4,1fr)}
 }
 @media(max-width:768px){
   #sidebar{transform:translateX(-100%)}
@@ -346,11 +387,11 @@ input,textarea,select{font-family:inherit}
   .photo-item{margin-bottom:10px}
   .about-hero{padding:32px 24px}
   .about-hero h1{font-size:22px}
-  .album-grid{grid-template-columns:repeat(2,1fr);gap:12px}
+  .album-grid{grid-template-columns:repeat(3,1fr);gap:12px}
   .contact-grid{grid-template-columns:repeat(3,1fr);gap:8px}
-  .contact-grid-item{padding:14px 8px}
-  .contact-grid-item .contact-icon{font-size:22px}
-  .contact-grid-item .contact-value{font-size:12px}
+  .contact-card{padding:14px 8px}
+  .contact-card .icon{width:32px;height:32px}
+  .contact-card .account{font-size:12px}
   .qr-modal-content{max-width:300px;padding:24px 16px}
 }
 @media(max-width:480px){
@@ -362,7 +403,7 @@ input,textarea,select{font-family:inherit}
   .tag-cloud .tag{padding:5px 12px;font-size:12px}
   .album-grid{grid-template-columns:repeat(2,1fr);gap:10px}
   .contact-grid{grid-template-columns:repeat(3,1fr);gap:6px}
-  .contact-grid-item{padding:10px 4px}
+  .contact-card{padding:10px 4px}
   .comment-section{padding-top:16px}
   .comment-input-area textarea{height:80px}
 }
@@ -450,6 +491,22 @@ input,textarea,select{font-family:inherit}
   </div>
 </div>
 
+<!-- Delivery Modal -->
+<div id="delivery-modal" onclick="hideDeliveryModal()">
+  <div class="delivery-modal-content" onclick="event.stopPropagation()">
+    <div class="delivery-success-icon">&#10003;</div>
+    <h3 id="delivery-title">获取资源成功</h3>
+    <div class="delivery-subtitle" id="delivery-subtitle">获取链接成功</div>
+    <div class="delivery-desc" id="delivery-desc">资源链接已准备就绪，点击下方按钮获取</div>
+    <div class="delivery-link-box" id="delivery-link-box"></div>
+    <div class="delivery-password-box" id="delivery-password-box"></div>
+    <div class="delivery-modal-actions">
+      <input type="button" style="background:var(--primary);color:#fff" value="复制链接" onclick="copyDeliveryLink()">
+      <input type="button" style="background:var(--bg);color:var(--text)" value="关闭" onclick="hideDeliveryModal()">
+    </div>
+  </div>
+</div>
+
 <!-- Lightbox -->
 <div id="lightbox" onclick="closeLightbox()">
   <span class="lightbox-close" onclick="closeLightbox()">&times;</span>
@@ -529,14 +586,14 @@ var DEFAULT_DATA = {
     }
   ],
   resources: [
-    { id: 'r1', title: '高端PPT模板合集', desc: '500+精心设计的高端PPT模板，适用于商业汇报、产品发布、年终总结等场景。', cover: 'https://picsum.photos/seed/aires1/600/400', tags: ['PPT', '模板', '办公'], category: '设计资源' },
-    { id: 'r2', title: '商业摄影素材包', desc: '1000+高清商业摄影素材，涵盖人物、产品、场景等多种类型，支持商用。', cover: 'https://picsum.photos/seed/aires2/600/400', tags: ['摄影', '素材', '商用'], category: '摄影素材' },
-    { id: 'r3', title: 'UI设计组件库', desc: '完整的UI设计组件库，包含2000+组件，兼容Figma和Sketch，大幅提升设计效率。', cover: 'https://picsum.photos/seed/aires3/600/400', tags: ['UI', '组件', 'Figma'], category: '设计资源' },
-    { id: 'r4', title: '视频剪辑素材包', desc: '包含转场特效、标题动画、背景音乐、音效等视频剪辑必备素材。', cover: 'https://picsum.photos/seed/aires4/600/400', tags: ['视频', '剪辑', '特效'], category: '视频素材' },
-    { id: 'r5', title: '字体资源大礼包', desc: '200+精选字体，涵盖中文、英文、日文、韩文，均支持免费商用。', cover: 'https://picsum.photos/seed/aires5/600/400', tags: ['字体', '免费', '商用'], category: '字体资源' },
-    { id: 'r6', title: '品牌VI设计模板', desc: '50+品牌VI设计模板，包含Logo、名片、信封、文件夹等完整VI体系。', cover: 'https://picsum.photos/seed/aires6/600/400', tags: ['品牌', 'VI', '模板'], category: '设计资源' },
-    { id: 'r7', title: '社交媒体素材包', desc: '专为社交媒体运营设计的素材包，包含各平台封面模板、话题图、互动图等。', cover: 'https://picsum.photos/seed/aires7/600/400', tags: ['社交', '媒体', '素材'], category: '运营工具' },
-    { id: 'r8', title: '电商运营工具集', desc: '电商运营必备工具合集，包含数据分析模板、运营计划表、客户管理工具等。', cover: 'https://picsum.photos/seed/aires8/600/400', tags: ['电商', '运营', '工具'], category: '运营工具' }
+    { id: 'r1', title: '高端PPT模板合集', desc: '500+精心设计的高端PPT模板，适用于商业汇报、产品发布、年终总结等场景。', cover: 'https://picsum.photos/seed/aires1/600/400', tags: ['PPT', '模板', '办公'], category: '设计资源', price: 29.9, originalPrice: 99, rating: 4.8, sold: 1256, featured: true, accessLevel: 1, deliveryLink: 'https://example.com/dl/ppt', deliveryPassword: 'ppt2024', hidden: false },
+    { id: 'r2', title: '商业摄影素材包', desc: '1000+高清商业摄影素材，涵盖人物、产品、场景等多种类型，支持商用。', cover: 'https://picsum.photos/seed/aires2/600/400', tags: ['摄影', '素材', '商用'], category: '摄影素材', price: 49.9, originalPrice: 199, rating: 4.9, sold: 892, featured: true, accessLevel: 2, deliveryLink: 'https://example.com/dl/photo', deliveryPassword: 'photo2024', hidden: false },
+    { id: 'r3', title: 'UI设计组件库', desc: '完整的UI设计组件库，包含2000+组件，兼容Figma和Sketch，大幅提升设计效率。', cover: 'https://picsum.photos/seed/aires3/600/400', tags: ['UI', '组件', 'Figma'], category: '设计资源', price: 0, originalPrice: 0, rating: 4.7, sold: 2341, featured: false, accessLevel: 0, deliveryLink: 'https://example.com/dl/ui', deliveryPassword: '', hidden: false },
+    { id: 'r4', title: '视频剪辑素材包', desc: '包含转场特效、标题动画、背景音乐、音效等视频剪辑必备素材。', cover: 'https://picsum.photos/seed/aires4/600/400', tags: ['视频', '剪辑', '特效'], category: '视频素材', price: 39.9, originalPrice: 149, rating: 4.6, sold: 678, featured: false, accessLevel: 1, deliveryLink: 'https://example.com/dl/video', deliveryPassword: 'video2024', hidden: false },
+    { id: 'r5', title: '字体资源大礼包', desc: '200+精选字体，涵盖中文、英文、日文、韩文，均支持免费商用。', cover: 'https://picsum.photos/seed/aires5/600/400', tags: ['字体', '免费', '商用'], category: '字体资源', price: 0, originalPrice: 0, rating: 4.5, sold: 3456, featured: false, accessLevel: 0, deliveryLink: 'https://example.com/dl/font', deliveryPassword: '', hidden: false },
+    { id: 'r6', title: '品牌VI设计模板', desc: '50+品牌VI设计模板，包含Logo、名片、信封、文件夹等完整VI体系。', cover: 'https://picsum.photos/seed/aires6/600/400', tags: ['品牌', 'VI', '模板'], category: '设计资源', price: 19.9, originalPrice: 79, rating: 4.8, sold: 445, featured: false, accessLevel: 1, deliveryLink: 'https://example.com/dl/vi', deliveryPassword: 'vi2024', hidden: false },
+    { id: 'r7', title: '社交媒体素材包', desc: '专为社交媒体运营设计的素材包，包含各平台封面模板、话题图、互动图等。', cover: 'https://picsum.photos/seed/aires7/600/400', tags: ['社交', '媒体', '素材'], category: '运营工具', price: 15.9, originalPrice: 59, rating: 4.4, sold: 1102, featured: false, accessLevel: 1, deliveryLink: 'https://example.com/dl/social', deliveryPassword: 'social2024', hidden: false },
+    { id: 'r8', title: '电商运营工具集', desc: '电商运营必备工具合集，包含数据分析模板、运营计划表、客户管理工具等。', cover: 'https://picsum.photos/seed/aires8/600/400', tags: ['电商', '运营', '工具'], category: '运营工具', price: 0, originalPrice: 0, rating: 4.3, sold: 567, featured: false, accessLevel: 0, deliveryLink: 'https://example.com/dl/ecom', deliveryPassword: '', hidden: false }
   ],
   albums: [
     {
@@ -606,6 +663,11 @@ var DEFAULT_DATA = {
     { id: 'm3', name: '李同学', text: '希望能增加更多UI设计相关的资源。', time: '2024-12-12 09:15' }
   ],
   contact_html: '',
+  contact_list: [
+    { platform: '微信', account: 'aiyoushe_vip', icon: '' },
+    { platform: '邮箱', account: 'hello@aiyoushe.com', icon: '' },
+    { platform: 'QQ', account: '123456789', icon: '' }
+  ],
   pricing_html: '',
   benefits_html: '',
   profile_data: {},
@@ -752,7 +814,7 @@ function listenFirebase() {
   var paths = [
     'articles', 'resources', 'albums', 'announcements',
     'categories', 'tags', 'featuredCats', 'messages',
-    'contact_html', 'pricing_html', 'benefits_html',
+    'contact_html', 'contact_list', 'pricing_html', 'benefits_html',
     'profile_data', 'vip_banner', 'about_data', 'qr_code',
     'carousel'
   ];
@@ -862,6 +924,7 @@ function renderCurrentPage() {
   if (appState.currentPage === 'home') startCarousel();
   if (appState.currentPage === 'article-detail' && appState.currentArticleId) loadComments('article', appState.currentArticleId);
   if (appState.currentPage === 'resource-detail' && appState.currentResourceId) loadComments('resource', appState.currentResourceId);
+  if (appState.currentPage === 'about') showUserLevel();
 }
 
 /* ---------- 首页 ---------- */
@@ -944,14 +1007,45 @@ function renderResourceCard(r) {
   for (var j = 0; j < (r.tags || []).length; j++) {
     tagsHtml += '<span class="tag">' + r.tags[j] + '</span>';
   }
+  var discountBadge = '';
+  if (r.originalPrice && r.originalPrice > 0 && r.price < r.originalPrice) {
+    var discount = Math.round((1 - r.price / r.originalPrice) * 100);
+    discountBadge = '<span class="discount-badge">-' + discount + '%</span>';
+  }
+  var featuredBadge = r.featured ? '<span class="featured-badge">精选</span>' : '';
+  var starsHtml = renderStars(r.rating || 0);
+  var soldText = r.sold ? formatNumber(r.sold) + '已售' : '';
+  var priceHtml = '';
+  if (r.price > 0 && r.originalPrice > 0 && r.originalPrice > r.price) {
+    var saved = (r.originalPrice - r.price).toFixed(1);
+    priceHtml = '<div class="price-row"><span class="price-now">&yen;' + r.price.toFixed(1) + '</span><span class="price-original">&yen;' + r.originalPrice.toFixed(1) + '</span><span class="price-save">省&yen;' + saved + '</span></div>';
+  } else if (r.price > 0) {
+    priceHtml = '<div class="price-row"><span class="price-now">&yen;' + r.price.toFixed(1) + '</span></div>';
+  } else {
+    priceHtml = '<div class="price-row"><span class="price-now" style="color:#52c41a">免费</span></div>';
+  }
+
   return '<div class="resource-card" onclick="navigateTo(\'resource-detail\',{currentResourceId:\'' + r.id + '\'})">' +
-    '<div class="resource-card-img"><img src="' + r.cover + '" alt="' + r.title + '" loading="lazy"></div>' +
+    '<div class="resource-card-img">' + discountBadge + featuredBadge + '<img src="' + r.cover + '" alt="' + r.title + '" loading="lazy"></div>' +
     '<div class="resource-card-body">' +
     '<h3>' + r.title + '</h3>' +
-    '<p>' + r.desc + '</p>' +
+    '<div class="rating-row"><span class="rating-stars">' + starsHtml + '</span><span>' + (r.rating || 0).toFixed(1) + '</span>' + (soldText ? '<span class="sold-count" style="margin-left:auto">' + soldText + '</span>' : '') + '</div>' +
+    priceHtml +
     '<div class="article-card-tags" style="margin-bottom:12px">' + tagsHtml + '</div>' +
-    '<input type="button" class="btn btn-outline btn-sm" value="查看资源" onclick="event.stopPropagation();navigateTo(\'resource-detail\',{currentResourceId:\'' + r.id + '\'})">' +
+    '<input type="button" class="btn btn-outline btn-sm" value="查看详情" onclick="event.stopPropagation();navigateTo(\'resource-detail\',{currentResourceId:\'' + r.id + '\'})">' +
     '</div></div>';
+}
+
+function renderStars(rating) {
+  var full = Math.floor(rating);
+  var half = (rating - full) >= 0.5 ? 1 : 0;
+  var empty = 5 - full - half;
+  var html = '';
+  var i;
+  for (i = 0; i < full; i++) html += '&#9733;';
+  for (i = 0; i < half; i++) html += '&#9734;';
+  for (i = 0; i < empty; i++) html += '&#9734;';
+  return html;
 }
 
 /* ---------- 轮播控制 ---------- */
@@ -1148,17 +1242,49 @@ function renderResourceDetail() {
   if (!resource) return '<div class="empty-state"><div class="empty-icon">&#128230;</div><p>资源不存在</p></div>';
 
   var html = '<span class="back-btn" onclick="navigateTo(\'resources\')">&laquo; 返回资源列表</span>';
+  html += '<div class="resource-detail-layout">';
+
+  /* 左侧封面 */
+  html += '<div class="resource-detail-left">';
+  html += '<div class="resource-detail-cover-wrap">';
+  var discountBadge = '';
+  if (resource.originalPrice && resource.originalPrice > 0 && resource.price < resource.originalPrice) {
+    var discount = Math.round((1 - resource.price / resource.originalPrice) * 100);
+    discountBadge = '<span class="discount-badge">-' + discount + '%</span>';
+  }
+  var hotBadge = (resource.sold && resource.sold > 500) ? '<span class="hot-badge">热销</span>' : '';
+  html += discountBadge + hotBadge;
   html += '<img class="resource-detail-cover" src="' + resource.cover + '" alt="' + resource.title + '">';
+  html += '</div></div>';
+
+  /* 右侧信息 */
+  html += '<div class="resource-detail-right">';
   html += '<div class="resource-detail-info">';
   html += '<h1>' + resource.title + '</h1>';
-  html += '<p>' + resource.desc + '</p>';
+  var starsHtml = renderStars(resource.rating || 0);
+  var soldText = resource.sold ? formatNumber(resource.sold) + '已售' : '';
+  html += '<div class="rating-row"><span class="rating-stars">' + starsHtml + '</span><span>' + (resource.rating || 0).toFixed(1) + '</span>' + (soldText ? '<span class="sold-count" style="margin-left:auto">' + soldText + '</span>' : '') + '</div>';
+
+  var priceHtml = '';
+  if (resource.price > 0 && resource.originalPrice > 0 && resource.originalPrice > resource.price) {
+    var saved = (resource.originalPrice - resource.price).toFixed(1);
+    priceHtml = '<div class="price-row"><span class="price-now">&yen;' + resource.price.toFixed(1) + '</span><span class="price-original">&yen;' + resource.originalPrice.toFixed(1) + '</span><span class="price-save">省&yen;' + saved + '</span></div>';
+  } else if (resource.price > 0) {
+    priceHtml = '<div class="price-row"><span class="price-now">&yen;' + resource.price.toFixed(1) + '</span></div>';
+  } else {
+    priceHtml = '<div class="price-row"><span class="price-now" style="color:#52c41a">免费</span></div>';
+  }
+  html += priceHtml;
+
   html += '<div class="resource-detail-tags">';
   if (resource.category) html += '<span class="category-tag">' + resource.category + '</span>';
   for (var i = 0; i < (resource.tags || []).length; i++) {
     html += '<span class="tag">' + resource.tags[i] + '</span>';
   }
   html += '</div>';
-  html += '<input type="button" class="get-resource-btn" value="获取资源" onclick="showQRModal()">';
+  html += '<p>' + resource.desc + '</p>';
+  html += '<input type="button" class="get-resource-btn" value="获取资源" onclick="handleGetResource(findResource(\'' + resource.id + '\'))">';
+  html += '</div></div>';
   html += '</div>';
   html += renderComments('resource', resource.id);
   return html;
@@ -1379,9 +1505,18 @@ function renderAbout() {
   html += '<div class="contact-info-box">';
   html += '<h3>联系方式</h3>';
   html += '<div class="contact-grid">';
-  html += '<div class="contact-grid-item"><div class="contact-icon">&#128172;</div><div class="contact-label">微信</div><div class="contact-value">' + (contact.wechat || 'aiyoushe_vip') + '</div></div>';
-  html += '<div class="contact-grid-item"><div class="contact-icon">&#9993;</div><div class="contact-label">邮箱</div><div class="contact-value">' + (contact.email || 'hello@aiyoushe.com') + '</div></div>';
-  html += '<div class="contact-grid-item"><div class="contact-icon">&#128101;</div><div class="contact-label">QQ</div><div class="contact-value">' + (contact.qq || '123456789') + '</div></div>';
+  var contactList = getData('contact_list') || [];
+  if (contactList.length) {
+    for (var ci = 0; ci < contactList.length; ci++) {
+      var cc = contactList[ci];
+      var iconHtml = cc.icon ? '<img class="icon" src="' + cc.icon + '" alt="' + cc.platform + '">' : '<div class="icon" style="width:40px;height:40px;border-radius:50%;background:var(--bg);display:flex;align-items:center;justify-content:center;margin:0 auto 8px;font-size:20px;color:var(--text-light)">&#128172;</div>';
+      html += '<div class="contact-card">' + iconHtml + '<div class="platform">' + cc.platform + '</div><div class="account">' + cc.account + '</div></div>';
+    }
+  } else {
+    html += '<div class="contact-card"><div class="icon" style="width:40px;height:40px;border-radius:50%;background:var(--bg);display:flex;align-items:center;justify-content:center;margin:0 auto 8px;font-size:20px;color:var(--text-light)">&#128172;</div><div class="platform">微信</div><div class="account">' + (contact.wechat || 'aiyoushe_vip') + '</div></div>';
+    html += '<div class="contact-card"><div class="icon" style="width:40px;height:40px;border-radius:50%;background:var(--bg);display:flex;align-items:center;justify-content:center;margin:0 auto 8px;font-size:20px;color:var(--text-light)">&#9993;</div><div class="platform">邮箱</div><div class="account">' + (contact.email || 'hello@aiyoushe.com') + '</div></div>';
+    html += '<div class="contact-card"><div class="icon" style="width:40px;height:40px;border-radius:50%;background:var(--bg);display:flex;align-items:center;justify-content:center;margin:0 auto 8px;font-size:20px;color:var(--text-light)">&#128101;</div><div class="platform">QQ</div><div class="account">' + (contact.qq || '123456789') + '</div></div>';
+  }
   html += '</div></div>';
 
   /* 留言板 */
@@ -1400,6 +1535,17 @@ function renderAbout() {
     html += '<div class="msg-item" style="display:flex;gap:10px;align-items:flex-start"><div style="width:36px;height:36px;border-radius:50%;background:' + color + ';display:flex;align-items:center;justify-content:center;color:#fff;font-weight:bold;font-size:14px;flex-shrink:0">' + initial + '</div><div style="flex:1"><div><span class="msg-name">' + escapeHtml(m.nickname || m.name || '匿名') + '</span><span class="msg-time">' + (m.time || '') + '</span></div><div class="msg-text">' + escapeHtml(m.text) + '</div></div></div>';
   }
   html += '</div></div>';
+
+  /* 指令码激活 */
+  html += '<div class="contact-info-box">';
+  html += '<h3>激活指令码</h3>';
+  html += '<div style="display:flex;gap:8px;margin-bottom:8px">';
+  html += '<input type="text" id="codeInput" placeholder="输入指令码" style="flex:1;padding:10px 16px;border:1px solid var(--border);border-radius:var(--radius);font-size:14px;outline:none">';
+  html += '<input type="button" class="btn btn-primary" value="激活" onclick="activateCode()">';
+  html += '</div>';
+  html += '<div id="codeResult" style="font-size:12px;color:#999;margin-top:4px"></div>';
+  html += '<div id="userLevelDisplay" style="font-size:12px;color:#666;margin-top:8px"></div>';
+  html += '</div>';
 
   return html;
 }
@@ -1557,6 +1703,157 @@ function hideQRModal() {
   document.body.style.overflow = '';
 }
 
+/* ========================================
+   资源获取与交付弹窗
+   ======================================== */
+function getUserAccessLevel() {
+  var level = localStorage.getItem('aiyoushe_user_level');
+  return level ? parseInt(level) : 0;
+}
+
+function handleGetResource(resource) {
+  if (!resource) return;
+  var userLevel = getUserAccessLevel();
+  var accessLevel = resource.accessLevel !== undefined ? resource.accessLevel : 0;
+
+  if (accessLevel === 0) {
+    showDeliveryModal(resource);
+  } else if (userLevel >= accessLevel) {
+    showDeliveryModal(resource);
+  } else {
+    showVIPQRModal();
+  }
+}
+
+function showDeliveryModal(resource) {
+  var modal = $('delivery-modal');
+  var linkBox = $('delivery-link-box');
+  var passwordBox = $('delivery-password-box');
+
+  if (resource.deliveryLink) {
+    linkBox.innerHTML = '<a href="' + resource.deliveryLink + '" target="_blank" rel="noopener">' + resource.deliveryLink + '</a>';
+  } else {
+    linkBox.innerHTML = '<span style="color:var(--text-lighter)">暂无交付链接</span>';
+  }
+
+  if (resource.deliveryPassword) {
+    passwordBox.innerHTML = '链接密码：<span>' + resource.deliveryPassword + '</span>';
+  } else {
+    passwordBox.innerHTML = '';
+  }
+
+  modal.className = 'delivery-modal show';
+  document.body.style.overflow = 'hidden';
+}
+
+function hideDeliveryModal() {
+  var modal = $('delivery-modal');
+  if (modal) {
+    modal.className = 'delivery-modal';
+    document.body.style.overflow = '';
+  }
+}
+
+var _deliveryLink = '';
+function copyDeliveryLink() {
+  var linkBox = $('delivery-link-box');
+  if (!linkBox) return;
+  var link = linkBox.textContent || linkBox.innerText || '';
+  _deliveryLink = link.trim();
+  if (!_deliveryLink) { showToast('没有可复制的链接'); return; }
+
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(_deliveryLink).then(function() {
+      showToast('链接已复制到剪贴板');
+    }).catch(function() {
+      fallbackCopy(_deliveryLink);
+    });
+  } else {
+    fallbackCopy(_deliveryLink);
+  }
+}
+
+function fallbackCopy(text) {
+  var ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.position = 'fixed';
+  ta.style.left = '-9999px';
+  document.body.appendChild(ta);
+  ta.select();
+  try {
+    document.execCommand('copy');
+    showToast('链接已复制到剪贴板');
+  } catch (e) {
+    showToast('复制失败，请手动复制');
+  }
+  document.body.removeChild(ta);
+}
+
+/* ========================================
+   指令码激活
+   ======================================== */
+function activateCode() {
+  var codeInput = document.getElementById('codeInput');
+  var codeResult = document.getElementById('codeResult');
+  var code = codeInput ? codeInput.value.trim() : '';
+  if (!code) { showToast('请输入指令码'); return; }
+  if (codeResult) codeResult.textContent = '验证中...';
+
+  if (!db) {
+    if (codeResult) codeResult.textContent = '网络未连接，无法验证指令码';
+    return;
+  }
+
+  db.ref('/site/codes').once('value', function(snap) {
+    var val = snap.val();
+    var codes = [];
+    if (Array.isArray(val)) {
+      codes = val;
+    } else if (typeof val === 'object' && val !== null) {
+      for (var k in val) {
+        if (val.hasOwnProperty(k)) { codes.push(val[k]); }
+      }
+    }
+    var found = false;
+    for (var i = 0; i < codes.length; i++) {
+      var c = codes[i];
+      if (c.code === code && !c.used) {
+        found = true;
+        var ip = 'unknown';
+        codes[i].used = true;
+        codes[i].usedAt = new Date().toISOString().split('T')[0];
+        codes[i].ip = ip;
+        db.ref('/site/codes').set(codes);
+        localStorage.setItem('aiyoushe_user_level', String(c.level));
+        localStorage.setItem('aiyoushe_code', code);
+        showUserLevel();
+        var levelNames = ['免费用户', '体验会员', '普通会员', '高级会员'];
+        showToast('激活成功！您已成为' + (levelNames[c.level] || '免费用户'));
+        if (codeResult) codeResult.textContent = '激活成功！';
+        if (codeInput) codeInput.value = '';
+        break;
+      }
+    }
+    if (!found) {
+      showToast('指令码无效或已被使用');
+      if (codeResult) codeResult.textContent = '指令码无效或已被使用';
+    }
+  }, function(err) {
+    if (codeResult) codeResult.textContent = '验证失败，请稍后再试';
+    console.log('指令码验证失败:', err.message);
+  });
+}
+
+function showUserLevel() {
+  var level = getUserAccessLevel();
+  var names = ['免费用户', '体验会员 V1', '普通会员 V2', '高级会员 V3'];
+  var el = document.getElementById('userLevelDisplay');
+  if (el) {
+    el.textContent = '当前权限：' + names[level];
+    el.style.color = level > 0 ? '#E63946' : '#999';
+  }
+}
+
 
 /* ========================================
    公告栏
@@ -1704,6 +2001,7 @@ function setupGlobalEvents() {
   document.addEventListener('keydown', function(e) {
     if (e.keyCode === 27) {
       hideQRModal();
+      hideDeliveryModal();
       closeLightbox();
     }
   });
@@ -1729,6 +2027,7 @@ function initApp() {
   renderCurrentPage();
   loadAnnouncements();
   loadProfile();
+  showUserLevel();
 }
 
 /* 页面加载完成后初始化 */
