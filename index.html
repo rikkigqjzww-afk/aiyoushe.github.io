@@ -2,13 +2,14 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
 <title>艾优社资源馆</title>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
 <style>
 :root{--primary:#E63946;--primary-light:#ff4d5a;--secondary:#1a2744;--secondary-light:#253556;--bg:#f5f6fa;--card-bg:#ffffff;--text:#333333;--text-light:#777777;--text-lighter:#aaaaaa;--border:#e8e8e8;--shadow:0 2px 12px rgba(0,0,0,0.08);--shadow-hover:0 6px 24px rgba(0,0,0,0.12);--radius:10px;--sidebar-width:240px;--topbar-height:56px;--bottomnav-height:60px;--transition:all .3s ease}
 *{margin:0;padding:0;box-sizing:border-box}
+html,body{-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Hiragino Sans GB','Microsoft YaHei','Helvetica Neue',sans-serif;background:var(--bg);color:var(--text);line-height:1.6;overflow-x:hidden}
 a{text-decoration:none;color:inherit}
 ul{list-style:none}
@@ -88,23 +89,31 @@ input,textarea,select{font-family:inherit}
 .card-grid-2{grid-template-columns:repeat(2,1fr)}
 
 /* ===== Resource Cards ===== */
-.resource-card{background:var(--card-bg);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow);transition:var(--transition);cursor:pointer;position:relative}
-.resource-card:hover{transform:translateY(-4px);box-shadow:var(--shadow-hover)}
-.resource-card-img{height:160px;overflow:hidden;position:relative;background:var(--bg)}
-.resource-card-img img{width:100%;height:100%;object-fit:cover;transition:transform .3s}
-.resource-card:hover .resource-card-img img{transform:scale(1.05)}
-.resource-card .discount-badge{position:absolute;top:8px;left:8px;background:var(--primary);color:#fff;font-size:11px;padding:3px 8px;border-radius:10px;font-weight:600;z-index:1}
-.resource-card .featured-badge{position:absolute;top:8px;right:8px;background:#FF9800;color:#fff;font-size:10px;padding:3px 8px;border-radius:10px;font-weight:600;z-index:1}
-.resource-card-body{padding:16px}
-.resource-card-body h3{font-size:15px;font-weight:600;margin-bottom:6px;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.resource-card-body p{font-size:13px;color:var(--text-light);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin-bottom:8px}
-.resource-card .rating-row{display:flex;align-items:center;gap:4px;margin-bottom:6px;font-size:12px;color:var(--text-light)}
-.resource-card .rating-stars{color:#FF9800}
-.resource-card .sold-count{color:var(--text-lighter);font-size:12px}
-.resource-card .price-row{display:flex;align-items:baseline;gap:8px;margin-bottom:8px}
-.resource-card .price-now{font-size:18px;font-weight:700;color:#E63946}
-.resource-card .price-original{font-size:12px;color:#999;text-decoration:line-through}
-.resource-card .price-save{font-size:11px;color:#52c41a;background:#f6ffed;padding:2px 6px;border-radius:4px}
+.resource-card{background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08);transition:transform .2s,box-shadow .2s;cursor:pointer;position:relative}
+.resource-card:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(0,0,0,0.12)}
+.resource-card .card-img-wrap{position:relative;width:100%;padding-top:60%;overflow:hidden}
+.resource-card .card-img-wrap img{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover}
+.resource-card .discount-badge{position:absolute;top:8px;left:0;background:#E63946;color:#fff;padding:4px 10px;border-radius:0 12px 12px 0;font-size:12px;font-weight:600;z-index:1}
+.resource-card .featured-badge{position:absolute;top:8px;left:0;z-index:1}
+.resource-card .featured-badge.has-discount{left:auto;right:8px}
+.resource-card .featured-badge.no-discount{left:0;border-radius:0 12px 12px 0}
+.resource-card .access-badge{position:absolute;bottom:8px;right:8px;background:rgba(0,0,0,0.7);color:#fff;padding:3px 8px;border-radius:4px;font-size:11px;z-index:1}
+.resource-card .card-info{padding:12px 14px 14px}
+.resource-card .card-title{font-size:15px;font-weight:600;color:#333;margin:0 0 8px;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.resource-card .card-meta{display:flex;align-items:center;gap:6px;margin-bottom:6px;font-size:12px;color:#999}
+.resource-card .stars{color:#FADB14;font-size:12px;letter-spacing:1px}
+.resource-card .card-rating{font-size:13px;color:#333;font-weight:500}
+.resource-card .card-sold{color:#999}
+.resource-card .card-price-row{display:flex;align-items:baseline;gap:8px;margin-bottom:8px}
+.resource-card .price-current{font-size:20px;font-weight:700;color:#1a1a1a}
+.resource-card .price-original{font-size:13px;color:#bbb;text-decoration:line-through}
+.resource-card .price-saved{font-size:12px;color:#E63946;font-weight:500}
+.resource-card .card-tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.resource-card .tag-pill{padding:3px 10px;border-radius:12px;font-size:11px;background:#FFF1F0;color:#E63946;border:1px solid #FFE0DE}
+.resource-card .btn-detail{width:100%;padding:8px 0;border:1px solid #e0e0e0;border-radius:6px;background:#fff;color:#666;font-size:13px;cursor:pointer;text-align:center}
+
+/* ===== Resource Grid ===== */
+.resource-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
 .btn{display:inline-flex;align-items:center;justify-content:center;padding:8px 20px;border-radius:20px;font-size:13px;font-weight:500;transition:var(--transition);cursor:pointer;border:none}
 .btn-primary{background:var(--primary);color:#fff}
 .btn-primary:hover{background:var(--primary-light);transform:translateY(-1px)}
@@ -123,7 +132,6 @@ input,textarea,select{font-family:inherit}
 .filter-btn.active,.filter-btn:hover{background:var(--primary);color:#fff;border-color:var(--primary)}
 
 /* ===== Article Detail ===== */
-.article-detail-cover{width:100%;height:400px;object-fit:cover;border-radius:var(--radius);margin-bottom:24px}
 .article-detail-header{margin-bottom:24px}
 .article-detail-header h1{font-size:28px;font-weight:700;color:var(--secondary);line-height:1.4;margin-bottom:12px}
 .article-detail-meta{display:flex;align-items:center;gap:20px;font-size:13px;color:var(--text-light);flex-wrap:wrap}
@@ -139,29 +147,65 @@ input,textarea,select{font-family:inherit}
 .back-btn{display:inline-flex;align-items:center;gap:6px;color:var(--text-light);font-size:14px;cursor:pointer;margin-bottom:20px;transition:var(--transition)}
 .back-btn:hover{color:var(--primary)}
 
+/* ===== Article Detail Layout (Toutiao-style) ===== */
+.article-detail-layout{display:flex;max-width:1100px;margin:0 auto;gap:20px;padding:20px}
+.article-left-bar{position:sticky;top:80px;flex:0 0 50px;display:flex;flex-direction:column;align-items:center;gap:16px;padding-top:40px}
+.article-left-bar .action-btn{display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;color:#999;font-size:11px;transition:var(--transition)}
+.article-left-bar .action-btn:hover{color:#E63946}
+.article-left-bar .action-btn .icon{font-size:24px}
+.article-left-bar .action-btn.active{color:#E63946}
+.article-center{flex:1;max-width:680px}
+.article-right-bar{position:sticky;top:80px;flex:0 0 280px}
+.recommend-section h4{margin:0 0 12px;font-size:16px;font-weight:600;color:var(--secondary)}
+.recommend-item{display:flex;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);transition:var(--transition)}
+.recommend-item:last-child{border-bottom:none}
+.recommend-item:hover .recommend-title{color:var(--primary)}
+.recommend-cover{flex:0 0 80px;height:60px;border-radius:6px;overflow:hidden}
+.recommend-cover img{width:100%;height:100%;object-fit:cover}
+.recommend-info{flex:1;min-width:0}
+.recommend-title{font-size:13px;font-weight:500;color:var(--text);line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin-bottom:4px}
+.recommend-meta{font-size:11px;color:var(--text-lighter)}
+
+/* Article paywall overlay */
+.article-paywall{position:relative;margin-top:20px}
+.article-paywall-overlay{position:absolute;bottom:0;left:0;right:0;height:200px;background:linear-gradient(transparent,rgba(255,255,255,.9));display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding-bottom:24px;z-index:1}
+.article-paywall-overlay .paywall-text{font-size:14px;color:var(--text-light);margin-bottom:12px}
+.article-paywall-overlay .paywall-btn{padding:10px 32px;background:var(--primary);color:#fff;border-radius:24px;font-size:14px;font-weight:500;cursor:pointer;transition:var(--transition)}
+.article-paywall-overlay .paywall-btn:hover{background:var(--primary-light);transform:translateY(-1px)}
+
+@media(max-width:900px){
+  .article-detail-layout{flex-direction:column;padding:0}
+  .article-left-bar{flex-direction:row;position:static;order:-1;padding-top:0;justify-content:center;gap:24px;padding-bottom:16px;border-bottom:1px solid var(--border);margin-bottom:20px}
+  .article-right-bar{position:static;order:1}
+}
+
 /* ===== Resource Detail ===== */
-.resource-detail-layout{display:flex;gap:32px;margin-bottom:24px}
-.resource-detail-left{flex:0 0 400px;max-width:400px}
-.resource-detail-right{flex:1;min-width:0}
-.resource-detail-cover-wrap{position:relative;border-radius:var(--radius);overflow:hidden;margin-bottom:0}
-.resource-detail-cover-wrap .discount-badge{position:absolute;top:12px;left:12px;background:var(--primary);color:#fff;font-size:14px;padding:4px 12px;border-radius:12px;font-weight:600;z-index:1}
-.resource-detail-cover-wrap .hot-badge{position:absolute;top:12px;right:12px;background:#FF9800;color:#fff;font-size:12px;padding:4px 10px;border-radius:12px;font-weight:600;z-index:1}
+.resource-detail-layout{display:flex;gap:24px;max-width:900px;margin:0 auto 24px}
+.resource-detail-left{flex:0 0 400px}
+.resource-detail-right{flex:1}
+.resource-detail-cover-wrap{position:relative;border-radius:12px;overflow:hidden;margin-bottom:0}
+.resource-detail-cover-wrap .discount-badge{position:absolute;top:12px;left:0;background:#E63946;color:#fff;font-size:14px;padding:5px 12px;border-radius:0 12px 12px 0;font-weight:600;z-index:1}
+.resource-detail-cover-wrap .featured-badge{position:absolute;top:12px;right:12px;background:#FF9800;color:#fff;font-size:12px;padding:4px 10px;border-radius:10px;font-weight:600;z-index:1}
+.resource-detail-cover-wrap .access-badge{position:absolute;bottom:12px;right:12px;background:rgba(0,0,0,0.7);color:#fff;padding:4px 10px;border-radius:4px;font-size:12px;z-index:1}
 .resource-detail-cover{width:100%;aspect-ratio:3/4;object-fit:cover;display:block}
-.resource-detail-info{background:var(--card-bg);border-radius:var(--radius);padding:32px;box-shadow:var(--shadow);margin-bottom:24px}
-.resource-detail-info h1{font-size:24px;font-weight:700;color:var(--secondary);margin-bottom:8px}
-.resource-detail-info p{font-size:14px;color:var(--text-light);margin-bottom:16px;line-height:1.6}
-.resource-detail-info .rating-row{display:flex;align-items:center;gap:6px;margin-bottom:12px;font-size:14px;color:var(--text-light)}
-.resource-detail-info .rating-stars{color:#FF9800;font-size:16px}
+.resource-detail-info{background:#fff;border-radius:12px;padding:28px;box-shadow:0 2px 8px rgba(0,0,0,0.08)}
+.resource-detail-info h1{font-size:22px;font-weight:700;color:#1a2744;margin-bottom:8px;line-height:1.4}
+.resource-detail-info .detail-desc{font-size:14px;color:#777;margin-bottom:16px;line-height:1.6}
+.resource-detail-info .rating-row{display:flex;align-items:center;gap:6px;margin-bottom:12px;font-size:14px;color:#999}
+.resource-detail-info .rating-stars{color:#FADB14;font-size:16px;letter-spacing:1px}
+.resource-detail-info .card-rating{font-size:15px;color:#333;font-weight:500}
+.resource-detail-info .card-sold{color:#999}
 .resource-detail-info .price-row{display:flex;align-items:baseline;gap:12px;margin-bottom:16px}
-.resource-detail-info .price-now{font-size:28px;font-weight:700;color:#E63946}
-.resource-detail-info .price-original{font-size:16px;color:#999;text-decoration:line-through}
-.resource-detail-info .price-save{font-size:13px;color:#52c41a;background:#f6ffed;padding:4px 10px;border-radius:6px;font-weight:500}
-.resource-detail-tags{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}
+.resource-detail-info .price-current{font-size:28px;font-weight:700;color:#1a1a1a}
+.resource-detail-info .price-original{font-size:16px;color:#bbb;text-decoration:line-through}
+.resource-detail-info .price-saved{font-size:13px;color:#E63946;font-weight:500}
+.resource-detail-tags{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.resource-detail-tags .tag-pill{padding:3px 10px;border-radius:12px;font-size:11px;background:#FFF1F0;color:#E63946;border:1px solid #FFE0DE}
 .get-resource-btn{padding:14px 48px;font-size:16px;font-weight:600;border-radius:28px;background:var(--primary);color:#fff;cursor:pointer;border:none;transition:var(--transition);display:inline-block}
 .get-resource-btn:hover{background:var(--primary-light);transform:translateY(-2px);box-shadow:0 8px 24px rgba(230,57,70,.3)}
 @media(max-width:768px){
   .resource-detail-layout{flex-direction:column;gap:16px}
-  .resource-detail-left{flex:none;max-width:none}
+  .resource-detail-left{flex:none;width:100%}
 }
 
 /* ===== Album ===== */
@@ -355,6 +399,7 @@ input,textarea,select{font-family:inherit}
 /* ===== Responsive ===== */
 @media(max-width:1024px){
   .card-grid{grid-template-columns:repeat(2,1fr)}
+  .resource-grid{grid-template-columns:repeat(2,1fr)}
   .pricing-grid{grid-template-columns:repeat(2,1fr)}
   .pricing-grid .pricing-card:last-child{grid-column:span 2;max-width:400px;justify-self:center}
   .benefits-grid{grid-template-columns:repeat(2,1fr)}
@@ -379,7 +424,7 @@ input,textarea,select{font-family:inherit}
   .carousel-content{left:20px;bottom:32px}
   .carousel-arrow{width:32px;height:32px;font-size:14px}
   #page-container{padding:16px}
-  .article-detail-cover{height:240px}
+
   .resource-detail-cover{height:240px}
   .vip-banner{padding:28px 20px}
   .vip-banner h2{font-size:22px}
@@ -396,6 +441,7 @@ input,textarea,select{font-family:inherit}
 }
 @media(max-width:480px){
   .card-grid{grid-template-columns:1fr}
+  .resource-grid{grid-template-columns:1fr}
   .filter-bar{gap:8px}
   .filter-btn{padding:6px 14px;font-size:12px}
   .carousel{height:180px}
@@ -970,7 +1016,7 @@ function renderHome() {
 
   /* 精选资源 */
   var resourcesHtml = '<div class="section-title"><span>精选资源</span><span class="more-link" onclick="navigateTo(\'resources\')">查看更多 &raquo;</span></div>';
-  resourcesHtml += '<div class="card-grid" style="margin-bottom:32px">';
+  resourcesHtml += '<div class="resource-grid" style="margin-bottom:32px">';
   for (i = 0; i < resList.length; i++) {
     r = resList[i];
     resourcesHtml += renderResourceCard(r);
@@ -1003,36 +1049,67 @@ function renderArticleCard(a) {
 }
 
 function renderResourceCard(r) {
+  /* 隐藏的资源不显示 */
+  if (r.hidden) return '';
+
+  /* 标签 */
   var tagsHtml = '';
   for (var j = 0; j < (r.tags || []).length; j++) {
-    tagsHtml += '<span class="tag">' + r.tags[j] + '</span>';
+    tagsHtml += '<span class="tag-pill">' + r.tags[j] + '</span>';
   }
+
+  /* 折扣角标 */
   var discountBadge = '';
+  var discount = 0;
   if (r.originalPrice && r.originalPrice > 0 && r.price < r.originalPrice) {
-    var discount = Math.round((1 - r.price / r.originalPrice) * 100);
-    discountBadge = '<span class="discount-badge">-' + discount + '%</span>';
+    discount = Math.round((1 - r.price / r.originalPrice) * 100);
+    if (discount === 100) {
+      discountBadge = '<span class="discount-badge">免费</span>';
+    } else {
+      discountBadge = '<span class="discount-badge">-' + discount + '%</span>';
+    }
   }
-  var featuredBadge = r.featured ? '<span class="featured-badge">精选</span>' : '';
+
+  /* 精选标签 */
+  var featuredBadge = '';
+  if (r.featured) {
+    var featCls = discountBadge ? 'featured-badge has-discount' : 'featured-badge no-discount';
+    featuredBadge = '<span class="' + featCls + '" style="background:#FF9800;color:#fff;font-size:10px;padding:3px 8px;border-radius:10px;font-weight:600">精选</span>';
+  }
+
+  /* 权限标签 */
+  var accessBadge = '';
+  var accessLabels = {0: '免费', 1: 'V1体验', 2: 'V2普通', 3: 'V3高级'};
+  if (r.accessLevel !== undefined && r.accessLevel !== null) {
+    accessBadge = '<span class="access-badge">' + (accessLabels[r.accessLevel] || '免费') + '</span>';
+  }
+
+  /* 星级 */
   var starsHtml = renderStars(r.rating || 0);
-  var soldText = r.sold ? formatNumber(r.sold) + '已售' : '';
+
+  /* 价格 */
   var priceHtml = '';
   if (r.price > 0 && r.originalPrice > 0 && r.originalPrice > r.price) {
     var saved = (r.originalPrice - r.price).toFixed(1);
-    priceHtml = '<div class="price-row"><span class="price-now">&yen;' + r.price.toFixed(1) + '</span><span class="price-original">&yen;' + r.originalPrice.toFixed(1) + '</span><span class="price-save">省&yen;' + saved + '</span></div>';
+    priceHtml = '<span class="price-current">&yen;' + r.price.toFixed(1) + '</span>' +
+      '<span class="price-original">&yen;' + r.originalPrice.toFixed(1) + '</span>' +
+      '<span class="price-saved">已省 &yen;' + saved + '</span>';
   } else if (r.price > 0) {
-    priceHtml = '<div class="price-row"><span class="price-now">&yen;' + r.price.toFixed(1) + '</span></div>';
+    priceHtml = '<span class="price-current">&yen;' + r.price.toFixed(1) + '</span>';
   } else {
-    priceHtml = '<div class="price-row"><span class="price-now" style="color:#52c41a">免费</span></div>';
+    priceHtml = '<span class="price-current" style="color:#52c41a">免费</span>';
   }
 
+  var soldText = r.sold ? '已售 ' + formatNumber(r.sold) : '';
+
   return '<div class="resource-card" onclick="navigateTo(\'resource-detail\',{currentResourceId:\'' + r.id + '\'})">' +
-    '<div class="resource-card-img">' + discountBadge + featuredBadge + '<img src="' + r.cover + '" alt="' + r.title + '" loading="lazy"></div>' +
-    '<div class="resource-card-body">' +
-    '<h3>' + r.title + '</h3>' +
-    '<div class="rating-row"><span class="rating-stars">' + starsHtml + '</span><span>' + (r.rating || 0).toFixed(1) + '</span>' + (soldText ? '<span class="sold-count" style="margin-left:auto">' + soldText + '</span>' : '') + '</div>' +
-    priceHtml +
-    '<div class="article-card-tags" style="margin-bottom:12px">' + tagsHtml + '</div>' +
-    '<input type="button" class="btn btn-outline btn-sm" value="查看详情" onclick="event.stopPropagation();navigateTo(\'resource-detail\',{currentResourceId:\'' + r.id + '\'})">' +
+    '<div class="card-img-wrap">' + discountBadge + featuredBadge + '<img src="' + r.cover + '" alt="' + r.title + '" loading="lazy">' + accessBadge + '</div>' +
+    '<div class="card-info">' +
+    '<div class="card-title">' + r.title + '</div>' +
+    '<div class="card-meta"><span class="stars">' + starsHtml + '</span><span class="card-rating">' + (r.rating || 0).toFixed(1) + '</span>' + (soldText ? '<span class="card-sold" style="margin-left:auto">' + soldText + '</span>' : '') + '</div>' +
+    '<div class="card-price-row">' + priceHtml + '</div>' +
+    '<div class="card-tags">' + tagsHtml + '</div>' +
+    '<input type="button" class="btn-detail" value="查看详情" onclick="event.stopPropagation();navigateTo(\'resource-detail\',{currentResourceId:\'' + r.id + '\'})">' +
     '</div></div>';
 }
 
@@ -1157,22 +1234,126 @@ function renderArticleDetail() {
   var liked = appState.likedArticles[article.id] ? ' liked' : '';
   var tagsHtml = renderArticleTags(article.tags);
   var likeCount = article.likes + (appState.likedArticles[article.id] ? 1 : 0);
+  var comments = DEFAULT_DATA['comments_article'] || [];
+  var commentCount = comments.length;
+  var hasAccess = canViewArticle(article);
 
+  /* Breadcrumb */
   var html = '<span class="back-btn" onclick="navigateTo(\'news\')">&laquo; 返回资讯列表</span>';
-  html += '<img class="article-detail-cover" src="' + article.cover + '" alt="' + article.title + '">';
+
+  /* Three-column layout */
+  html += '<div class="article-detail-layout">';
+
+  /* Left bar: actions */
+  html += '<div class="article-left-bar">';
+  html += '<div class="action-btn' + liked + '" onclick="toggleLike(\'' + article.id + '\')">';
+  html += '<span class="icon">&#128077;</span>';
+  html += '<span>' + formatNumber(likeCount) + '</span>';
+  html += '</div>';
+  html += '<div class="action-btn" onclick="document.getElementById(\'articleComments\')&&document.getElementById(\'articleComments\').scrollIntoView({behavior:\'smooth\'})">';
+  html += '<span class="icon">&#128172;</span>';
+  html += '<span>' + commentCount + '</span>';
+  html += '</div>';
+  html += '<div class="action-btn' + (appState.favoritedArticles && appState.favoritedArticles[article.id] ? ' active' : '') + '" onclick="toggleFavorite(\'' + article.id + '\')">';
+  html += '<span class="icon">&#11088;</span>';
+  html += '<span>收藏</span>';
+  html += '</div>';
+  html += '<div class="action-btn" onclick="copyArticleLink(\'' + article.id + '\')">';
+  html += '<span class="icon">&#8599;</span>';
+  html += '<span>分享</span>';
+  html += '</div>';
+  html += '</div>';
+
+  /* Center: article content */
+  html += '<div class="article-center">';
   html += '<div class="article-detail-header">';
   html += '<h1>' + article.title + '</h1>';
   html += '<div class="article-detail-meta">';
   html += '<span>' + article.date + '</span>';
   html += '<span>' + formatNumber(article.views) + '阅读</span>';
-  html += '<span class="like-btn' + liked + '" onclick="toggleLike(\'' + article.id + '\')">&#9829; ' + formatNumber(likeCount) + '</span>';
   if (article.category) html += '<span class="category-tag">' + article.category + '</span>';
   html += '</div>';
   if (tagsHtml) html += '<div style="margin-top:12px">' + tagsHtml + '</div>';
   html += '</div>';
-  html += '<div class="article-detail-content">' + (article.content || '<p>暂无内容</p>') + '</div>';
+
+  if (hasAccess) {
+    html += '<div class="article-detail-content">' + (article.content || '<p>暂无内容</p>') + '</div>';
+  } else {
+    /* Show summary + paywall */
+    var summaryText = article.summary || '';
+    html += '<div class="article-detail-content">' + (summaryText ? '<p>' + summaryText + '</p>' : '') + '</div>';
+    html += '<div class="article-paywall">';
+    html += '<div class="article-detail-content" style="filter:blur(5px);user-select:none;pointer-events:none">' + (article.content || '<p>暂无内容</p>') + '</div>';
+    html += '<div class="article-paywall-overlay">';
+    html += '<div class="paywall-text">开通会员查看完整内容</div>';
+    html += '<div class="paywall-btn" onclick="showVIPQRModal()">立即开通</div>';
+    html += '</div></div>';
+  }
+
+  /* Comments */
   html += renderComments('article', article.id);
+  html += '</div>';
+
+  /* Right bar: recommended articles */
+  html += '<div class="article-right-bar">';
+  html += renderRecommendedArticles(article.id);
+  html += '</div>';
+
+  html += '</div>';
   return html;
+}
+
+function renderRecommendedArticles(excludeId) {
+  var articles = getData('articles');
+  var featured = articles.filter(function(a) { return a.featured && !a.hidden && a.id !== excludeId; });
+  featured = featured.slice(0, 8);
+  var html = '<div class="recommend-section">';
+  html += '<h4>精选推荐</h4>';
+  featured.forEach(function(a) {
+    var cover = a.cover || 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2280%22 height=%2260%22%3E%3Crect fill=%22%23eee%22 width=%2280%22 height=%2260%22/%3E%3C/svg%3E';
+    html += '<a class="recommend-item" href="#article-' + a.id + '" onclick="navigateTo(\'article-detail\',{currentArticleId:\'' + a.id + '\'})">';
+    html += '<div class="recommend-cover"><img src="' + cover + '" alt="" loading="lazy"></div>';
+    html += '<div class="recommend-info"><div class="recommend-title">' + a.title + '</div>';
+    html += '<div class="recommend-meta">' + (a.date || '') + ' &middot; ' + (a.views || 0) + '阅读</div></div>';
+    html += '</a>';
+  });
+  html += '</div>';
+  return html;
+}
+
+function copyArticleLink(articleId) {
+  var url = window.location.href.split('#')[0] + '#article-' + articleId;
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(url).then(function() {
+      showToast('链接已复制');
+    });
+  } else {
+    var textarea = document.createElement('textarea');
+    textarea.value = url;
+    textarea.style.position = 'fixed';
+    textarea.style.opacity = '0';
+    document.body.appendChild(textarea);
+    textarea.select();
+    try {
+      document.execCommand('copy');
+      showToast('链接已复制');
+    } catch(e) {
+      showToast('复制失败，请手动复制');
+    }
+    document.body.removeChild(textarea);
+  }
+}
+
+function toggleFavorite(articleId) {
+  if (!appState.favoritedArticles) appState.favoritedArticles = {};
+  if (appState.favoritedArticles[articleId]) {
+    delete appState.favoritedArticles[articleId];
+    showToast('已取消收藏');
+  } else {
+    appState.favoritedArticles[articleId] = true;
+    showToast('已收藏');
+  }
+  renderCurrentPage();
 }
 
 function toggleLike(articleId) {
@@ -1223,7 +1404,7 @@ function renderResources() {
     if ((matchCat || tagCheck) && matchSearch) filtered.push(r);
   }
 
-  html += '<div class="card-grid">';
+  html += '<div class="resource-grid">';
   for (var m = 0; m < filtered.length; m++) {
     html += renderResourceCard(filtered[m]);
   }
@@ -1250,39 +1431,47 @@ function renderResourceDetail() {
   var discountBadge = '';
   if (resource.originalPrice && resource.originalPrice > 0 && resource.price < resource.originalPrice) {
     var discount = Math.round((1 - resource.price / resource.originalPrice) * 100);
-    discountBadge = '<span class="discount-badge">-' + discount + '%</span>';
+    if (discount === 100) {
+      discountBadge = '<span class="discount-badge">免费</span>';
+    } else {
+      discountBadge = '<span class="discount-badge">-' + discount + '%</span>';
+    }
   }
-  var hotBadge = (resource.sold && resource.sold > 500) ? '<span class="hot-badge">热销</span>' : '';
-  html += discountBadge + hotBadge;
+  var featuredBadge = resource.featured ? '<span class="featured-badge">精选</span>' : '';
+  var accessBadge = '';
+  var accessLabels = {0: '免费', 1: 'V1体验', 2: 'V2普通', 3: 'V3高级'};
+  if (resource.accessLevel !== undefined && resource.accessLevel !== null) {
+    accessBadge = '<span class="access-badge">' + (accessLabels[resource.accessLevel] || '免费') + '</span>';
+  }
+  html += discountBadge + featuredBadge;
   html += '<img class="resource-detail-cover" src="' + resource.cover + '" alt="' + resource.title + '">';
-  html += '</div></div>';
+  html += accessBadge + '</div></div>';
 
   /* 右侧信息 */
   html += '<div class="resource-detail-right">';
   html += '<div class="resource-detail-info">';
   html += '<h1>' + resource.title + '</h1>';
   var starsHtml = renderStars(resource.rating || 0);
-  var soldText = resource.sold ? formatNumber(resource.sold) + '已售' : '';
-  html += '<div class="rating-row"><span class="rating-stars">' + starsHtml + '</span><span>' + (resource.rating || 0).toFixed(1) + '</span>' + (soldText ? '<span class="sold-count" style="margin-left:auto">' + soldText + '</span>' : '') + '</div>';
+  var soldText = resource.sold ? '已售 ' + formatNumber(resource.sold) : '';
+  html += '<div class="rating-row"><span class="rating-stars">' + starsHtml + '</span><span class="card-rating">' + (resource.rating || 0).toFixed(1) + '</span>' + (soldText ? '<span class="card-sold" style="margin-left:auto">' + soldText + '</span>' : '') + '</div>';
 
   var priceHtml = '';
   if (resource.price > 0 && resource.originalPrice > 0 && resource.originalPrice > resource.price) {
     var saved = (resource.originalPrice - resource.price).toFixed(1);
-    priceHtml = '<div class="price-row"><span class="price-now">&yen;' + resource.price.toFixed(1) + '</span><span class="price-original">&yen;' + resource.originalPrice.toFixed(1) + '</span><span class="price-save">省&yen;' + saved + '</span></div>';
+    priceHtml = '<div class="price-row"><span class="price-current">&yen;' + resource.price.toFixed(1) + '</span><span class="price-original">&yen;' + resource.originalPrice.toFixed(1) + '</span><span class="price-saved">已省 &yen;' + saved + '</span></div>';
   } else if (resource.price > 0) {
-    priceHtml = '<div class="price-row"><span class="price-now">&yen;' + resource.price.toFixed(1) + '</span></div>';
+    priceHtml = '<div class="price-row"><span class="price-current">&yen;' + resource.price.toFixed(1) + '</span></div>';
   } else {
-    priceHtml = '<div class="price-row"><span class="price-now" style="color:#52c41a">免费</span></div>';
+    priceHtml = '<div class="price-row"><span class="price-current" style="color:#52c41a">免费</span></div>';
   }
   html += priceHtml;
 
   html += '<div class="resource-detail-tags">';
-  if (resource.category) html += '<span class="category-tag">' + resource.category + '</span>';
   for (var i = 0; i < (resource.tags || []).length; i++) {
-    html += '<span class="tag">' + resource.tags[i] + '</span>';
+    html += '<span class="tag-pill">' + resource.tags[i] + '</span>';
   }
   html += '</div>';
-  html += '<p>' + resource.desc + '</p>';
+  html += '<div class="detail-desc">' + resource.desc + '</div>';
   html += '<input type="button" class="get-resource-btn" value="获取资源" onclick="handleGetResource(findResource(\'' + resource.id + '\'))">';
   html += '</div></div>';
   html += '</div>';
@@ -1296,6 +1485,7 @@ function renderAlbums() {
   var html = '<div class="section-title"><span>相册分组</span></div>';
   html += '<div class="album-grid">';
 
+  var accessLabels = {0: '免费', 1: 'V1体验', 2: 'V2普通', 3: 'V3高级'};
   for (var i = 0; i < albums.length; i++) {
     var g = albums[i];
     var count = (g.subAlbums || []).length;
@@ -1303,9 +1493,14 @@ function renderAlbums() {
     for (var j = 0; j < (g.subAlbums || []).length; j++) {
       photoCount += (g.subAlbums[j].photos || []).length;
     }
-    html += '<div class="album-card" onclick="navigateTo(\'album-detail\',{currentAlbumGroupId:\'' + g.id + '\'})">' +
+    var accessBadge = '';
+    if (g.accessLevel !== undefined && g.accessLevel !== null && g.accessLevel > 0) {
+      accessBadge = '<span style="position:absolute;bottom:8px;right:8px;background:rgba(0,0,0,0.7);color:#fff;padding:3px 8px;border-radius:4px;font-size:11px;z-index:1">' + (accessLabels[g.accessLevel] || '免费') + '</span>';
+    }
+    html += '<div class="album-card" style="position:relative" onclick="navigateTo(\'album-detail\',{currentAlbumGroupId:\'' + g.id + '\'})">' +
       '<img class="album-cover" src="' + g.cover + '" alt="' + g.name + '" loading="lazy">' +
       '<div class="album-name">' + g.name + '</div>' +
+      accessBadge +
       '</div>';
   }
   html += '</div>';
@@ -1318,6 +1513,16 @@ function renderAlbumDetail() {
 
   var html = '<span class="back-btn" onclick="navigateTo(\'albums\')">&laquo; 返回相册中心</span>';
   html += '<div class="section-title"><span>' + group.name + '</span></div>';
+
+  if (!canViewAlbum(group)) {
+    html += '<div class="empty-state" style="padding:80px 20px">';
+    html += '<div style="font-size:48px;margin-bottom:16px">&#128274;</div>';
+    html += '<p style="font-size:16px;color:var(--text);margin-bottom:20px">开通会员查看相册内容</p>';
+    html += '<input type="button" class="btn btn-primary" style="padding:12px 40px;font-size:15px" value="立即开通" onclick="showVIPQRModal()">';
+    html += '</div>';
+    return html;
+  }
+
   html += '<div class="album-grid">';
 
   for (var i = 0; i < (group.subAlbums || []).length; i++) {
@@ -1344,8 +1549,10 @@ function renderSubAlbum() {
 
   for (var i = 0; i < (subAlbum.photos || []).length; i++) {
     var p = subAlbum.photos[i];
+    var photoSrc = (typeof p === 'string') ? p : (p.url || p.src || '');
+    var photoAlt = (typeof p === 'string') ? '' : (p.title || '');
     html += '<div class="photo-item" onclick="openLightbox(' + i + ')">' +
-      '<img src="' + p.url + '" alt="' + p.title + '" loading="lazy">' +
+      '<img src="' + photoSrc + '" alt="' + photoAlt + '" loading="lazy">' +
       '</div>';
   }
   html += '</div>';
@@ -1379,8 +1586,11 @@ function lightboxNav(dir) {
 
 function updateLightbox() {
   if (!lightboxPhotos[lightboxIndex]) return;
-  $('lightbox-img').src = lightboxPhotos[lightboxIndex].url;
-  $('lightbox-img').alt = lightboxPhotos[lightboxIndex].title;
+  var p = lightboxPhotos[lightboxIndex];
+  var photoSrc = (typeof p === 'string') ? p : (p.url || p.src || '');
+  var photoAlt = (typeof p === 'string') ? '' : (p.title || '');
+  $('lightbox-img').src = photoSrc;
+  $('lightbox-img').alt = photoAlt;
   $('lightbox-counter').textContent = (lightboxIndex + 1) + ' / ' + lightboxPhotos.length;
 }
 
@@ -1701,6 +1911,21 @@ function showQRModal() {
 function hideQRModal() {
   $('qr-modal').className = 'qr-modal';
   document.body.style.overflow = '';
+}
+
+/* ========================================
+   权限控制
+   ======================================== */
+function canViewArticle(article) {
+  if (!article.accessLevel || article.accessLevel === 0) return true;
+  var userLevel = getUserAccessLevel();
+  return userLevel >= article.accessLevel;
+}
+
+function canViewAlbum(album) {
+  if (!album.accessLevel || album.accessLevel === 0) return true;
+  var userLevel = getUserAccessLevel();
+  return userLevel >= album.accessLevel;
 }
 
 /* ========================================

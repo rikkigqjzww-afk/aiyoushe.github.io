@@ -143,6 +143,15 @@ table img{width:60px;height:40px;object-fit:cover;border-radius:4px;}
 .photo-grid .photo-item:hover .photo-del{opacity:1;}
 .photo-grid .photo-item.dragging{opacity:0.5;}
 
+/* Drag Handle & Sortable */
+.drag-handle{cursor:grab;color:#ccc;font-size:18px;padding:0 8px;user-select:none;-webkit-user-select:none;display:inline-flex;align-items:center;}
+.drag-handle:active{cursor:grabbing;}
+.album-group-item[draggable="true"]{transition:background 0.2s;}
+.album-group-item.dragging{opacity:0.5;background:#f0f0f0;}
+.res-card.dragging{opacity:0.5;}
+table tbody tr[draggable="true"]{transition:background 0.2s;}
+table tbody tr.dragging{opacity:0.5;background:#f0f0f0;}
+
 /* Tags Input */
 .tags-display{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;}
 .tag-chip{display:inline-flex;align-items:center;gap:4px;padding:4px 12px;background:#f5f5f5;border-radius:16px;font-size:12px;color:#666;}
@@ -237,6 +246,29 @@ table img{width:60px;height:40px;object-fit:cover;border-radius:4px;}
 .res-form-step.active{color:#E63946;border-bottom-color:#E63946;font-weight:500;}
 .res-form-page{display:none;}
 .res-form-page.active{display:block;}
+
+/* Resource Card Grid */
+.res-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px;padding:20px 24px;}
+.res-card{background:#fff;border:1px solid #e8e8e8;border-radius:10px;overflow:hidden;transition:box-shadow 0.2s;}
+.res-card:hover{box-shadow:0 4px 16px rgba(0,0,0,0.1);}
+.res-card-cover{position:relative;width:100%;aspect-ratio:1;overflow:hidden;background:#f5f5f5;}
+.res-card-cover img{width:100%;height:100%;object-fit:cover;}
+.res-card-cover .res-discount-badge{position:absolute;top:8px;right:8px;background:#E63946;color:#fff;font-size:11px;font-weight:600;padding:2px 8px;border-radius:4px;}
+.res-card-cover .res-access-badge{position:absolute;top:8px;left:8px;font-size:11px;font-weight:500;padding:2px 8px;border-radius:4px;color:#fff;}
+.res-card-cover .res-access-badge.v0{background:#52c41a;}
+.res-card-cover .res-access-badge.v1{background:#1890ff;}
+.res-card-cover .res-access-badge.v2{background:#722ed1;}
+.res-card-cover .res-access-badge.v3{background:#f59e0b;}
+.res-card-cover .res-hidden-badge{position:absolute;bottom:8px;left:8px;background:rgba(0,0,0,0.6);color:#fff;font-size:11px;padding:2px 8px;border-radius:4px;}
+.res-card-info{padding:12px;}
+.res-card-title{font-size:14px;font-weight:500;color:#333;margin-bottom:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.res-card-meta{display:flex;align-items:center;gap:8px;font-size:12px;color:#999;margin-bottom:8px;}
+.res-card-meta .res-stars{color:#f59e0b;}
+.res-card-price{display:flex;align-items:baseline;gap:6px;margin-bottom:10px;}
+.res-card-price .res-now-price{font-size:18px;font-weight:700;color:#E63946;}
+.res-card-price .res-orig-price{font-size:12px;color:#bbb;text-decoration:line-through;}
+.res-card-actions{display:flex;gap:6px;}
+.res-card-actions .btn-sm{flex:1;text-align:center;}
 </style>
 <script data-preview-injected src="https://lf3-static.bytednsdoc.com/obj/eden-cn/8011eh7nupenuvonuhd/previewer-tools.de3cd6a1.umd.js"></script></head>
 <body>
@@ -358,10 +390,7 @@ table img{width:60px;height:40px;object-fit:cover;border-radius:4px;}
             <input type="button" class="btn-primary" value="&#43; 添加资源" onclick="openResourceModal()">
           </div>
           <div class="card-body">
-            <table>
-              <thead><tr><th>封面</th><th>标题</th><th>分类</th><th>操作</th></tr></thead>
-              <tbody id="resourcesList"></tbody>
-            </table>
+            <div class="res-grid" id="resourcesList"></div>
           </div>
         </div>
       </div>
@@ -1151,24 +1180,23 @@ function compressAndRead(file, callback) {
   var reader = new FileReader();
   reader.onload = function(e) {
     var dataUrl = e.target.result;
-    if (file.size > 2 * 1024 * 1024) {
-      var img = new Image();
-      img.onload = function() {
-        var canvas = document.createElement('canvas');
-        var maxW = 1200;
-        var w = img.width;
-        var h = img.height;
-        if (w > maxW) { h = h * maxW / w; w = maxW; }
-        canvas.width = w;
-        canvas.height = h;
-        var ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0, w, h);
-        callback(canvas.toDataURL('image/jpeg', 0.8));
-      };
-      img.src = dataUrl;
-    } else {
-      callback(dataUrl);
-    }
+    var img = new Image();
+    img.onload = function() {
+      var canvas = document.createElement('canvas');
+      var maxW = 1200, maxH = 1200;
+      var w = img.width, h = img.height;
+      if (w > maxW) { h = h * maxW / w; w = maxW; }
+      if (h > maxH) { w = w * maxH / h; h = maxH; }
+      canvas.width = w;
+      canvas.height = h;
+      var ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, w, h);
+      callback(canvas.toDataURL('image/jpeg', 0.8));
+    };
+    img.onerror = function() {
+      showToast('图片读取失败', 'error');
+    };
+    img.src = dataUrl;
   };
   reader.readAsDataURL(file);
 }
@@ -1216,7 +1244,7 @@ function insertEditorImage(editorId) {
   input.onchange = function() {
     if (input.files && input.files[0]) {
       compressAndRead(input.files[0], function(base64) {
-        document.execCommand('insertImage', false, base64);
+        document.execCommand('insertHTML', false, '<img src="' + base64 + '" style="max-width:100%;height:auto;">');
       });
     }
   };
@@ -1234,11 +1262,23 @@ function setupEditorPaste(editorId) {
         e.preventDefault();
         var file = items[i].getAsFile();
         if (file) {
-          compressAndRead(file, function(base64) {
-            document.execCommand('insertImage', false, base64);
-          });
+          var reader = new FileReader();
+          reader.onload = function(ev) {
+            var base64 = ev.target.result;
+            // Use insertHTML for better browser compatibility
+            if (editor.contentEditable === 'true') {
+              editor.focus();
+              document.execCommand('insertHTML', false, '<img src="' + base64 + '" style="max-width:100%;height:auto;">');
+            } else {
+              var img = document.createElement('img');
+              img.src = base64;
+              img.style.cssText = 'max-width:100%;height:auto;';
+              editor.appendChild(img);
+            }
+          };
+          reader.readAsDataURL(file);
         }
-        break;
+        return;
       }
     }
   });
@@ -1247,6 +1287,217 @@ function setupEditorPaste(editorId) {
 function getEditorContent(id) {
   var el = document.getElementById(id);
   return el ? el.innerHTML : '';
+}
+
+// ==================== Drag & Drop Sort Utility ====================
+function getDragAfterElement(container, y) {
+  var draggableElements = [];
+  var children = container.children;
+  for (var i = 0; i < children.length; i++) {
+    if (children[i].getAttribute('draggable') === 'true') {
+      draggableElements.push(children[i]);
+    }
+  }
+  var result = null;
+  for (var i = 0; i < draggableElements.length; i++) {
+    var box = draggableElements[i].getBoundingClientRect();
+    var offset = y - box.top - box.height / 2;
+    if (offset < 0 && offset < (result ? (y - result.getBoundingClientRect().top - result.getBoundingClientRect().height / 2) : Infinity)) {
+      result = draggableElements[i];
+    }
+  }
+  return result;
+}
+
+function initDragSort(containerEl, saveCallback) {
+  if (!containerEl) return;
+  containerEl.addEventListener('dragstart', function(e) {
+    var target = e.target.closest('[draggable="true"]');
+    if (!target) return;
+    // Only allow drag from drag-handle
+    if (e.target.classList && !e.target.classList.contains('drag-handle') && !target.contains(e.target)) return;
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', '');
+    setTimeout(function() { target.classList.add('dragging'); }, 0);
+  });
+  containerEl.addEventListener('dragend', function(e) {
+    var target = e.target.closest('[draggable="true"]');
+    if (target) target.classList.remove('dragging');
+  });
+  containerEl.addEventListener('dragover', function(e) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    var dragging = containerEl.querySelector('.dragging');
+    if (dragging) {
+      var afterElement = getDragAfterElement(containerEl, e.clientY);
+      if (afterElement) {
+        containerEl.insertBefore(dragging, afterElement);
+      } else {
+        containerEl.appendChild(dragging);
+      }
+    }
+  });
+  containerEl.addEventListener('drop', function(e) {
+    e.preventDefault();
+    saveCallback();
+  });
+  // Touch drag support
+  var touchStartY = 0;
+  var touchItem = null;
+  containerEl.addEventListener('touchstart', function(e) {
+    if (e.target.classList && e.target.classList.contains('drag-handle')) {
+      touchItem = e.target.closest('[draggable="true"]');
+      if (touchItem) {
+        touchStartY = e.touches[0].clientY;
+        touchItem.classList.add('dragging');
+      }
+    }
+  }, { passive: true });
+  containerEl.addEventListener('touchmove', function(e) {
+    if (touchItem) {
+      e.preventDefault();
+      var y = e.touches[0].clientY;
+      var afterElement = getDragAfterElement(containerEl, y);
+      if (afterElement) {
+        containerEl.insertBefore(touchItem, afterElement);
+      } else {
+        containerEl.appendChild(touchItem);
+      }
+    }
+  }, { passive: false });
+  containerEl.addEventListener('touchend', function() {
+    if (touchItem) {
+      touchItem.classList.remove('dragging');
+      touchItem = null;
+      saveCallback();
+    }
+  });
+}
+
+// ==================== Drag Sort Save Functions ====================
+function saveArticleOrder() {
+  var tbody = document.getElementById('articlesList');
+  var rows = tbody.querySelectorAll('tr[draggable="true"]');
+  var keys = [];
+  for (var i = 0; i < rows.length; i++) {
+    var k = rows[i].getAttribute('data-key');
+    if (k) keys.push(k);
+  }
+  var list = toArray(allData.articles || []);
+  var reordered = [];
+  for (var i = 0; i < keys.length; i++) {
+    for (var j = 0; j < list.length; j++) {
+      if ((list[j].id || list[j]._key) === keys[i]) {
+        reordered.push(list[j]);
+        break;
+      }
+    }
+  }
+  // Add any items not in the key list (shouldn't happen but safety)
+  for (var i = 0; i < list.length; i++) {
+    var found = false;
+    for (var j = 0; j < keys.length; j++) {
+      if ((list[i].id || list[i]._key) === keys[j]) { found = true; break; }
+    }
+    if (!found) reordered.push(list[i]);
+  }
+  saveData('articles', rebuildArray(reordered), function() {
+    showToast('文章排序已更新', 'success');
+    loadAllData();
+  });
+}
+
+function saveResourceOrder() {
+  var container = document.getElementById('resourcesList');
+  var cards = container.querySelectorAll('.res-card[draggable="true"]');
+  var keys = [];
+  for (var i = 0; i < cards.length; i++) {
+    var k = cards[i].getAttribute('data-key');
+    if (k) keys.push(k);
+  }
+  var list = toArray(allData.resources || []);
+  var reordered = [];
+  for (var i = 0; i < keys.length; i++) {
+    for (var j = 0; j < list.length; j++) {
+      if ((list[j].id || list[j]._key) === keys[i]) {
+        reordered.push(list[j]);
+        break;
+      }
+    }
+  }
+  for (var i = 0; i < list.length; i++) {
+    var found = false;
+    for (var j = 0; j < keys.length; j++) {
+      if ((list[i].id || list[i]._key) === keys[j]) { found = true; break; }
+    }
+    if (!found) reordered.push(list[i]);
+  }
+  saveData('resources', rebuildArray(reordered), function() {
+    showToast('资源排序已更新', 'success');
+    loadAllData();
+  });
+}
+
+function saveAlbumGroupOrder() {
+  var container = document.getElementById('albumGroupsList');
+  var items = container.querySelectorAll('.album-group-item[draggable="true"]');
+  var keys = [];
+  for (var i = 0; i < items.length; i++) {
+    var k = items[i].getAttribute('data-key');
+    if (k) keys.push(k);
+  }
+  var list = toArray(allData.albums || []);
+  var reordered = [];
+  for (var i = 0; i < keys.length; i++) {
+    for (var j = 0; j < list.length; j++) {
+      if ((list[j].id || list[j]._key) === keys[i]) {
+        reordered.push(list[j]);
+        break;
+      }
+    }
+  }
+  for (var i = 0; i < list.length; i++) {
+    var found = false;
+    for (var j = 0; j < keys.length; j++) {
+      if ((list[i].id || list[i]._key) === keys[j]) { found = true; break; }
+    }
+    if (!found) reordered.push(list[i]);
+  }
+  saveData('albums', rebuildArray(reordered), function() {
+    showToast('分组排序已更新', 'success');
+    loadAllData();
+  });
+}
+
+function saveSubAlbumOrder() {
+  var container = document.getElementById('subAlbumsList');
+  var items = container.querySelectorAll('.album-group-item[draggable="true"]');
+  var keys = [];
+  for (var i = 0; i < items.length; i++) {
+    var k = items[i].getAttribute('data-key');
+    if (k) keys.push(k);
+  }
+  var list = toArray(allData.albums || []);
+  for (var i = 0; i < list.length; i++) {
+    if ((list[i].id || list[i]._key) === currentAlbumGroup) {
+      var subs = list[i].subAlbums || [];
+      var reordered = [];
+      for (var j = 0; j < keys.length; j++) {
+        for (var k = 0; k < subs.length; k++) {
+          if (subs[k].id === keys[j]) {
+            reordered.push(subs[k]);
+            break;
+          }
+        }
+      }
+      list[i].subAlbums = reordered;
+      break;
+    }
+  }
+  saveData('albums', rebuildArray(list), function() {
+    showToast('子相册排序已更新', 'success');
+    loadAllData();
+  });
 }
 
 // ==================== Helpers ====================
@@ -1326,21 +1577,25 @@ function loadArticles() {
   var html = '';
   for (var i = 0; i < list.length; i++) {
     var a = list[i];
+    var aKey = a.id || a._key || '';
     var hidden = a.hidden ? '<span style="color:#999;">[已隐藏]</span>' : '';
-    html += '<tr>' +
-      '<td>' + (a.cover ? '<img src="' + a.cover + '">' : '-') + '</td>' +
-      '<td>' + escapeHtml(a.title || '') + hidden + '</td>' +
+    var accessLevel = (a.accessLevel !== undefined) ? a.accessLevel : 0;
+    var accessLabel = ['免费V0','体验V1','普通V2','高级V3'][accessLevel] || '免费V0';
+    html += '<tr draggable="true" data-key="' + aKey + '">' +
+      '<td><span class="drag-handle">&#8942;</span>' + (a.cover ? '<img src="' + a.cover + '">' : '-') + '</td>' +
+      '<td>' + escapeHtml(a.title || '') + hidden + ' <span style="font-size:11px;color:#999;">[' + accessLabel + ']</span></td>' +
       '<td>' + escapeHtml(a.articleCat || '-') + '</td>' +
       '<td>' + formatDate(a.date) + '</td>' +
       '<td>' + (a.views || 0) + '</td>' +
       '<td>' + (a.likes || 0) + '</td>' +
       '<td class="td-actions">' +
-        '<input type="button" class="btn-sm btn-edit" value="编辑" onclick="editArticle(\'' + (a.id || a._key || '') + '\')">' +
-        '<input type="button" class="btn-sm ' + (a.hidden ? 'btn-success' : 'btn-warning') + '" value="' + (a.hidden ? '显示' : '隐藏') + '" onclick="toggleArticleHidden(\'' + (a.id || a._key || '') + '\')">' +
-        '<input type="button" class="btn-sm btn-del" value="删除" onclick="deleteArticle(\'' + (a.id || a._key || '') + '\')">' +
+        '<input type="button" class="btn-sm btn-edit" value="编辑" onclick="editArticle(\'' + aKey + '\')">' +
+        '<input type="button" class="btn-sm ' + (a.hidden ? 'btn-success' : 'btn-warning') + '" value="' + (a.hidden ? '显示' : '隐藏') + '" onclick="toggleArticleHidden(\'' + aKey + '\')">' +
+        '<input type="button" class="btn-sm btn-del" value="删除" onclick="deleteArticle(\'' + aKey + '\')">' +
       '</td></tr>';
   }
   tbody.innerHTML = html;
+  initDragSort(tbody.closest('tbody') || tbody, saveArticleOrder);
 }
 
 function openArticleModal(articleId) {
@@ -1405,6 +1660,14 @@ function openArticleModal(articleId) {
     '<div class="form-row-half">' +
       '<div class="form-row"><label>点赞量</label><input type="number" id="artLikes" value="' + (article ? article.likes || 0 : 0) + '"></div>' +
       '<div class="form-row"><div class="form-switch" style="margin-top:24px;"><input type="checkbox" id="artFeatured"' + (article && article.featured ? ' checked' : '') + '><label for="artFeatured">设为精选</label></div></div>' +
+    '</div>' +
+    '<div class="form-row"><label>文章权限</label>' +
+      '<div style="display:flex;gap:12px;margin-top:6px;">' +
+        '<label class="form-switch"><input type="radio" name="artAccess" value="0"' + (article && article.accessLevel === 1 ? '' : (article && article.accessLevel === 2 ? '' : (article && article.accessLevel === 3 ? '' : ' checked'))) + ' id="artAccess0"><label for="artAccess0">免费阅读 V0</label></label>' +
+        '<label class="form-switch"><input type="radio" name="artAccess" value="1"' + (article && article.accessLevel === 1 ? ' checked' : '') + ' id="artAccess1"><label for="artAccess1">体验会员 V1</label></label>' +
+        '<label class="form-switch"><input type="radio" name="artAccess" value="2"' + (article && article.accessLevel === 2 ? ' checked' : '') + ' id="artAccess2"><label for="artAccess2">普通会员 V2</label></label>' +
+        '<label class="form-switch"><input type="radio" name="artAccess" value="3"' + (article && article.accessLevel === 3 ? ' checked' : '') + ' id="artAccess3"><label for="artAccess3">高级会员 V3</label></label>' +
+      '</div>' +
     '</div>';
 
   if (isEdit) {
@@ -1450,6 +1713,11 @@ function saveArticle(editId) {
   var views = parseInt(document.getElementById('artViews').value) || 0;
   var likes = parseInt(document.getElementById('artLikes').value) || 0;
   var featured = document.getElementById('artFeatured').checked;
+  var accessLevel = 0;
+  var artRadios = document.querySelectorAll('input[name="artAccess"]');
+  for (var i = 0; i < artRadios.length; i++) {
+    if (artRadios[i].checked) { accessLevel = parseInt(artRadios[i].value); break; }
+  }
 
   var list = toArray(allData.articles || []);
   if (editId) {
@@ -1466,6 +1734,7 @@ function saveArticle(editId) {
         list[i].views = views;
         list[i].likes = likes;
         list[i].featured = featured;
+        list[i].accessLevel = accessLevel;
         break;
       }
     }
@@ -1473,7 +1742,8 @@ function saveArticle(editId) {
     list.push({
       id: genId(), title: title, cover: cover, desc: desc, content: content,
       articleCat: articleCat, featuredCat: featuredCat, infoTags: tags,
-      date: date, views: views, likes: likes, featured: featured, hidden: false
+      date: date, views: views, likes: likes, featured: featured, hidden: false,
+      accessLevel: accessLevel
     });
   }
   saveData('articles', rebuildArray(list), function() {
@@ -1519,26 +1789,63 @@ function toggleArticleHidden(id) {
 // ==================== Resources ====================
 function loadResources() {
   var list = toArray(allData.resources || []);
-  var tbody = document.getElementById('resourcesList');
+  var container = document.getElementById('resourcesList');
   if (!list.length) {
-    tbody.innerHTML = '<tr><td colspan="4" class="empty-state"><div class="empty-icon">&#9733;</div><p>暂无资源</p></td></tr>';
+    container.innerHTML = '<div class="empty-state" style="grid-column:1/-1;"><div class="empty-icon">&#9733;</div><p>暂无资源</p></div>';
     return;
   }
   var html = '';
+  var accessLabels = ['免费V0', '体验V1', '普通V2', '高级V3'];
   for (var i = 0; i < list.length; i++) {
     var r = list[i];
-    var hidden = r.hidden ? '<span style="color:#999;">[已隐藏]</span>' : '';
-    html += '<tr>' +
-      '<td>' + (r.cover ? '<img src="' + r.cover + '">' : '-') + '</td>' +
-      '<td>' + escapeHtml(r.title || '') + hidden + '</td>' +
-      '<td>' + escapeHtml(r.category || '-') + '</td>' +
-      '<td class="td-actions">' +
-        '<input type="button" class="btn-sm btn-edit" value="编辑" onclick="editResource(\'' + (r.id || r._key || '') + '\')">' +
-        '<input type="button" class="btn-sm ' + (r.hidden ? 'btn-success' : 'btn-warning') + '" value="' + (r.hidden ? '显示' : '隐藏') + '" onclick="toggleResourceHidden(\'' + (r.id || r._key || '') + '\')">' +
-        '<input type="button" class="btn-sm btn-del" value="删除" onclick="deleteResource(\'' + (r.id || r._key || '') + '\')">' +
-      '</td></tr>';
+    var coverImg = r.cover ? '<img src="' + r.cover + '">' : '<div style="display:flex;align-items:center;justify-content:center;width:100%;height:100%;color:#ccc;font-size:48px;">&#9733;</div>';
+    var discount = '';
+    if (r.originalPrice && r.originalPrice > r.price && r.price > 0) {
+      var pct = Math.round(r.price / r.originalPrice * 10) / 10;
+      discount = '<span class="res-discount-badge">' + pct + '折</span>';
+    }
+    var accessLevel = (r.accessLevel !== undefined) ? r.accessLevel : 0;
+    var accessBadge = '<span class="res-access-badge v' + accessLevel + '">' + (accessLabels[accessLevel] || '免费V0') + '</span>';
+    var hiddenBadge = r.hidden ? '<span class="res-hidden-badge">已隐藏</span>' : '';
+    var starsHtml = '';
+    var rating = (r.rating !== undefined) ? r.rating : 0;
+    if (rating > 0) {
+      var fullStar = Math.floor(rating);
+      var halfStar = (rating % 1 >= 0.5) ? 1 : 0;
+      var starStr = '';
+      for (var s = 0; s < fullStar; s++) starStr += '&#9733;';
+      if (halfStar) starStr += '&#189;';
+      starsHtml = '<span class="res-stars">' + starStr + '</span> ' + rating;
+    }
+    var sold = (r.sold !== undefined) ? r.sold : 0;
+    var metaHtml = '';
+    if (starsHtml || sold) {
+      metaHtml = '<div class="res-card-meta">' + starsHtml + (sold ? '<span>已售 ' + sold + '</span>' : '') + '</div>';
+    }
+    var priceHtml = '<div class="res-card-price"><span class="res-now-price">&yen;' + (r.price || 0) + '</span>';
+    if (r.originalPrice && r.originalPrice > r.price) {
+      priceHtml += '<span class="res-orig-price">&yen;' + r.originalPrice + '</span>';
+    }
+    priceHtml += '</div>';
+    html += '<div class="res-card" draggable="true" data-key="' + (r.id || r._key || '') + '">' +
+      '<div class="res-card-cover">' +
+        '<span class="drag-handle" style="position:absolute;top:8px;right:40px;z-index:2;background:rgba(0,0,0,0.5);color:#fff;border-radius:4px;padding:2px 6px;font-size:16px;">&#8942;</span>' +
+        coverImg + discount + accessBadge + hiddenBadge +
+      '</div>' +
+      '<div class="res-card-info">' +
+        '<div class="res-card-title" title="' + escapeHtml(r.title || '') + '">' + escapeHtml(r.title || '无标题') + '</div>' +
+        metaHtml +
+        priceHtml +
+        '<div class="res-card-actions">' +
+          '<input type="button" class="btn-sm btn-edit" value="编辑" onclick="editResource(\'' + (r.id || r._key || '') + '\')">' +
+          '<input type="button" class="btn-sm ' + (r.hidden ? 'btn-success' : 'btn-warning') + '" value="' + (r.hidden ? '显示' : '隐藏') + '" onclick="toggleResourceHidden(\'' + (r.id || r._key || '') + '\')">' +
+          '<input type="button" class="btn-sm btn-del" value="删除" onclick="deleteResource(\'' + (r.id || r._key || '') + '\')">' +
+        '</div>' +
+      '</div>' +
+    '</div>';
   }
-  tbody.innerHTML = html;
+  container.innerHTML = html;
+  initDragSort(container, saveResourceOrder);
 }
 
 function openResourceModal(resId) {
@@ -1596,8 +1903,9 @@ function openResourceModal(resId) {
     '<div class="res-form-page" id="resPage1">' +
       '<div class="form-row-half">' +
         '<div class="form-row"><label>评分 (0-5)</label><input type="number" id="resRating" min="0" max="5" step="0.1" value="' + (res && res.rating !== undefined ? res.rating : 0) + '"></div>' +
-        '<div class="form-row"><label>标签 (逗号分隔)</label><input type="text" id="resTagsInput" value="' + escapeHtml(selTags.join(', ')) + '" placeholder="标签1, 标签2"></div>' +
+        '<div class="form-row"><label>已售数量</label><input type="number" id="resSold" min="0" value="' + (res && res.sold !== undefined ? res.sold : 0) + '"></div>' +
       '</div>' +
+      '<div class="form-row"><label>标签 (逗号分隔)</label><input type="text" id="resTagsInput" value="' + escapeHtml(selTags.join(', ')) + '" placeholder="标签1, 标签2"></div>' +
       '<div class="form-row"><label>商品类型</label>' +
         '<div style="display:flex;gap:20px;margin-top:6px;">' +
           '<label class="form-switch"><input type="checkbox" id="resFeatured"' + featured + '><label for="resFeatured">加入精选</label></label>' +
@@ -1657,6 +1965,7 @@ function saveResource(editId) {
   var rating = parseFloat(document.getElementById('resRating').value) || 0;
   if (rating > 5) rating = 5;
   if (rating < 0) rating = 0;
+  var sold = parseInt(document.getElementById('resSold').value) || 0;
   var tagsStr = document.getElementById('resTagsInput').value.trim();
   var tags = [];
   if (tagsStr) {
@@ -1682,7 +1991,7 @@ function saveResource(editId) {
       if ((list[i].id || list[i]._key) === editId) {
         list[i].title = title; list[i].cover = cover; list[i].desc = desc;
         list[i].price = price; list[i].originalPrice = originalPrice; list[i].stock = stock;
-        list[i].category = category; list[i].rating = rating; list[i].tags = tags;
+        list[i].category = category; list[i].rating = rating; list[i].sold = sold; list[i].tags = tags;
         list[i].featured = featured; list[i].normal = normal; list[i].accessLevel = accessLevel;
         list[i].deliveryLink = deliveryLink; list[i].deliveryPassword = deliveryPassword;
         break;
@@ -1692,7 +2001,7 @@ function saveResource(editId) {
     list.push({
       id: genId(), title: title, cover: cover, desc: desc,
       price: price, originalPrice: originalPrice, stock: stock,
-      category: category, rating: rating, tags: tags,
+      category: category, rating: rating, sold: sold, tags: tags,
       featured: featured, normal: normal, accessLevel: accessLevel,
       deliveryLink: deliveryLink, deliveryPassword: deliveryPassword,
       hidden: false
@@ -1746,8 +2055,9 @@ function loadAlbumGroups() {
   var html = '';
   for (var i = 0; i < list.length; i++) {
     var g = list[i];
-    html += '<div class="album-group-item">' +
+    html += '<div class="album-group-item" draggable="true" data-key="' + (g.id || g._key || '') + '">' +
       '<div style="display:flex;align-items:center;gap:12px;">' +
+        '<span class="drag-handle">&#8942;</span>' +
         (g.cover ? '<img src="' + g.cover + '" style="width:48px;height:48px;object-fit:cover;border-radius:6px;">' : '') +
         '<span class="group-name">' + escapeHtml(g.name || '未命名') + '</span>' +
         '<span style="color:#999;font-size:12px;">(' + (g.subAlbums ? g.subAlbums.length : 0) + '个子相册)</span>' +
@@ -1759,6 +2069,7 @@ function loadAlbumGroups() {
       '</div></div>';
   }
   container.innerHTML = html;
+  initDragSort(container, saveAlbumGroupOrder);
 }
 
 function openAlbumGroupModal(groupId) {
@@ -1774,7 +2085,15 @@ function openAlbumGroupModal(groupId) {
 
   var bodyHtml =
     '<div class="form-row"><label>分组名称<span class="req">*</span></label><input type="text" id="grpName" value="' + escapeHtml(group ? group.name : '') + '"></div>' +
-    '<div class="form-row"><label>封面图</label><div class="img-upload-area"><p>点击上传封面图</p><input type="file" accept="image/*" onchange="handleImageUpload(this,\'grpCoverPreview\',\'grpCoverData\',9/16)"></div><div class="img-preview" id="grpCoverPreview">' + (group && group.cover ? '<img src="' + group.cover + '"><span class="remove-img" onclick="clearImage(\'grpCoverPreview\',\'grpCoverData\')">移除</span>' : '') + '</div></div>';
+    '<div class="form-row"><label>封面图</label><div class="img-upload-area"><p>点击上传封面图</p><input type="file" accept="image/*" onchange="handleImageUpload(this,\'grpCoverPreview\',\'grpCoverData\',9/16)"></div><div class="img-preview" id="grpCoverPreview">' + (group && group.cover ? '<img src="' + group.cover + '"><span class="remove-img" onclick="clearImage(\'grpCoverPreview\',\'grpCoverData\')">移除</span>' : '') + '</div></div>' +
+    '<div class="form-row"><label>相册权限</label>' +
+      '<div style="display:flex;gap:12px;margin-top:6px;">' +
+        '<label class="form-switch"><input type="radio" name="grpAccess" value="0"' + (group && group.accessLevel === 1 ? '' : (group && group.accessLevel === 2 ? '' : (group && group.accessLevel === 3 ? '' : ' checked'))) + ' id="grpAccess0"><label for="grpAccess0">免费浏览 V0</label></label>' +
+        '<label class="form-switch"><input type="radio" name="grpAccess" value="1"' + (group && group.accessLevel === 1 ? ' checked' : '') + ' id="grpAccess1"><label for="grpAccess1">体验会员 V1</label></label>' +
+        '<label class="form-switch"><input type="radio" name="grpAccess" value="2"' + (group && group.accessLevel === 2 ? ' checked' : '') + ' id="grpAccess2"><label for="grpAccess2">普通会员 V2</label></label>' +
+        '<label class="form-switch"><input type="radio" name="grpAccess" value="3"' + (group && group.accessLevel === 3 ? ' checked' : '') + ' id="grpAccess3"><label for="grpAccess3">高级会员 V3</label></label>' +
+      '</div>' +
+    '</div>';
 
   if (isEdit) { window.grpCoverData = group.cover || ''; }
 
@@ -1789,15 +2108,20 @@ function saveAlbumGroup(editId) {
   var name = document.getElementById('grpName').value.trim();
   if (!name) { showToast('请输入分组名称', 'error'); return; }
   var cover = window.grpCoverData || '';
+  var accessLevel = 0;
+  var grpRadios = document.querySelectorAll('input[name="grpAccess"]');
+  for (var i = 0; i < grpRadios.length; i++) {
+    if (grpRadios[i].checked) { accessLevel = parseInt(grpRadios[i].value); break; }
+  }
   var list = toArray(allData.albums || []);
   if (editId) {
     for (var i = 0; i < list.length; i++) {
       if ((list[i].id || list[i]._key) === editId) {
-        list[i].name = name; list[i].cover = cover; break;
+        list[i].name = name; list[i].cover = cover; list[i].accessLevel = accessLevel; break;
       }
     }
   } else {
-    list.push({ id: genId(), name: name, cover: cover, subAlbums: [] });
+    list.push({ id: genId(), name: name, cover: cover, subAlbums: [], accessLevel: accessLevel });
   }
   saveData('albums', rebuildArray(list), function() {
     showToast(editId ? '分组已更新' : '分组已添加', 'success');
@@ -1851,8 +2175,9 @@ function viewSubAlbums(groupId) {
   var html = '';
   for (var i = 0; i < subs.length; i++) {
     var s = subs[i];
-    html += '<div class="album-group-item">' +
+    html += '<div class="album-group-item" draggable="true" data-key="' + (s.id || '') + '">' +
       '<div style="display:flex;align-items:center;gap:12px;">' +
+        '<span class="drag-handle">&#8942;</span>' +
         (s.cover ? '<img src="' + s.cover + '" style="width:48px;height:48px;object-fit:cover;border-radius:6px;">' : '') +
         '<span class="group-name">' + escapeHtml(s.name || '未命名') + '</span>' +
         '<span style="color:#999;font-size:12px;">(' + (s.photos ? s.photos.length : 0) + '张照片)</span>' +
@@ -1864,6 +2189,7 @@ function viewSubAlbums(groupId) {
       '</div></div>';
   }
   container.innerHTML = html;
+  initDragSort(container, saveSubAlbumOrder);
 }
 
 function openSubAlbumModal(subId) {
@@ -1885,7 +2211,15 @@ function openSubAlbumModal(subId) {
 
   var bodyHtml =
     '<div class="form-row"><label>子相册名称<span class="req">*</span></label><input type="text" id="subName" value="' + escapeHtml(sub ? sub.name : '') + '"></div>' +
-    '<div class="form-row"><label>封面图</label><div class="img-upload-area"><p>点击上传封面图</p><input type="file" accept="image/*" onchange="handleImageUpload(this,\'subCoverPreview\',\'subCoverData\',9/16)"></div><div class="img-preview" id="subCoverPreview">' + (sub && sub.cover ? '<img src="' + sub.cover + '"><span class="remove-img" onclick="clearImage(\'subCoverPreview\',\'subCoverData\')">移除</span>' : '') + '</div></div>';
+    '<div class="form-row"><label>封面图</label><div class="img-upload-area"><p>点击上传封面图</p><input type="file" accept="image/*" onchange="handleImageUpload(this,\'subCoverPreview\',\'subCoverData\',9/16)"></div><div class="img-preview" id="subCoverPreview">' + (sub && sub.cover ? '<img src="' + sub.cover + '"><span class="remove-img" onclick="clearImage(\'subCoverPreview\',\'subCoverData\')">移除</span>' : '') + '</div></div>' +
+    '<div class="form-row"><label>子相册权限</label>' +
+      '<div style="display:flex;gap:12px;margin-top:6px;">' +
+        '<label class="form-switch"><input type="radio" name="subAccess" value="0"' + (sub && sub.accessLevel === 1 ? '' : (sub && sub.accessLevel === 2 ? '' : (sub && sub.accessLevel === 3 ? '' : ' checked'))) + ' id="subAccess0"><label for="subAccess0">免费浏览 V0</label></label>' +
+        '<label class="form-switch"><input type="radio" name="subAccess" value="1"' + (sub && sub.accessLevel === 1 ? ' checked' : '') + ' id="subAccess1"><label for="subAccess1">体验会员 V1</label></label>' +
+        '<label class="form-switch"><input type="radio" name="subAccess" value="2"' + (sub && sub.accessLevel === 2 ? ' checked' : '') + ' id="subAccess2"><label for="subAccess2">普通会员 V2</label></label>' +
+        '<label class="form-switch"><input type="radio" name="subAccess" value="3"' + (sub && sub.accessLevel === 3 ? ' checked' : '') + ' id="subAccess3"><label for="subAccess3">高级会员 V3</label></label>' +
+      '</div>' +
+    '</div>';
 
   if (isEdit) { window.subCoverData = sub.cover || ''; }
 
@@ -1900,6 +2234,11 @@ function saveSubAlbum(editId) {
   var name = document.getElementById('subName').value.trim();
   if (!name) { showToast('请输入子相册名称', 'error'); return; }
   var cover = window.subCoverData || '';
+  var accessLevel = 0;
+  var subRadios = document.querySelectorAll('input[name="subAccess"]');
+  for (var i = 0; i < subRadios.length; i++) {
+    if (subRadios[i].checked) { accessLevel = parseInt(subRadios[i].value); break; }
+  }
   var list = toArray(allData.albums || []);
   for (var i = 0; i < list.length; i++) {
     if ((list[i].id || list[i]._key) === currentAlbumGroup) {
@@ -1909,11 +2248,12 @@ function saveSubAlbum(editId) {
           if (list[i].subAlbums[j].id === editId) {
             list[i].subAlbums[j].name = name;
             list[i].subAlbums[j].cover = cover;
+            list[i].subAlbums[j].accessLevel = accessLevel;
             break;
           }
         }
       } else {
-        list[i].subAlbums.push({ id: genId(), name: name, cover: cover, photos: [] });
+        list[i].subAlbums.push({ id: genId(), name: name, cover: cover, photos: [], accessLevel: accessLevel });
       }
       break;
     }
@@ -1976,75 +2316,169 @@ function viewPhotos(subId) {
   }
   var html = '';
   for (var k = 0; k < photos.length; k++) {
-    html += '<div class="photo-item" draggable="true" data-index="' + k + '" ondragstart="photoDragStart(event)" ondragover="event.preventDefault()" ondrop="photoDrop(event,' + k + ')">' +
+    html += '<div class="photo-item" draggable="true" data-index="' + k + '" data-photo-key="' + k + '">' +
       '<img src="' + photos[k] + '">' +
+      '<span class="drag-handle" style="position:absolute;top:4px;left:4px;z-index:2;background:rgba(0,0,0,0.5);color:#fff;border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-size:14px;">&#8942;</span>' +
       '<input type="button" class="photo-del" value="&times;" onclick="deletePhoto(' + k + ')">' +
     '</div>';
   }
   grid.innerHTML = html;
-}
-
-var dragPhotoIndex = null;
-function photoDragStart(e) {
-  dragPhotoIndex = parseInt(e.currentTarget.getAttribute('data-index'));
-  e.currentTarget.classList.add('dragging');
-}
-function photoDrop(e, targetIndex) {
-  e.preventDefault();
-  if (dragPhotoIndex === null || dragPhotoIndex === targetIndex) return;
-  var list = toArray(allData.albums || []);
-  for (var i = 0; i < list.length; i++) {
-    if ((list[i].id || list[i]._key) === currentAlbumGroup) {
-      var subs = list[i].subAlbums || [];
-      for (var j = 0; j < subs.length; j++) {
-        if (subs[j].id === currentSubAlbum) {
-          var photos = subs[j].photos || [];
-          var moved = photos.splice(dragPhotoIndex, 1)[0];
-          photos.splice(targetIndex, 0, moved);
-          saveData('albums', rebuildArray(list), function() {
-            showToast('排序已更新', 'success');
-            loadAllData();
-          });
-          return;
+  // Init photo drag sort with touch support
+  (function() {
+    var photoDragIdx = null;
+    var photoTouchItem = null;
+    var photoTouchStartY = 0;
+    grid.addEventListener('dragstart', function(e) {
+      var target = e.target.closest('.photo-item');
+      if (!target) return;
+      if (!e.target.classList.contains('drag-handle') && e.target !== target) return;
+      photoDragIdx = parseInt(target.getAttribute('data-photo-key'));
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', '');
+      setTimeout(function() { target.classList.add('dragging'); }, 0);
+    });
+    grid.addEventListener('dragend', function(e) {
+      var target = e.target.closest('.photo-item');
+      if (target) target.classList.remove('dragging');
+    });
+    grid.addEventListener('dragover', function(e) {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      var dragging = grid.querySelector('.photo-item.dragging');
+      if (dragging) {
+        var afterElement = getDragAfterElement(grid, e.clientY);
+        if (afterElement) grid.insertBefore(dragging, afterElement);
+        else grid.appendChild(dragging);
+      }
+    });
+    grid.addEventListener('drop', function(e) {
+      e.preventDefault();
+      if (photoDragIdx === null) return;
+      var items = grid.querySelectorAll('.photo-item');
+      var newOrder = [];
+      for (var i = 0; i < items.length; i++) {
+        newOrder.push(parseInt(items[i].getAttribute('data-photo-key')));
+      }
+      if (newOrder.length === 0) return;
+      var list = toArray(allData.albums || []);
+      for (var i = 0; i < list.length; i++) {
+        if ((list[i].id || list[i]._key) === currentAlbumGroup) {
+          var subs = list[i].subAlbums || [];
+          for (var j = 0; j < subs.length; j++) {
+            if (subs[j].id === currentSubAlbum) {
+              var photos = subs[j].photos || [];
+              var reordered = [];
+              for (var n = 0; n < newOrder.length; n++) {
+                reordered.push(photos[newOrder[n]]);
+              }
+              subs[j].photos = reordered;
+              break;
+            }
+          }
+          break;
         }
       }
-      break;
-    }
-  }
-  dragPhotoIndex = null;
+      saveData('albums', rebuildArray(list), function() {
+        showToast('照片排序已更新', 'success');
+        loadAllData();
+      });
+      photoDragIdx = null;
+    });
+    // Touch support for photos
+    grid.addEventListener('touchstart', function(e) {
+      if (e.target.classList && e.target.classList.contains('drag-handle')) {
+        photoTouchItem = e.target.closest('.photo-item');
+        if (photoTouchItem) {
+          photoTouchStartY = e.touches[0].clientY;
+          photoTouchItem.classList.add('dragging');
+        }
+      }
+    }, { passive: true });
+    grid.addEventListener('touchmove', function(e) {
+      if (photoTouchItem) {
+        e.preventDefault();
+        var y = e.touches[0].clientY;
+        var afterElement = getDragAfterElement(grid, y);
+        if (afterElement) grid.insertBefore(photoTouchItem, afterElement);
+        else grid.appendChild(photoTouchItem);
+      }
+    }, { passive: false });
+    grid.addEventListener('touchend', function() {
+      if (photoTouchItem) {
+        photoTouchItem.classList.remove('dragging');
+        // Trigger same reorder logic
+        var items = grid.querySelectorAll('.photo-item');
+        var newOrder = [];
+        for (var i = 0; i < items.length; i++) {
+          newOrder.push(parseInt(items[i].getAttribute('data-photo-key')));
+        }
+        if (newOrder.length > 0) {
+          var list = toArray(allData.albums || []);
+          for (var i = 0; i < list.length; i++) {
+            if ((list[i].id || list[i]._key) === currentAlbumGroup) {
+              var subs = list[i].subAlbums || [];
+              for (var j = 0; j < subs.length; j++) {
+                if (subs[j].id === currentSubAlbum) {
+                  var photos = subs[j].photos || [];
+                  var reordered = [];
+                  for (var n = 0; n < newOrder.length; n++) {
+                    reordered.push(photos[newOrder[n]]);
+                  }
+                  subs[j].photos = reordered;
+                  break;
+                }
+              }
+              break;
+            }
+          }
+          saveData('albums', rebuildArray(list), function() {
+            showToast('照片排序已更新', 'success');
+            loadAllData();
+          });
+        }
+        photoTouchItem = null;
+      }
+    });
+  })();
 }
 
 function uploadPhotos(input) {
-  if (!input || !input.files || input.files.length === 0) return;
+  if (!input || !input.files || input.files.length === 0) {
+    showToast('请选择图片文件');
+    return;
+  }
   var files = input.files;
   var count = 0;
   var total = files.length;
+  showToast('正在上传 ' + total + ' 张照片...');
 
-  function processFile(index) {
-    if (index >= total) {
-      showToast('已上传 ' + count + ' 张照片', 'success');
+  function processOne(idx) {
+    if (idx >= total) {
+      showToast('已上传 ' + count + '/' + total + ' 张照片', 'success');
+      input.value = '';
       loadAlbumPhotos();
       return;
     }
-    var file = files[index];
-    compressAndRead(file, function(base64) {
-      var albumIdx = currentAlbumIndex;
-      var subIdx = currentSubAlbumIndex;
-      if (albumIdx < 0 || subIdx < 0) {
-        showToast('请先选择子相册', 'error');
-        return;
-      }
-      db.ref('/site/albums/' + albumIdx + '/subAlbums/' + subIdx + '/photos').once('value', function(snap) {
-        var photos = snap.val() || [];
-        photos.push(base64);
-        db.ref('/site/albums/' + albumIdx + '/subAlbums/' + subIdx + '/photos').set(photos, function(err) {
+    var albumIdx = currentAlbumIndex;
+    var subIdx = currentSubAlbumIndex;
+    if (albumIdx < 0 || subIdx < 0) {
+      showToast('请先选择子相册', 'error');
+      return;
+    }
+    compressAndRead(files[idx], function(base64) {
+      var photosRef = db.ref('/site/albums/' + albumIdx + '/subAlbums/' + subIdx + '/photos');
+      photosRef.once('value', function(snap) {
+        var arr = snap.val() || [];
+        arr.push(base64);
+        photosRef.set(arr, function(err) {
           if (!err) count++;
-          processFile(index + 1);
+          else showToast('第' + (idx + 1) + '张上传失败', 'error');
+          processOne(idx + 1);
         });
       });
     });
   }
-  processFile(0);
+  processOne(0);
 }
 
 function loadAlbumPhotos() {
