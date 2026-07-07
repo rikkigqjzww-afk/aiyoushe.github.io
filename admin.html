@@ -2,6 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
+<meta name="referrer" content="no-referrer">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>艾优社资源馆 - 管理后台</title>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
@@ -1221,6 +1222,8 @@ function createRichEditorHtml(id, value) {
       '<input type="button" value="OL" onclick="execCmd(\'insertOrderedList\')">' +
       '<input type="button" value="&#128279;" onclick="insertEditorLink(\'' + id + '\')">' +
       '<input type="button" value="&#128247;" onclick="insertEditorImage(\'' + id + '\')">' +
+      '<input type="button" value="上传图片" onclick="editorUploadImage(this)" style="margin-left:4px;padding:2px 6px;font-size:12px;">' +
+      '<input type="file" accept="image/*" style="display:none" onchange="handleEditorImageUpload(this)">' +
       '<input type="button" value="清除格式" onclick="execCmd(\'removeFormat\')">' +
     '</div>' +
     '<div class="editor-content" contenteditable="true" id="' + id + '">' + val + '</div>' +
@@ -1251,36 +1254,66 @@ function insertEditorImage(editorId) {
   input.click();
 }
 
+function editorUploadImage(btn) {
+  var fileInput = btn.nextElementSibling;
+  if (fileInput) fileInput.click();
+}
+
+function handleEditorImageUpload(input) {
+  if (!input || !input.files || !input.files[0]) return;
+  var file = input.files[0];
+  compressAndRead(file, function(base64) {
+    var editor = input.closest('.modal-body') ?
+      input.closest('.modal-body').querySelector('[contenteditable="true"]') : null;
+    if (!editor) {
+      var toolbar = input.closest('.rich-editor') || input.closest('.toolbar');
+      if (toolbar) {
+        editor = toolbar.parentNode.querySelector('[contenteditable="true"]');
+      }
+    }
+    if (editor) {
+      editor.focus();
+      document.execCommand('insertHTML', false,
+        '<img src="' + base64 + '" style="max-width:100%;height:auto;">');
+      showToast('图片已上传');
+    }
+  });
+  input.value = '';
+}
+
 function setupEditorPaste(editorId) {
   var editor = document.getElementById(editorId);
   if (!editor) return;
   editor.addEventListener('paste', function(e) {
-    var items = e.clipboardData && e.clipboardData.items;
-    if (!items) return;
-    for (var i = 0; i < items.length; i++) {
-      if (items[i].type.indexOf('image') !== -1) {
-        e.preventDefault();
-        var file = items[i].getAsFile();
-        if (file) {
-          var reader = new FileReader();
-          reader.onload = function(ev) {
-            var base64 = ev.target.result;
-            // Use insertHTML for better browser compatibility
-            if (editor.contentEditable === 'true') {
+    var clipboardData = e.clipboardData || window.clipboardData;
+    var items = clipboardData && clipboardData.items;
+    var hasImage = false;
+
+    // First priority: check if clipboard has actual image file (e.g. screenshot paste)
+    if (items) {
+      for (var i = 0; i < items.length; i++) {
+        if (items[i].type.indexOf('image') !== -1) {
+          hasImage = true;
+          e.preventDefault();
+          var file = items[i].getAsFile();
+          if (file) {
+            var reader = new FileReader();
+            reader.onload = function(ev) {
+              var base64 = ev.target.result;
               editor.focus();
-              document.execCommand('insertHTML', false, '<img src="' + base64 + '" style="max-width:100%;height:auto;">');
-            } else {
-              var img = document.createElement('img');
-              img.src = base64;
-              img.style.cssText = 'max-width:100%;height:auto;';
-              editor.appendChild(img);
-            }
-          };
-          reader.readAsDataURL(file);
+              document.execCommand('insertHTML', false,
+                '<img src="' + base64 + '" style="max-width:100%;height:auto;">');
+              showToast('图片已插入');
+            };
+            reader.readAsDataURL(file);
+          }
+          return;
         }
-        return;
       }
     }
+
+    // WeChat images will work because of <meta name="referrer" content="no-referrer">
+    // No need to intercept WeChat HTML content
   });
 }
 
@@ -1309,7 +1342,7 @@ function getDragAfterElement(container, y) {
   return result;
 }
 
-function initDragSort(containerEl, saveCallback) {
+function initDragSort(containerEl, dataKey, saveCallback) {
   if (!containerEl) return;
   containerEl.addEventListener('dragstart', function(e) {
     var target = e.target.closest('[draggable="true"]');
@@ -1339,7 +1372,15 @@ function initDragSort(containerEl, saveCallback) {
   });
   containerEl.addEventListener('drop', function(e) {
     e.preventDefault();
-    saveCallback();
+    // Read new order from DOM
+    var newOrder = [];
+    var allItems = containerEl.querySelectorAll('[data-key]');
+    for (var i = 0; i < allItems.length; i++) {
+      if (allItems[i].getAttribute('data-key')) {
+        newOrder.push(allItems[i].getAttribute('data-key'));
+      }
+    }
+    if (saveCallback) saveCallback(newOrder);
   });
   // Touch drag support
   var touchStartY = 0;
@@ -1368,20 +1409,30 @@ function initDragSort(containerEl, saveCallback) {
   containerEl.addEventListener('touchend', function() {
     if (touchItem) {
       touchItem.classList.remove('dragging');
+      // Read new order from DOM
+      var newOrder = [];
+      var allItems = containerEl.querySelectorAll('[data-key]');
+      for (var i = 0; i < allItems.length; i++) {
+        if (allItems[i].getAttribute('data-key')) {
+          newOrder.push(allItems[i].getAttribute('data-key'));
+        }
+      }
+      if (saveCallback) saveCallback(newOrder);
       touchItem = null;
-      saveCallback();
     }
   });
 }
 
 // ==================== Drag Sort Save Functions ====================
-function saveArticleOrder() {
-  var tbody = document.getElementById('articlesList');
-  var rows = tbody.querySelectorAll('tr[draggable="true"]');
-  var keys = [];
-  for (var i = 0; i < rows.length; i++) {
-    var k = rows[i].getAttribute('data-key');
-    if (k) keys.push(k);
+function saveArticleOrder(newOrder) {
+  var keys = newOrder || [];
+  if (keys.length === 0) {
+    var tbody = document.getElementById('articlesList');
+    var rows = tbody.querySelectorAll('tr[draggable="true"]');
+    for (var i = 0; i < rows.length; i++) {
+      var k = rows[i].getAttribute('data-key');
+      if (k) keys.push(k);
+    }
   }
   var list = toArray(allData.articles || []);
   var reordered = [];
@@ -1407,13 +1458,15 @@ function saveArticleOrder() {
   });
 }
 
-function saveResourceOrder() {
-  var container = document.getElementById('resourcesList');
-  var cards = container.querySelectorAll('.res-card[draggable="true"]');
-  var keys = [];
-  for (var i = 0; i < cards.length; i++) {
-    var k = cards[i].getAttribute('data-key');
-    if (k) keys.push(k);
+function saveResourceOrder(newOrder) {
+  var keys = newOrder || [];
+  if (keys.length === 0) {
+    var container = document.getElementById('resourcesList');
+    var cards = container.querySelectorAll('.res-card[draggable="true"]');
+    for (var i = 0; i < cards.length; i++) {
+      var k = cards[i].getAttribute('data-key');
+      if (k) keys.push(k);
+    }
   }
   var list = toArray(allData.resources || []);
   var reordered = [];
@@ -1438,13 +1491,15 @@ function saveResourceOrder() {
   });
 }
 
-function saveAlbumGroupOrder() {
-  var container = document.getElementById('albumGroupsList');
-  var items = container.querySelectorAll('.album-group-item[draggable="true"]');
-  var keys = [];
-  for (var i = 0; i < items.length; i++) {
-    var k = items[i].getAttribute('data-key');
-    if (k) keys.push(k);
+function saveAlbumGroupOrder(newOrder) {
+  var keys = newOrder || [];
+  if (keys.length === 0) {
+    var container = document.getElementById('albumGroupsList');
+    var items = container.querySelectorAll('.album-group-item[draggable="true"]');
+    for (var i = 0; i < items.length; i++) {
+      var k = items[i].getAttribute('data-key');
+      if (k) keys.push(k);
+    }
   }
   var list = toArray(allData.albums || []);
   var reordered = [];
@@ -1469,13 +1524,15 @@ function saveAlbumGroupOrder() {
   });
 }
 
-function saveSubAlbumOrder() {
-  var container = document.getElementById('subAlbumsList');
-  var items = container.querySelectorAll('.album-group-item[draggable="true"]');
-  var keys = [];
-  for (var i = 0; i < items.length; i++) {
-    var k = items[i].getAttribute('data-key');
-    if (k) keys.push(k);
+function saveSubAlbumOrder(newOrder) {
+  var keys = newOrder || [];
+  if (keys.length === 0) {
+    var container = document.getElementById('subAlbumsList');
+    var items = container.querySelectorAll('.album-group-item[draggable="true"]');
+    for (var i = 0; i < items.length; i++) {
+      var k = items[i].getAttribute('data-key');
+      if (k) keys.push(k);
+    }
   }
   var list = toArray(allData.albums || []);
   for (var i = 0; i < list.length; i++) {
@@ -1595,7 +1652,7 @@ function loadArticles() {
       '</td></tr>';
   }
   tbody.innerHTML = html;
-  initDragSort(tbody.closest('tbody') || tbody, saveArticleOrder);
+  initDragSort(tbody.closest('tbody') || tbody, 'articles', function(order) { saveArticleOrder(order); });
 }
 
 function openArticleModal(articleId) {
@@ -1845,7 +1902,7 @@ function loadResources() {
     '</div>';
   }
   container.innerHTML = html;
-  initDragSort(container, saveResourceOrder);
+  initDragSort(container, 'resources', function(order) { saveResourceOrder(order); });
 }
 
 function openResourceModal(resId) {
@@ -2069,7 +2126,7 @@ function loadAlbumGroups() {
       '</div></div>';
   }
   container.innerHTML = html;
-  initDragSort(container, saveAlbumGroupOrder);
+  initDragSort(container, 'albums', function(order) { saveAlbumGroupOrder(order); });
 }
 
 function openAlbumGroupModal(groupId) {
@@ -2189,7 +2246,7 @@ function viewSubAlbums(groupId) {
       '</div></div>';
   }
   container.innerHTML = html;
-  initDragSort(container, saveSubAlbumOrder);
+  initDragSort(container, 'subAlbums', function(order) { saveSubAlbumOrder(order); });
 }
 
 function openSubAlbumModal(subId) {

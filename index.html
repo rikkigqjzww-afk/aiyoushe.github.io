@@ -2,6 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
+<meta name="referrer" content="no-referrer">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
 <title>艾优社资源馆</title>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
@@ -149,13 +150,16 @@ input,textarea,select{font-family:inherit}
 
 /* ===== Article Detail Layout (Toutiao-style) ===== */
 .article-detail-layout{display:flex;max-width:1100px;margin:0 auto;gap:20px;padding:20px}
-.article-left-bar{position:sticky;top:80px;flex:0 0 50px;display:flex;flex-direction:column;align-items:center;gap:16px;padding-top:40px}
-.article-left-bar .action-btn{display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;color:#999;font-size:11px;transition:var(--transition)}
-.article-left-bar .action-btn:hover{color:#E63946}
-.article-left-bar .action-btn .icon{font-size:24px}
+.article-left-bar{position:sticky;top:80px;flex:0 0 50px;height:fit-content;display:flex;flex-direction:column;align-items:center;gap:20px;padding-top:60px;align-self:flex-start}
+.article-left-bar .action-btn{display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;color:#666;font-size:11px;transition:var(--transition)}
+.article-left-bar .action-btn:hover{color:#333}
 .article-left-bar .action-btn.active{color:#E63946}
+.article-left-bar .action-btn .icon{width:24px;height:24px;display:flex;align-items:center;justify-content:center}
+.article-left-bar .action-btn .icon svg{width:22px;height:22px;fill:none;stroke:#666;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.article-left-bar .action-btn:hover .icon svg{stroke:#333}
+.article-left-bar .action-btn.active .icon svg{stroke:#E63946;fill:#E63946}
 .article-center{flex:1;max-width:680px}
-.article-right-bar{position:sticky;top:80px;flex:0 0 280px}
+.article-right-bar{position:sticky;top:80px;flex:0 0 280px;height:fit-content;align-self:flex-start}
 .recommend-section h4{margin:0 0 12px;font-size:16px;font-weight:600;color:var(--secondary)}
 .recommend-item{display:flex;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);transition:var(--transition)}
 .recommend-item:last-child{border-bottom:none}
@@ -1247,19 +1251,19 @@ function renderArticleDetail() {
   /* Left bar: actions */
   html += '<div class="article-left-bar">';
   html += '<div class="action-btn' + liked + '" onclick="toggleLike(\'' + article.id + '\')">';
-  html += '<span class="icon">&#128077;</span>';
+  html += '<span class="icon"><svg viewBox="0 0 24 24"><path d="M7 10v12M15 5v14M3 14h18M3 10h18"/></svg></span>';
   html += '<span>' + formatNumber(likeCount) + '</span>';
   html += '</div>';
   html += '<div class="action-btn" onclick="document.getElementById(\'articleComments\')&&document.getElementById(\'articleComments\').scrollIntoView({behavior:\'smooth\'})">';
-  html += '<span class="icon">&#128172;</span>';
+  html += '<span class="icon"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>';
   html += '<span>' + commentCount + '</span>';
   html += '</div>';
   html += '<div class="action-btn' + (appState.favoritedArticles && appState.favoritedArticles[article.id] ? ' active' : '') + '" onclick="toggleFavorite(\'' + article.id + '\')">';
-  html += '<span class="icon">&#11088;</span>';
+  html += '<span class="icon"><svg viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg></span>';
   html += '<span>收藏</span>';
   html += '</div>';
   html += '<div class="action-btn" onclick="copyArticleLink(\'' + article.id + '\')">';
-  html += '<span class="icon">&#8599;</span>';
+  html += '<span class="icon"><svg viewBox="0 0 24 24"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg></span>';
   html += '<span>分享</span>';
   html += '</div>';
   html += '</div>';
