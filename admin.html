@@ -1332,30 +1332,30 @@ function moveItem(dataKey, index, direction) {
   };
   var path = pathMap[dataKey];
   if (!path) return;
+  if (!db) { showToast('Firebase未连接'); return; }
 
-  db.ref(path).once('value', function(snap) {
+  db.ref(path).once('value').then(function(snap) {
     var arr = toArray(snap.val());
     var newIndex = index + direction;
-    if (newIndex < 0 || newIndex >= arr.length) return;
+    if (newIndex < 0 || newIndex >= arr.length) { showToast('已在边界'); return; }
 
     // Swap
     var temp = arr[index];
     arr[index] = arr[newIndex];
     arr[newIndex] = temp;
 
-    db.ref(path).set(arr, function(err) {
-      if (!err) {
-        showToast('顺序已更新');
-        // Refresh the list
-        if (dataKey === 'articles') loadArticles();
-        else if (dataKey === 'resources') loadResources();
-        else if (dataKey === 'albums') loadAlbumGroups();
-        else if (dataKey === 'subAlbums') viewSubAlbums();
-        else if (dataKey === 'photos') loadAlbumPhotos();
-      } else {
-        showToast('更新失败');
-      }
-    });
+    return db.ref(path).set(arr);
+  }).then(function() {
+    showToast('顺序已更新');
+    // Update local allData cache
+    if (dataKey === 'articles') { allData.articles = toArray(allData.articles); loadArticles(); }
+    else if (dataKey === 'resources') { allData.resources = toArray(allData.resources); loadResources(); }
+    else if (dataKey === 'albums') { allData.albums = toArray(allData.albums); loadAlbumGroups(); }
+    else if (dataKey === 'subAlbums') { viewSubAlbums(); }
+    else if (dataKey === 'photos') { loadAlbumPhotos(); }
+  }).catch(function(err) {
+    console.log('[moveItem] Error:', err);
+    showToast('更新失败: ' + (err.message || '未知错误'));
   });
 }
 
