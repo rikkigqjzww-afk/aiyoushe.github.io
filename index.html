@@ -70,51 +70,59 @@ input,textarea,select{font-family:inherit}
 .carousel-dot.active{width:24px;background:#fff}
 
 /* ===== Article Cards ===== */
-.article-card{background:var(--card-bg);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow);transition:var(--transition);cursor:pointer}
-.article-card:hover{transform:translateY(-4px);box-shadow:var(--shadow-hover)}
-.article-card-img{height:180px;overflow:hidden;position:relative}
-.article-card-img img{width:100%;height:100%;object-fit:cover;transition:transform .3s}
-.article-card:hover .article-card-img img{transform:scale(1.05)}
-.article-card-body{padding:16px}
-.article-card-body h3{font-size:15px;font-weight:600;margin-bottom:8px;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.article-card-body p{font-size:13px;color:var(--text-light);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin-bottom:12px}
-.article-card-meta{display:flex;align-items:center;justify-content:space-between;font-size:12px;color:var(--text-lighter)}
-.article-card-tags{display:flex;gap:6px;flex-wrap:wrap}
-.tag{display:inline-block;padding:3px 10px;background:var(--bg);border-radius:12px;font-size:12px;color:var(--text-light);transition:var(--transition)}
-.tag:hover,.tag.active{background:var(--primary);color:#fff;cursor:pointer}
-.tag-outline{border:1px solid var(--border);background:transparent}
+.article-card{background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.06);transition:transform .2s,box-shadow .2s;cursor:pointer}
+.article-card:hover{transform:translateY(-4px);box-shadow:0 8px 24px rgba(0,0,0,0.12)}
+.article-card .card-img-wrap{position:relative;width:100%;padding-top:56%;overflow:hidden}
+.article-card .card-img-wrap img{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover}
+.article-card .card-body{padding:14px 16px 16px}
+.article-card .card-title{font-size:15px;font-weight:600;color:#1a1a1a;margin:0 0 6px;line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.article-card .card-desc{font-size:13px;color:#999;margin:0 0 8px;line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.article-card .card-meta{font-size:12px;color:#bbb;margin-bottom:8px}
+.article-card .card-tags{display:flex;flex-wrap:wrap;gap:6px}
+.article-card .tag-pill{padding:3px 10px;border-radius:12px;font-size:11px;background:#f5f5f5;color:#666}
 .category-tag{display:inline-block;padding:3px 10px;border-radius:12px;font-size:12px;color:var(--primary);background:rgba(230,57,70,.08);font-weight:500}
 
 /* ===== Card Grid ===== */
-.card-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+.card-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
 .card-grid-2{grid-template-columns:repeat(2,1fr)}
+.article-card-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+@media(max-width:1024px){.article-card-grid{grid-template-columns:repeat(2,1fr);}}
+@media(max-width:640px){.article-card-grid{grid-template-columns:1fr;}}
+
+/* ===== Resource Page Header ===== */
+.resource-page-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;}
+.resource-page-header h2{font-size:20px;font-weight:700;color:#1a1a1a;margin:0;}
+.resource-page-header .count{font-size:13px;color:#999;}
 
 /* ===== Resource Cards ===== */
-.resource-card{background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08);transition:transform .2s,box-shadow .2s;cursor:pointer;position:relative}
-.resource-card:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(0,0,0,0.12)}
+.resource-card{background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.06);transition:transform .2s,box-shadow .2s;cursor:pointer;position:relative}
+.resource-card:hover{transform:translateY(-4px);box-shadow:0 8px 24px rgba(0,0,0,0.12)}
 .resource-card .card-img-wrap{position:relative;width:100%;padding-top:60%;overflow:hidden}
 .resource-card .card-img-wrap img{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover}
-.resource-card .discount-badge{position:absolute;top:8px;left:0;background:#E63946;color:#fff;padding:4px 10px;border-radius:0 12px 12px 0;font-size:12px;font-weight:600;z-index:1}
-.resource-card .featured-badge{position:absolute;top:8px;left:0;z-index:1}
-.resource-card .featured-badge.has-discount{left:auto;right:8px}
-.resource-card .featured-badge.no-discount{left:0;border-radius:0 12px 12px 0}
-.resource-card .access-badge{position:absolute;bottom:8px;right:8px;background:rgba(0,0,0,0.7);color:#fff;padding:3px 8px;border-radius:4px;font-size:11px;z-index:1}
-.resource-card .card-info{padding:12px 14px 14px}
-.resource-card .card-title{font-size:15px;font-weight:600;color:#333;margin:0 0 8px;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.resource-card .card-meta{display:flex;align-items:center;gap:6px;margin-bottom:6px;font-size:12px;color:#999}
-.resource-card .stars{color:#FADB14;font-size:12px;letter-spacing:1px}
-.resource-card .card-rating{font-size:13px;color:#333;font-weight:500}
-.resource-card .card-sold{color:#999}
-.resource-card .card-price-row{display:flex;align-items:baseline;gap:8px;margin-bottom:8px}
-.resource-card .price-current{font-size:20px;font-weight:700;color:#1a1a1a}
-.resource-card .price-original{font-size:13px;color:#bbb;text-decoration:line-through}
-.resource-card .price-saved{font-size:12px;color:#E63946;font-weight:500}
-.resource-card .card-tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
-.resource-card .tag-pill{padding:3px 10px;border-radius:12px;font-size:11px;background:#FFF1F0;color:#E63946;border:1px solid #FFE0DE}
+.resource-card .discount-badge{position:absolute;top:10px;left:0;background:#E63946;color:#fff;padding:4px 12px 4px 8px;border-radius:0 12px 12px 0;font-size:12px;font-weight:600;z-index:1}
+.resource-card .card-actions{position:absolute;top:10px;right:10px;display:flex;gap:6px;opacity:0;transition:opacity .2s;z-index:2}
+.resource-card:hover .card-actions{opacity:1}
+.resource-card .card-actions input{width:28px;height:28px;border-radius:50%;border:none;background:rgba(255,255,255,.9);cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center}
+.resource-card .access-badge{position:absolute;bottom:10px;right:10px;background:rgba(0,0,0,.7);color:#fff;padding:3px 10px;border-radius:4px;font-size:11px;z-index:1}
+.resource-card .card-body{padding:14px 16px 16px}
+.resource-card .card-title{font-size:15px;font-weight:600;color:#1a1a1a;margin:0 0 8px;line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.resource-card .card-rating{display:flex;align-items:center;gap:6px;margin-bottom:6px;font-size:12px;color:#999}
+.resource-card .card-rating .stars{color:#FADB14;font-size:13px;letter-spacing:1px}
+.resource-card .card-rating .score{color:#333;font-weight:600;font-size:13px}
+.resource-card .card-rating .sold{color:#999}
+.resource-card .card-price{display:flex;align-items:baseline;gap:8px;margin-bottom:8px;flex-wrap:wrap}
+.resource-card .price-now{font-size:20px;font-weight:700;color:#1a1a1a}
+.resource-card .price-old{font-size:13px;color:#bbb;text-decoration:line-through}
+.resource-card .price-save{font-size:12px;color:#E63946;font-weight:500}
+.resource-card .card-tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.resource-card .tag-pill{padding:3px 10px;border-radius:12px;font-size:11px;background:#f5f5f5;color:#666}
 .resource-card .btn-detail{width:100%;padding:8px 0;border:1px solid #e0e0e0;border-radius:6px;background:#fff;color:#666;font-size:13px;cursor:pointer;text-align:center}
+.resource-card .btn-detail:hover{border-color:#E63946;color:#E63946}
 
 /* ===== Resource Grid ===== */
-.resource-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.resource-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+@media(max-width:1024px){.resource-grid{grid-template-columns:repeat(2,1fr);}}
+@media(max-width:640px){.resource-grid{grid-template-columns:1fr;}}
 .btn{display:inline-flex;align-items:center;justify-content:center;padding:8px 20px;border-radius:20px;font-size:13px;font-weight:500;transition:var(--transition);cursor:pointer;border:none}
 .btn-primary{background:var(--primary);color:#fff}
 .btn-primary:hover{background:var(--primary-light);transform:translateY(-1px)}
@@ -133,7 +141,7 @@ input,textarea,select{font-family:inherit}
 .filter-btn.active,.filter-btn:hover{background:var(--primary);color:#fff;border-color:var(--primary)}
 
 /* ===== Filter Tabs (Category) ===== */
-.filter-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+.filter-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
 .filter-tabs input[type="button"]{padding:6px 16px;border:1px solid #ddd;border-radius:20px;background:#fff;color:#333;font-size:13px;cursor:pointer;transition:var(--transition)}
 .filter-tabs input[type="button"].active{background:#333;color:#fff;border-color:#333}
 .filter-tabs input[type="button"]:hover{border-color:#999}
@@ -143,9 +151,15 @@ input,textarea,select{font-family:inherit}
 .filter-tag-pill.active{background:#E63946;color:#fff;border-color:#E63946}
 .filter-tag-pill:hover{border-color:#E63946}
 
+/* ===== News Sort Bar ===== */
+.news-sort-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px}
+.news-sort-links{display:flex;align-items:center;gap:16px;font-size:13px;color:#999;}
+.news-sort-links a{color:#999;cursor:pointer;text-decoration:none;font-size:13px;}
+.news-sort-links a.active{color:#1a1a1a;font-weight:600;text-decoration:underline;}
+.news-sort-links a:hover{color:#1a1a1a;}
+
 /* ===== Tag Pill (Article/Resource card) ===== */
-.tag-pill{padding:3px 10px;border-radius:12px;font-size:11px;background:#FFF1F0;color:#E63946;border:1px solid #FFE0DE}
-.article-card-tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.tag-pill{padding:3px 10px;border-radius:12px;font-size:11px;background:#f5f5f5;color:#666}
 
 /* ===== Sort Bar ===== */
 .sort-bar{display:flex;align-items:center;gap:8px;margin-bottom:16px}
@@ -1067,16 +1081,29 @@ function renderHome() {
 function renderArticleCard(a) {
   var tagsHtml = '';
   for (var j = 0; j < (a.tags || []).length; j++) {
-    tagsHtml += '<span class="tag">' + a.tags[j] + '</span>';
+    tagsHtml += '<span class="tag-pill">' + a.tags[j] + '</span>';
   }
+
+  /* 分类标签 val→label 映射 */
+  var catName = a.category || a.articleCat || '';
+  var catMap = {};
+  var allCats = getData('categories') || [];
+  for (var k = 0; k < allCats.length; k++) {
+    if (allCats[k].val) catMap[allCats[k].val] = allCats[k].label || allCats[k].val;
+  }
+  if (catMap[catName]) catName = catMap[catName];
+
+  var descHtml = (a.desc || a.summary || '') ? '<div class="card-desc">' + escapeHtml(a.desc || a.summary || '') + '</div>' : '';
+
   return '<div class="article-card" onclick="navigateTo(\'article-detail\',{currentArticleId:\'' + a.id + '\'})">' +
-    '<div class="article-card-img"><img src="' + a.cover + '" alt="' + a.title + '" loading="lazy"></div>' +
-    '<div class="article-card-body">' +
-    '<h3>' + a.title + '</h3>' +
-    '<p>' + a.summary + '</p>' +
-    '<div class="article-card-meta"><div class="article-card-tags">' + tagsHtml + '</div>' +
-    '<div><span>' + a.date + '</span> &middot; <span>' + formatNumber(a.views) + '阅读</span></div>' +
-    '</div></div></div>';
+    '<div class="card-img-wrap"><img src="' + a.cover + '" alt="' + a.title + '" loading="lazy"></div>' +
+    '<div class="card-body">' +
+    (catName ? '<span class="category-tag">' + escapeHtml(catName) + '</span>' : '') +
+    '<div class="card-title">' + a.title + '</div>' +
+    descHtml +
+    '<div class="card-meta">' + (a.date || '') + '  ' + formatNumber(a.views || 0) + '阅读  ' + formatNumber(a.likes || 0) + '赞</div>' +
+    '<div class="card-tags">' + tagsHtml + '</div>' +
+    '</div></div>';
 }
 
 function renderResourceCard(r) {
@@ -1101,16 +1128,9 @@ function renderResourceCard(r) {
     }
   }
 
-  /* 精选标签 */
-  var featuredBadge = '';
-  if (r.featured) {
-    var featCls = discountBadge ? 'featured-badge has-discount' : 'featured-badge no-discount';
-    featuredBadge = '<span class="' + featCls + '" style="background:#FF9800;color:#fff;font-size:10px;padding:3px 8px;border-radius:10px;font-weight:600">精选</span>';
-  }
-
   /* 权限标签 */
   var accessBadge = '';
-  var accessLabels = {0: '免费', 1: 'V1体验', 2: 'V2普通', 3: 'V3高级'};
+  var accessLabels = {0: '免费', 1: 'V1', 2: 'V2', 3: 'V3'};
   if (r.accessLevel !== undefined && r.accessLevel !== null) {
     accessBadge = '<span class="access-badge">' + (accessLabels[r.accessLevel] || '免费') + '</span>';
   }
@@ -1122,23 +1142,24 @@ function renderResourceCard(r) {
   var priceHtml = '';
   if (r.price > 0 && r.originalPrice > 0 && r.originalPrice > r.price) {
     var saved = (r.originalPrice - r.price).toFixed(1);
-    priceHtml = '<span class="price-current">&yen;' + r.price.toFixed(1) + '</span>' +
-      '<span class="price-original">&yen;' + r.originalPrice.toFixed(1) + '</span>' +
-      '<span class="price-saved">已省 &yen;' + saved + '</span>';
+    priceHtml = '<span class="price-now">&yen;' + r.price.toFixed(1) + '</span>' +
+      '<span class="price-old">&yen;' + r.originalPrice.toFixed(1) + '</span>' +
+      '<span class="price-save">已省 &yen;' + saved + '</span>';
   } else if (r.price > 0) {
-    priceHtml = '<span class="price-current">&yen;' + r.price.toFixed(1) + '</span>';
+    priceHtml = '<span class="price-now">&yen;' + r.price.toFixed(1) + '</span>';
   } else {
-    priceHtml = '<span class="price-current" style="color:#52c41a">免费</span>';
+    priceHtml = '<span class="price-now" style="color:#52c41a">免费</span>';
   }
 
   var soldText = r.sold ? '已售 ' + formatNumber(r.sold) : '';
+  var scoreText = (r.rating || 0).toFixed(1);
 
   return '<div class="resource-card" onclick="navigateTo(\'resource-detail\',{currentResourceId:\'' + r.id + '\'})">' +
-    '<div class="card-img-wrap">' + discountBadge + featuredBadge + '<img src="' + r.cover + '" alt="' + r.title + '" loading="lazy">' + accessBadge + '</div>' +
-    '<div class="card-info">' +
+    '<div class="card-img-wrap">' + discountBadge + '<img src="' + r.cover + '" alt="' + r.title + '" loading="lazy">' + accessBadge + '</div>' +
+    '<div class="card-body">' +
     '<div class="card-title">' + r.title + '</div>' +
-    '<div class="card-meta"><span class="stars">' + starsHtml + '</span><span class="card-rating">' + (r.rating || 0).toFixed(1) + '</span>' + (soldText ? '<span class="card-sold" style="margin-left:auto">' + soldText + '</span>' : '') + '</div>' +
-    '<div class="card-price-row">' + priceHtml + '</div>' +
+    '<div class="card-rating"><span class="stars">' + starsHtml + '</span><span class="score">' + scoreText + '</span>' + (soldText ? '<span class="sold" style="margin-left:auto">' + soldText + '</span>' : '') + '</div>' +
+    '<div class="card-price">' + priceHtml + '</div>' +
     '<div class="card-tags">' + tagsHtml + '</div>' +
     '<input type="button" class="btn-detail" value="查看详情" onclick="event.stopPropagation();navigateTo(\'resource-detail\',{currentResourceId:\'' + r.id + '\'})">' +
     '</div></div>';
@@ -1146,14 +1167,13 @@ function renderResourceCard(r) {
 
 function renderStars(rating) {
   var full = Math.floor(rating);
-  var half = (rating - full) >= 0.5 ? 1 : 0;
-  var empty = 5 - full - half;
-  var html = '';
-  var i;
-  for (i = 0; i < full; i++) html += '&#9733;';
-  for (i = 0; i < half; i++) html += '&#9734;';
-  for (i = 0; i < empty; i++) html += '&#9734;';
-  return html;
+  var half = (rating - full) >= 0.5;
+  var empty = 5 - full - (half ? 1 : 0);
+  var s = '';
+  for (var i = 0; i < full; i++) s += '\u2605';
+  if (half) s += '\u2606';
+  for (var i = 0; i < empty; i++) s += '\u2606';
+  return s;
 }
 
 /* ---------- 轮播控制 ---------- */
@@ -1201,8 +1221,17 @@ function updateCarouselUI() {
 function extractCategories(items) {
   var cats = [];
   var seen = {};
+  // Build val->label mapping from allData.categories
+  var catMap = {};
+  var allCats = getData('categories') || [];
+  for (var i = 0; i < allCats.length; i++) {
+    if (allCats[i].val) catMap[allCats[i].val] = allCats[i].label || allCats[i].val;
+    if (allCats[i].label) catMap[allCats[i].label] = allCats[i].label;
+  }
+
   for (var i = 0; i < items.length; i++) {
-    var cat = items[i].category || items[i].articleCat || '';
+    var raw = items[i].category || items[i].articleCat || '';
+    var cat = catMap[raw] || raw; // Translate val to label if mapping exists
     if (cat && !seen[cat]) {
       seen[cat] = true;
       cats.push(cat);
@@ -1215,7 +1244,7 @@ function extractTags(items) {
   var tags = [];
   var seen = {};
   for (var i = 0; i < items.length; i++) {
-    var t = items[i].tags || [];
+    var t = items[i].tags || items[i].infoTags || [];
     for (var j = 0; j < t.length; j++) {
       if (t[j] && !seen[t[j]]) {
         seen[t[j]] = true;
@@ -1253,6 +1282,11 @@ function renderNews() {
 
   var i, a, html = '';
 
+  /* 页面头部 */
+  html += '<div class="resource-page-header">';
+  html += '<h2>业内资讯</h2>';
+  html += '</div>';
+
   /* 分类筛选按钮 */
   html += '<div class="filter-tabs">';
   for (i = 0; i < categories.length; i++) {
@@ -1271,23 +1305,34 @@ function renderNews() {
   }
   html += '</div>';
 
-  /* 排序按钮 */
-  html += '<div class="sort-bar">';
-  html += '<span style="font-size:13px;color:#999;">排序：</span>';
+  /* 排序栏：文字链接 + 新增文章按钮 */
+  html += '<div class="news-sort-bar">';
+  html += '<div class="news-sort-links">';
   var sortOptions = [
     {key: 'latest', label: '最新发布'},
     {key: 'views', label: '最多阅读'},
     {key: 'likes', label: '最多点赞'}
   ];
   for (i = 0; i < sortOptions.length; i++) {
-    var sortCls = (appState.articleSort === sortOptions[i].key) ? 'sort-btn active' : 'sort-btn';
-    html += '<input type="button" class="' + sortCls + '" value="' + sortOptions[i].label + '" onclick="sortArticles(\'' + sortOptions[i].key + '\')">';
+    var sortActive = (appState.articleSort === sortOptions[i].key) ? ' active' : '';
+    html += '<a class="' + sortActive + '" onclick="sortArticles(\'' + sortOptions[i].key + '\')">' + sortOptions[i].label + '</a>';
   }
+  html += '</div>';
   html += '</div>';
 
   /* 过滤 */
+  /* Build val→label mapping for filter comparison */
+  var _catMap = {};
+  var _allCats = getData('categories') || [];
+  for (var _ci = 0; _ci < _allCats.length; _ci++) {
+    if (_allCats[_ci].val) _catMap[_allCats[_ci].val] = _allCats[_ci].label || _allCats[_ci].val;
+  }
   var filtered = articles.filter(function(a) {
-    if (appState.selectedCategory && (a.category || a.articleCat) !== appState.selectedCategory) return false;
+    if (appState.selectedCategory) {
+      var rawCat = a.category || a.articleCat || '';
+      var mappedCat = _catMap[rawCat] || rawCat;
+      if (mappedCat !== appState.selectedCategory) return false;
+    }
     if (appState.selectedTag) {
       var t = a.tags || [];
       if (t.indexOf(appState.selectedTag) === -1) return false;
@@ -1304,28 +1349,10 @@ function renderNews() {
     filtered.sort(function(a, b) { return (b.date || '').localeCompare(a.date || ''); });
   }
 
-  /* 文章列表 */
-  html += '<div class="card-grid">';
+  /* 文章列表 - 新卡片设计 */
+  html += '<div class="article-card-grid">';
   for (i = 0; i < filtered.length; i++) {
-    a = filtered[i];
-    var catTag = (a.category || a.articleCat) ? '<span class="category-tag" style="margin-right:8px">' + (a.category || a.articleCat) + '</span>' : '';
-    var tagsHtml = '';
-    if (a.tags && a.tags.length) {
-      tagsHtml = '<div class="article-card-tags">';
-      for (var j = 0; j < a.tags.length; j++) {
-        tagsHtml += '<span class="tag-pill">' + a.tags[j] + '</span>';
-      }
-      tagsHtml += '</div>';
-    }
-    html += '<div class="article-card" onclick="navigateTo(\'article-detail\',{currentArticleId:\'' + a.id + '\'})">' +
-      '<div class="article-card-img"><img src="' + a.cover + '" alt="' + a.title + '" loading="lazy"></div>' +
-      '<div class="article-card-body">' +
-      catTag +
-      '<h3>' + a.title + '</h3>' +
-      '<p>' + a.summary + '</p>' +
-      tagsHtml +
-      '<div class="article-card-meta"><span>' + a.date + '</span><span>' + formatNumber(a.views) + '阅读</span><span style="color:var(--primary)">' + formatNumber(a.likes) + '赞</span></div>' +
-      '</div></div>';
+    html += renderArticleCard(filtered[i]);
   }
   html += '</div>';
 
@@ -1394,7 +1421,14 @@ function renderArticleDetail() {
   html += '<div class="article-detail-meta">';
   html += '<span>' + article.date + '</span>';
   html += '<span>' + formatNumber(article.views) + '阅读</span>';
-  if (article.category) html += '<span class="category-tag">' + article.category + '</span>';
+  if (article.category) {
+    var _detailCatMap = {};
+    var _detailCats = getData('categories') || [];
+    for (var _di = 0; _di < _detailCats.length; _di++) {
+      if (_detailCats[_di].val) _detailCatMap[_detailCats[_di].val] = _detailCats[_di].label || _detailCats[_di].val;
+    }
+    html += '<span class="category-tag">' + (_detailCatMap[article.category] || article.category) + '</span>';
+  }
   html += '</div>';
   if (tagsHtml) html += '<div style="margin-top:12px">' + tagsHtml + '</div>';
   html += '</div>';
@@ -1499,10 +1533,6 @@ function filterResByTag(tag) {
   renderCurrentPage();
 }
 
-function sortResources(type) {
-  appState.resourceSort = type;
-  renderCurrentPage();
-}
 
 /* ---------- 资源列表 ---------- */
 function renderResources() {
@@ -1515,10 +1545,10 @@ function renderResources() {
 
   var html = '';
 
-  /* 搜索框 */
-  html += '<div class="search-bar-page">';
-  html += '<input type="text" id="res-search-input" placeholder="搜索资源..." value="' + (appState.searchQuery || '') + '" onkeydown="if(event.keyCode===13){appState.searchQuery=this.value;renderCurrentPage()}">';
-  html += '<input type="button" class="btn btn-primary" value="搜索" onclick="appState.searchQuery=document.getElementById(\'res-search-input\').value;renderCurrentPage()">';
+  /* 页面头部：标题 + 资源数量 */
+  html += '<div class="resource-page-header">';
+  html += '<h2>资源列表</h2>';
+  html += '<span class="count">共 ' + resources.length + ' 件资源</span>';
   html += '</div>';
 
   /* 分类筛选按钮 */
@@ -1539,40 +1569,15 @@ function renderResources() {
   }
   html += '</div>';
 
-  /* 排序按钮 */
-  html += '<div class="sort-bar">';
-  html += '<span style="font-size:13px;color:#999;">排序：</span>';
-  var sortOpts = [
-    {key: 'latest', label: '最新发布'},
-    {key: 'views', label: '最多阅读'},
-    {key: 'likes', label: '最多点赞'}
-  ];
-  for (i = 0; i < sortOpts.length; i++) {
-    var sortCls = ((appState.resourceSort || 'latest') === sortOpts[i].key) ? 'sort-btn active' : 'sort-btn';
-    html += '<input type="button" class="' + sortCls + '" value="' + sortOpts[i].label + '" onclick="sortResources(\'' + sortOpts[i].key + '\')">';
-  }
-  html += '</div>';
-
   /* 过滤 */
-  var query = (appState.searchQuery || '').toLowerCase();
   var filtered = resources.filter(function(r) {
     if (appState.selectedResCategory && (r.category || r.articleCat) !== appState.selectedResCategory) return false;
     if (appState.selectedResTag) {
       var t = r.tags || [];
       if (t.indexOf(appState.selectedResTag) === -1) return false;
     }
-    var matchSearch = !query || r.title.toLowerCase().indexOf(query) >= 0 || (r.desc || '').toLowerCase().indexOf(query) >= 0;
-    return matchSearch;
+    return true;
   });
-
-  /* 排序 */
-  if ((appState.resourceSort || 'latest') === 'views') {
-    filtered.sort(function(a, b) { return (b.views || 0) - (a.views || 0); });
-  } else if ((appState.resourceSort || 'latest') === 'likes') {
-    filtered.sort(function(a, b) { return (b.likes || 0) - (a.likes || 0); });
-  } else {
-    filtered.sort(function(a, b) { return (b.date || '').localeCompare(a.date || ''); });
-  }
 
   html += '<div class="resource-grid">';
   for (var m = 0; m < filtered.length; m++) {
