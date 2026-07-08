@@ -257,6 +257,22 @@ input,textarea,select{font-family:inherit}
 .resource-detail-rich-content p{margin-bottom:14px}
 .get-resource-btn{padding:14px 48px;font-size:16px;font-weight:600;border-radius:28px;background:var(--primary);color:#fff;cursor:pointer;border:none;transition:var(--transition);display:inline-block}
 .get-resource-btn:hover{background:var(--primary-light);transform:translateY(-2px);box-shadow:0 8px 24px rgba(230,57,70,.3)}
+.resource-detail-body-layout{display:flex;gap:20px;max-width:1100px;margin:0 auto;padding:20px 0}
+.resource-detail-left-bar{position:sticky;top:80px;flex:0 0 50px;height:fit-content;display:flex;flex-direction:column;align-items:center;gap:20px;padding-top:20px;align-self:flex-start}
+.resource-detail-left-bar .action-btn{display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;color:#666;font-size:11px;transition:var(--transition)}
+.resource-detail-left-bar .action-btn:hover{color:#333}
+.resource-detail-left-bar .action-btn.active{color:#E63946}
+.resource-detail-left-bar .action-btn .icon{width:24px;height:24px;display:flex;align-items:center;justify-content:center}
+.resource-detail-left-bar .action-btn .icon svg{width:22px;height:22px;fill:none;stroke:#666;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.resource-detail-left-bar .action-btn:hover .icon svg{stroke:#333}
+.resource-detail-left-bar .action-btn.active .icon svg{stroke:#E63946;fill:#E63946}
+.resource-detail-body-center{flex:1;max-width:680px}
+.resource-detail-right-bar{position:sticky;top:80px;flex:0 0 280px;height:fit-content;align-self:flex-start}
+@media(max-width:900px){
+  .resource-detail-body-layout{flex-direction:column;padding:0}
+  .resource-detail-left-bar{flex-direction:row;position:static;order:-1;padding-top:0;justify-content:center;gap:24px;padding-bottom:16px;border-bottom:1px solid var(--border);margin-bottom:20px}
+  .resource-detail-right-bar{position:static;order:1}
+}
 @media(max-width:768px){
   .resource-detail-layout{flex-direction:column;gap:16px}
   .resource-detail-left{flex:none;width:100%}
@@ -1642,6 +1658,54 @@ function toggleLike(articleId) {
   renderCurrentPage();
 }
 
+function copyResourceLink(resourceId) {
+  var url = window.location.href.split('#')[0] + '#resource-' + resourceId;
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(url).then(function() {
+      showToast('链接已复制');
+    });
+  } else {
+    var textarea = document.createElement('textarea');
+    textarea.value = url;
+    textarea.style.position = 'fixed';
+    textarea.style.opacity = '0';
+    document.body.appendChild(textarea);
+    textarea.select();
+    try { document.execCommand('copy'); showToast('链接已复制'); } catch(e) { showToast('复制失败，请手动复制'); }
+    document.body.removeChild(textarea);
+  }
+}
+
+function toggleResourceFavorite(resourceId) {
+  if (!appState.favoritedResources) appState.favoritedResources = {};
+  if (appState.favoritedResources[resourceId]) {
+    delete appState.favoritedResources[resourceId];
+    showToast('已取消收藏');
+  } else {
+    appState.favoritedResources[resourceId] = true;
+    showToast('已收藏');
+  }
+  renderCurrentPage();
+}
+
+function renderRecommendedResources(excludeId) {
+  var resources = getData('resources');
+  var featured = resources.filter(function(r) { return r.featured && !r.hidden && r.id !== excludeId; });
+  featured = featured.slice(0, 8);
+  var html = '<div class="recommend-section">';
+  html += '<h4>精选资源</h4>';
+  featured.forEach(function(r) {
+    var cover = r.cover || 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2280%22 height=%2260%22%3E%3Crect fill=%22%23eee%22 width=%2280%22 height=%2260%22/%3E%3C/svg%3E';
+    html += '<a class="recommend-item" href="#resource-' + r.id + '" onclick="navigateTo(\'resource-detail\',{currentResourceId:\'' + r.id + '\'})">';
+    html += '<div class="recommend-cover"><img src="' + cover + '" alt="" loading="lazy"></div>';
+    html += '<div class="recommend-info"><div class="recommend-title">' + r.title + '</div>';
+    html += '<div class="recommend-meta">' + (r.price > 0 ? '&yen;' + r.price.toFixed(1) : '免费') + '</div></div>';
+    html += '</a>';
+  });
+  html += '</div>';
+  return html;
+}
+
 function filterResByCategory(cat) {
   appState.selectedResCategory = (cat === '全部') ? '' : cat;
   renderCurrentPage();
@@ -1800,9 +1864,36 @@ function renderResourceDetail() {
   html += '</div>';
   var detailHtml = resource.detailHtml || resource.detail || resource.content || '';
   if (detailHtml) {
+    html += '<div class="resource-detail-body-layout">';
+
+    /* 左侧：操作按钮 */
+    html += '<div class="resource-detail-left-bar">';
+    html += '<div class="action-btn" onclick="document.getElementById(\'resourceComments\')&&document.getElementById(\'resourceComments\').scrollIntoView({behavior:\'smooth\'})">';
+    html += '<span class="icon"><svg viewBox="0 0 24 24"><path d="M21 12C21 13.1 20.1 14 19 14H6L2 18V4C2 2.9 2.9 2 4 2H19C20.1 2 21 2.9 21 4V12Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 10H16M8 6H13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span>';
+    html += '<span>评论</span></div>';
+    html += '<div class="action-btn' + (appState.favoritedResources && appState.favoritedResources[resource.id] ? ' active' : '') + '" onclick="toggleResourceFavorite(\'' + resource.id + '\')">';
+    html += '<span class="icon"><svg viewBox="0 0 24 24"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>';
+    html += '<span>收藏</span></div>';
+    html += '<div class="action-btn" onclick="copyResourceLink(\'' + resource.id + '\')">';
+    html += '<span class="icon"><svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="2" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="6" cy="12" r="2" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="18" cy="19" r="2" fill="none" stroke="currentColor" stroke-width="1.8"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span>';
+    html += '<span>分享</span></div>';
+    html += '</div>';
+
+    /* 中间：商品详情 + 评论 */
+    html += '<div class="resource-detail-body-center">';
     html += '<div class="resource-detail-rich"><h3>商品详情</h3><div class="resource-detail-rich-content">' + detailHtml + '</div></div>';
+    html += '<div class="resource-detail-comments" id="resourceComments">' + renderComments('resource', resource.id) + '</div>';
+    html += '</div>';
+
+    /* 右侧：精选推荐 */
+    html += '<div class="resource-detail-right-bar">';
+    html += renderRecommendedResources(resource.id);
+    html += '</div>';
+
+    html += '</div>';
+  } else {
+    html += '<div class="resource-detail-comments" id="resourceComments">' + renderComments('resource', resource.id) + '</div>';
   }
-  html += '<div class="resource-detail-comments">' + renderComments('resource', resource.id) + '</div>';
   return html;
 }
 

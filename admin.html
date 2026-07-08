@@ -316,11 +316,8 @@ table img{width:60px;height:40px;object-fit:cover;border-radius:4px;}
       <div class="nav-item" data-page="albums" onclick="switchPage('albums',this)">
         <span class="nav-icon">&#9788;</span>相册管理
       </div>
-      <div class="nav-item" data-page="carousel" onclick="switchPage('carousel',this)">
-        <span class="nav-icon">&#9654;</span>轮播图管理
-      </div>
-      <div class="nav-item" data-page="announcements" onclick="switchPage('announcements',this)">
-        <span class="nav-icon">&#9993;</span>公告管理
+      <div class="nav-item" data-page="home" onclick="switchPage('home',this)">
+        <span class="nav-icon">&#127968;</span>主页管理
       </div>
       <div class="nav-item" data-page="pricing" onclick="switchPage('pricing',this)">
         <span class="nav-icon">&#9830;</span>会员套餐
@@ -328,17 +325,8 @@ table img{width:60px;height:40px;object-fit:cover;border-radius:4px;}
       <div class="nav-item" data-page="settings" onclick="switchPage('settings',this)">
         <span class="nav-icon">&#9881;</span>页面设置
       </div>
-      <div class="nav-item" data-page="profile" onclick="switchPage('profile',this)">
-        <span class="nav-icon">&#127968;</span>平台资料
-      </div>
       <div class="nav-item" data-page="messages" onclick="switchPage('messages',this)">
         <span class="nav-icon">&#9997;</span>留言管理
-      </div>
-      <div class="nav-item" data-page="articlecomments" onclick="switchPage('articlecomments',this)">
-        <span class="nav-icon">&#128172;</span>文章留言
-      </div>
-      <div class="nav-item" data-page="resourcecomments" onclick="switchPage('resourcecomments',this)">
-        <span class="nav-icon">&#128172;</span>资源留言
       </div>
       <div class="nav-item" data-page="datamgmt" onclick="switchPage('datamgmt',this)">
         <span class="nav-icon">&#9881;</span>数据管理
@@ -427,8 +415,8 @@ table img{width:60px;height:40px;object-fit:cover;border-radius:4px;}
         </div>
       </div>
 
-      <!-- Carousel -->
-      <div class="page-section" id="page-carousel">
+      <!-- Home Management -->
+      <div class="page-section" id="page-home">
         <div class="card">
           <div class="card-header">
             <h4>轮播图列表</h4>
@@ -441,10 +429,6 @@ table img{width:60px;height:40px;object-fit:cover;border-radius:4px;}
             </table>
           </div>
         </div>
-      </div>
-
-      <!-- Announcements -->
-      <div class="page-section" id="page-announcements">
         <div class="card">
           <div class="card-header">
             <h4>公告列表</h4>
@@ -455,6 +439,21 @@ table img{width:60px;height:40px;object-fit:cover;border-radius:4px;}
               <thead><tr><th>标题</th><th>内容</th><th>日期</th><th>操作</th></tr></thead>
               <tbody id="announcementsList"></tbody>
             </table>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><h4>平台资料</h4></div>
+          <div class="card-body" style="padding:24px;">
+            <div class="form-row"><label>平台名称</label><input type="text" id="profileName" placeholder="艾优社" value="艾优社"></div>
+            <div class="form-row"><label>平台副标题</label><input type="text" id="profileSubtitle" placeholder="资源馆" value="资源馆"></div>
+            <div class="form-row"><label>平台头像</label>
+              <div class="img-upload-area" id="profileAvatarUpload">
+                <p>点击或拖拽上传头像</p>
+                <input type="file" accept="image/*" onchange="handleImageUpload(this,'profileAvatarPreview','profileAvatarData')">
+              </div>
+              <div class="img-preview" id="profileAvatarPreview"></div>
+            </div>
+            <input type="button" class="btn-primary" value="保存平台资料" onclick="saveProfileData()">
           </div>
         </div>
       </div>
@@ -554,12 +553,26 @@ table img{width:60px;height:40px;object-fit:cover;border-radius:4px;}
       <!-- Messages -->
       <div class="page-section" id="page-messages">
         <div class="card">
-          <div class="card-header"><h4>留言列表</h4></div>
+          <div class="card-header"><h4>主页留言</h4></div>
           <div class="card-body">
             <table>
               <thead><tr><th>用户</th><th>内容</th><th>时间</th><th>操作</th></tr></thead>
               <tbody id="messagesList"></tbody>
             </table>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><h4>文章留言</h4></div>
+          <div class="card-body" style="padding:24px;">
+            <div class="form-row"><label>选择文章</label><select id="articleCommentSelect" onchange="loadArticleComments()"></select></div>
+            <div id="articleCommentsList"></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><h4>资源商品留言</h4></div>
+          <div class="card-body" style="padding:24px;">
+            <div class="form-row"><label>选择资源商品</label><select id="resourceCommentSelect" onchange="loadResourceComments()"></select></div>
+            <div id="resourceCommentsList"></div>
           </div>
         </div>
       </div>
@@ -594,47 +607,6 @@ table img{width:60px;height:40px;object-fit:cover;border-radius:4px;}
               <thead><tr><th>指令码</th><th>权限等级</th><th>绑定IP</th><th>状态</th><th>使用时间</th><th>操作</th></tr></thead>
               <tbody id="codesList"></tbody>
             </table>
-          </div>
-        </div>
-      </div>
-
-      <!-- Article Comments -->
-      <div class="page-section" id="page-articlecomments">
-        <div class="card">
-          <div class="card-header"><h4>文章留言管理</h4></div>
-          <div class="card-body" style="padding:24px;">
-            <div class="form-row"><label>选择文章</label><select id="articleCommentSelect" onchange="loadArticleComments()"></select></div>
-            <div id="articleCommentsList"></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Resource Comments -->
-      <div class="page-section" id="page-resourcecomments">
-        <div class="card">
-          <div class="card-header"><h4>资源留言管理</h4></div>
-          <div class="card-body" style="padding:24px;">
-            <div class="form-row"><label>选择资源</label><select id="resourceCommentSelect" onchange="loadResourceComments()"></select></div>
-            <div id="resourceCommentsList"></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Platform Profile -->
-      <div class="page-section" id="page-profile">
-        <div class="card">
-          <div class="card-header"><h4>平台资料</h4></div>
-          <div class="card-body" style="padding:24px;">
-            <div class="form-row"><label>平台名称</label><input type="text" id="profileName" placeholder="艾优社" value="艾优社"></div>
-            <div class="form-row"><label>平台副标题</label><input type="text" id="profileSubtitle" placeholder="资源馆" value="资源馆"></div>
-            <div class="form-row"><label>平台头像</label>
-              <div class="img-upload-area" id="profileAvatarUpload">
-                <p>点击或拖拽上传头像</p>
-                <input type="file" accept="image/*" onchange="handleImageUpload(this,'profileAvatarPreview','profileAvatarData')">
-              </div>
-              <div class="img-preview" id="profileAvatarPreview"></div>
-            </div>
-            <input type="button" class="btn-primary" value="保存平台资料" onclick="saveProfileData()">
           </div>
         </div>
       </div>
@@ -834,9 +806,8 @@ function switchPage(page, navEl) {
   }
   var titles = {
     dashboard:'仪表盘', articles:'文章管理', resources:'资源管理', albums:'相册管理',
-    carousel:'轮播图管理', announcements:'公告管理', pricing:'会员套餐', settings:'页面设置',
-    messages:'留言管理', datamgmt:'数据管理', articlecomments:'文章留言管理', resourcecomments:'资源留言管理',
-    profile:'平台资料'
+    home:'主页管理', pricing:'会员套餐', settings:'页面设置',
+    messages:'留言管理', datamgmt:'数据管理'
   };
   document.getElementById('pageTitle').textContent = titles[page] || page;
   refreshCurrentPage();
@@ -848,15 +819,11 @@ function refreshCurrentPage() {
     case 'articles': loadArticles(); break;
     case 'resources': loadResources(); break;
     case 'albums': loadAlbumGroups(); break;
-    case 'carousel': loadCarousel(); break;
-    case 'announcements': loadAnnouncements(); break;
+    case 'home': loadHomePage(); break;
     case 'pricing': loadPricing(); break;
     case 'settings': loadSettings(); break;
-    case 'messages': loadMessages(); break;
+    case 'messages': loadAllMessagesPage(); break;
     case 'datamgmt': loadDataMgmt(); break;
-    case 'articlecomments': loadArticleCommentsPage(); break;
-    case 'resourcecomments': loadResourceCommentsPage(); break;
-    case 'profile': loadProfilePage(); break;
   }
 }
 
@@ -2386,6 +2353,19 @@ function deletePhoto(index) {
       loadAllData();
     });
   });
+}
+
+// ==================== Home Management ====================
+function loadHomePage() {
+  loadCarousel();
+  loadAnnouncements();
+  loadProfilePage();
+}
+
+function loadAllMessagesPage() {
+  loadMessages();
+  loadArticleCommentsPage();
+  loadResourceCommentsPage();
 }
 
 // ==================== Carousel ====================
