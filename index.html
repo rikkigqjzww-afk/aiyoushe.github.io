@@ -224,14 +224,17 @@ input,textarea,select{font-family:inherit}
 }
 
 /* ===== Resource Detail ===== */
-.resource-detail-layout{display:flex;gap:24px;max-width:900px;margin:0 auto 24px}
-.resource-detail-left{flex:0 0 400px}
+.resource-detail-layout{display:flex;gap:24px;max-width:1100px;margin:0 auto 24px;align-items:flex-start}
+.resource-detail-left{flex:0 0 520px}
 .resource-detail-right{flex:1}
-.resource-detail-cover-wrap{position:relative;border-radius:12px;overflow:hidden;margin-bottom:0}
+.resource-detail-cover-wrap{position:relative;border-radius:12px;overflow:hidden;margin-bottom:12px;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,0.08)}
 .resource-detail-cover-wrap .discount-badge{position:absolute;top:12px;left:0;background:#E63946;color:#fff;font-size:14px;padding:5px 12px;border-radius:0 12px 12px 0;font-weight:600;z-index:1}
 .resource-detail-cover-wrap .featured-badge{position:absolute;top:12px;right:12px;background:#FF9800;color:#fff;font-size:12px;padding:4px 10px;border-radius:10px;font-weight:600;z-index:1}
 .resource-detail-cover-wrap .access-badge{position:absolute;bottom:12px;right:12px;background:rgba(0,0,0,0.7);color:#fff;padding:4px 10px;border-radius:4px;font-size:12px;z-index:1}
-.resource-detail-cover{width:100%;aspect-ratio:3/4;object-fit:cover;display:block}
+.resource-detail-cover{width:100%;aspect-ratio:16/9;object-fit:cover;display:block}
+.resource-thumb-list{display:flex;gap:10px;overflow-x:auto;padding:4px 2px 2px;margin-bottom:16px}
+.resource-thumb{width:78px;height:52px;border-radius:8px;border:2px solid transparent;object-fit:cover;cursor:pointer;flex-shrink:0;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,0.08)}
+.resource-thumb.active,.resource-thumb:hover{border-color:var(--primary)}
 .resource-detail-info{background:#fff;border-radius:12px;padding:28px;box-shadow:0 2px 8px rgba(0,0,0,0.08)}
 .resource-detail-info h1{font-size:22px;font-weight:700;color:#1a2744;margin-bottom:8px;line-height:1.4}
 .resource-detail-info .detail-desc{font-size:14px;color:#777;margin-bottom:16px;line-height:1.6}
@@ -245,6 +248,11 @@ input,textarea,select{font-family:inherit}
 .resource-detail-info .price-saved{font-size:13px;color:#E63946;font-weight:500}
 .resource-detail-tags{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
 .resource-detail-tags .tag-pill{padding:3px 10px;border-radius:12px;font-size:11px;background:#FFF1F0;color:#E63946;border:1px solid #FFE0DE}
+.resource-detail-rich{max-width:1100px;margin:0 auto 24px;background:#fff;border-radius:12px;padding:28px;box-shadow:0 2px 8px rgba(0,0,0,0.08)}
+.resource-detail-rich h3{font-size:18px;color:var(--secondary);margin-bottom:18px;padding-bottom:12px;border-bottom:1px solid var(--border)}
+.resource-detail-rich-content{font-size:15px;line-height:1.9;color:var(--text)}
+.resource-detail-rich-content img{max-width:100%;height:auto;border-radius:8px;margin:12px 0}
+.resource-detail-rich-content p{margin-bottom:14px}
 .get-resource-btn{padding:14px 48px;font-size:16px;font-weight:600;border-radius:28px;background:var(--primary);color:#fff;cursor:pointer;border:none;transition:var(--transition);display:inline-block}
 .get-resource-btn:hover{background:var(--primary-light);transform:translateY(-2px);box-shadow:0 8px 24px rgba(230,57,70,.3)}
 @media(max-width:768px){
@@ -479,7 +487,7 @@ input,textarea,select{font-family:inherit}
   .carousel-arrow{width:32px;height:32px;font-size:14px}
   #page-container{padding:16px}
 
-  .resource-detail-cover{height:240px}
+  .resource-detail-cover{height:auto}
   .vip-banner{padding:28px 20px}
   .vip-banner h2{font-size:22px}
   .photo-grid{columns:2;column-gap:10px}
@@ -1702,9 +1710,30 @@ function renderResources() {
 }
 
 /* ---------- 资源详情 ---------- */
+function getResourceImages(resource) {
+  var images = resource.images || resource.gallery || [];
+  if (!Array.isArray(images)) images = [];
+  var result = [];
+  if (resource.cover) result.push(resource.cover);
+  for (var i = 0; i < images.length; i++) {
+    if (images[i] && result.indexOf(images[i]) < 0) result.push(images[i]);
+  }
+  return result;
+}
+
+function setResourceMainImage(src, el) {
+  var main = document.getElementById('resourceMainImage');
+  if (main) main.src = src;
+  var thumbs = document.querySelectorAll('.resource-thumb');
+  for (var i = 0; i < thumbs.length; i++) thumbs[i].classList.remove('active');
+  if (el) el.classList.add('active');
+}
+
 function renderResourceDetail() {
   var resource = findResource(appState.currentResourceId);
   if (!resource) return '<div class="empty-state"><div class="empty-icon">&#128230;</div><p>资源不存在</p></div>';
+  var resourceImages = getResourceImages(resource);
+  var mainImage = resourceImages[0] || resource.cover || '';
 
   var html = '<span class="back-btn" onclick="navigateTo(\'resources\')">&laquo; 返回资源列表</span>';
   html += '<div class="resource-detail-layout">';
@@ -1728,8 +1757,15 @@ function renderResourceDetail() {
     accessBadge = '<span class="access-badge">' + (accessLabels[resource.accessLevel] || '免费') + '</span>';
   }
   html += discountBadge + featuredBadge;
-  html += '<img class="resource-detail-cover" src="' + resource.cover + '" alt="' + resource.title + '">';
+  html += '<img class="resource-detail-cover" id="resourceMainImage" src="' + mainImage + '" alt="' + resource.title + '">';
   html += accessBadge + '</div></div>';
+  if (resourceImages.length > 1) {
+    html += '<div class="resource-thumb-list">';
+    for (var ri = 0; ri < resourceImages.length; ri++) {
+      html += '<img class="resource-thumb' + (ri === 0 ? ' active' : '') + '" src="' + resourceImages[ri] + '" alt="' + resource.title + '" onclick="setResourceMainImage(\'' + resourceImages[ri] + '\',this)">';
+    }
+    html += '</div>';
+  }
 
   /* 右侧信息 */
   html += '<div class="resource-detail-right">';
@@ -1759,6 +1795,10 @@ function renderResourceDetail() {
   html += '<input type="button" class="get-resource-btn" value="获取资源" onclick="handleGetResource(findResource(\'' + resource.id + '\'))">';
   html += '</div></div>';
   html += '</div>';
+  var detailHtml = resource.detailHtml || resource.detail || resource.content || '';
+  if (detailHtml) {
+    html += '<div class="resource-detail-rich"><h3>商品详情</h3><div class="resource-detail-rich-content">' + detailHtml + '</div></div>';
+  }
   html += renderComments('resource', resource.id);
   return html;
 }

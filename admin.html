@@ -1677,6 +1677,7 @@ function saveArticle(editId) {
     showToast(editId ? '文章已更新' : '文章已添加', 'success');
     closeModal();
     window.artCoverData = '';
+    window.resImagesData = [];
     loadAllData();
   });
 }
@@ -1733,7 +1734,7 @@ function loadResources() {
     }
     var accessLevel = (r.accessLevel !== undefined) ? r.accessLevel : 0;
     var accessBadge = '<span class="res-access-badge v' + accessLevel + '">' + (accessLabels[accessLevel] || '免费V0') + '</span>';
-    var hiddenBadge = r.hidden ? '<span class="res-hidden-badge">已隐藏</span>' : '';
+    var hiddenBadge = r.hidden ? '<span class="res-hidden-badge">已下架</span>' : '';
     var starsHtml = '';
     var rating = (r.rating !== undefined) ? r.rating : 0;
     if (rating > 0) {
@@ -1766,7 +1767,7 @@ function loadResources() {
         priceHtml +
         '<div class="res-card-actions">' + resUpBtn + resDownBtn +
           '<input type="button" class="btn-sm btn-edit" value="编辑" onclick="editResource(\'' + (r.id || r._key || '') + '\')">' +
-          '<input type="button" class="btn-sm ' + (r.hidden ? 'btn-success' : 'btn-warning') + '" value="' + (r.hidden ? '显示' : '隐藏') + '" onclick="toggleResourceHidden(\'' + (r.id || r._key || '') + '\')">' +
+          '<input type="button" class="btn-sm ' + (r.hidden ? 'btn-success' : 'btn-warning') + '" value="' + (r.hidden ? '上架' : '下架') + '" onclick="toggleResourceHidden(\'' + (r.id || r._key || '') + '\')">' +
           '<input type="button" class="btn-sm btn-del" value="删除" onclick="deleteResource(\'' + (r.id || r._key || '') + '\')">' +
         '</div>' +
       '</div>' +
@@ -1805,10 +1806,12 @@ function openResourceModal(resId) {
     '<div class="res-form-steps">' +
       '<div class="res-form-step active" onclick="switchResPage(0)">基本信息</div>' +
       '<div class="res-form-step" onclick="switchResPage(1)">详细设置</div>' +
+      '<div class="res-form-step" onclick="switchResPage(2)">商品详情</div>' +
     '</div>' +
     '<div class="res-form-page active" id="resPage0">' +
       '<div class="form-row"><label>商品标题<span class="req">*</span></label><input type="text" id="resTitle" value="' + escapeHtml(res ? res.title : '') + '"></div>' +
-      '<div class="form-row"><label>封面图片</label><div class="img-upload-area"><p>点击上传封面图 (1:1)</p><input type="file" accept="image/*" onchange="handleImageUpload(this,\'resCoverPreview\',\'resCoverData\',1)"></div><div class="img-preview" id="resCoverPreview">' + (res && res.cover ? '<img src="' + res.cover + '"><span class="remove-img" onclick="clearImage(\'resCoverPreview\',\'resCoverData\')">移除</span>' : '') + '</div></div>' +
+      '<div class="form-row"><label>封面图片</label><div class="img-upload-area"><p>点击上传封面图 (16:9)</p><input type="file" accept="image/*" onchange="handleImageUpload(this,\'resCoverPreview\',\'resCoverData\',16/9)"></div><div class="img-preview" id="resCoverPreview">' + (res && res.cover ? '<img src="' + res.cover + '"><span class="remove-img" onclick="clearImage(\'resCoverPreview\',\'resCoverData\')">移除</span>' : '') + '</div></div>' +
+      '<div class="form-row"><label>商品多图</label><div class="img-upload-area"><p>点击上传商品图，可多选，第一张默认作为主图</p><input type="file" accept="image/*" multiple onchange="handleResourceImagesUpload(this)"></div><div class="photo-grid" id="resImagesPreview"></div></div>' +
       '<div class="form-row"><label>商品简介</label><textarea id="resDesc">' + escapeHtml(res ? res.desc || '' : '') + '</textarea></div>' +
       '<div class="form-row-half">' +
         '<div class="form-row"><label>现价</label><input type="number" id="resPrice" step="0.01" value="' + (res && res.price !== undefined ? res.price : 0) + '"></div>' +
@@ -1841,9 +1844,13 @@ function openResourceModal(resId) {
       '</div>' +
       '<div class="form-row"><label>交付链接</label><input type="url" id="resDeliveryLink" value="' + escapeHtml(res ? res.deliveryLink || '' : '') + '" placeholder="https://..."></div>' +
       '<div class="form-row"><label>链接密码 (选填)</label><input type="text" id="resDeliveryPassword" value="' + escapeHtml(res ? res.deliveryPassword || '' : '') + '" placeholder="选填"></div>' +
+    '</div>' +
+    '<div class="res-form-page" id="resPage2">' +
+      '<div class="form-row"><label>商品详情介绍</label>' + createRichEditorHtml('resDetailContent', res ? (res.detailHtml || res.detail || res.content || '') : '') + '</div>' +
     '</div>';
 
   if (isEdit) { window.resCoverData = res.cover || ''; }
+  window.resImagesData = res ? (res.images || res.gallery || []) : [];
 
   var footerHtml =
     '<input type="button" class="btn-default" value="取消" onclick="closeModal()">' +
@@ -1851,6 +1858,7 @@ function openResourceModal(resId) {
 
   openModal(isEdit ? '编辑资源' : '添加资源', bodyHtml, footerHtml, true);
   populateTagChips(selTags, 'resTagPreview');
+  renderResourceImagesEditor();
 }
 
 function switchResPage(idx) {
@@ -1862,6 +1870,69 @@ function switchResPage(idx) {
   }
   if (steps[idx]) steps[idx].classList.add('active');
   if (pages[idx]) pages[idx].classList.add('active');
+}
+
+function renderResourceImagesEditor() {
+  var grid = document.getElementById('resImagesPreview');
+  if (!grid) return;
+  var imgs = window.resImagesData || [];
+  if (!imgs.length) {
+    grid.innerHTML = '<div style="color:#999;text-align:center;padding:20px;grid-column:1/-1;">暂无商品图，可上传多张图片</div>';
+    return;
+  }
+  var html = '';
+  for (var i = 0; i < imgs.length; i++) {
+    var upBtn = i > 0 ? '<input type="button" class="photo-move-btn" value="↑" title="上移" onclick="moveResourceImage(' + i + ',-1)">' : '';
+    var downBtn = i < imgs.length - 1 ? '<input type="button" class="photo-move-btn" value="↓" title="下移" onclick="moveResourceImage(' + i + ',1)">' : '';
+    html += '<div class="photo-item">' +
+      '<img src="' + imgs[i] + '">' +
+      '<input type="button" class="photo-del" value="×" onclick="removeResourceImage(' + i + ')">' +
+      '<div class="photo-move-btns">' + upBtn + downBtn + '</div>' +
+      (i === 0 ? '<div style="position:absolute;left:4px;top:4px;background:#E63946;color:#fff;font-size:11px;padding:2px 6px;border-radius:4px;">主图</div>' : '') +
+      '</div>';
+  }
+  grid.innerHTML = html;
+}
+
+function handleResourceImagesUpload(input) {
+  if (!input || !input.files || !input.files.length) return;
+  if (!window.resImagesData) window.resImagesData = [];
+  var files = Array.prototype.slice.call(input.files);
+  var idx = 0;
+  function next() {
+    if (idx >= files.length) {
+      renderResourceImagesEditor();
+      input.value = '';
+      return;
+    }
+    compressAndRead(files[idx], function(base64) {
+      window.resImagesData.push(base64);
+      if (!window.resCoverData) {
+        window.resCoverData = base64;
+        var preview = document.getElementById('resCoverPreview');
+        if (preview) preview.innerHTML = '<img src="' + base64 + '"><span class="remove-img" onclick="clearImage(\'resCoverPreview\',\'resCoverData\')">移除</span>';
+      }
+      idx++;
+      next();
+    });
+  }
+  next();
+}
+
+function removeResourceImage(index) {
+  if (!window.resImagesData) window.resImagesData = [];
+  window.resImagesData.splice(index, 1);
+  renderResourceImagesEditor();
+}
+
+function moveResourceImage(index, direction) {
+  if (!window.resImagesData) window.resImagesData = [];
+  var target = index + direction;
+  if (target < 0 || target >= window.resImagesData.length) return;
+  var temp = window.resImagesData[index];
+  window.resImagesData[index] = window.resImagesData[target];
+  window.resImagesData[target] = temp;
+  renderResourceImagesEditor();
 }
 
 
@@ -1888,6 +1959,9 @@ function saveResource(editId) {
   }
   var deliveryLink = document.getElementById('resDeliveryLink').value.trim();
   var deliveryPassword = document.getElementById('resDeliveryPassword').value.trim();
+  var images = window.resImagesData || [];
+  if (!cover && images.length) cover = images[0];
+  var detailHtml = getEditorContent('resDetailContent');
 
   var list = toArray(allData.resources || []);
   if (editId) {
@@ -1898,6 +1972,7 @@ function saveResource(editId) {
         list[i].category = category; list[i].rating = rating; list[i].sold = sold; list[i].tags = tags;
         list[i].featured = featured; list[i].normal = normal; list[i].accessLevel = accessLevel;
         list[i].deliveryLink = deliveryLink; list[i].deliveryPassword = deliveryPassword;
+        list[i].images = images; list[i].detailHtml = detailHtml;
         break;
       }
     }
@@ -1908,6 +1983,7 @@ function saveResource(editId) {
       category: category, rating: rating, sold: sold, tags: tags,
       featured: featured, normal: normal, accessLevel: accessLevel,
       deliveryLink: deliveryLink, deliveryPassword: deliveryPassword,
+      images: images, detailHtml: detailHtml,
       hidden: false
     });
   }
@@ -1915,6 +1991,7 @@ function saveResource(editId) {
     showToast(editId ? '资源已更新' : '资源已添加', 'success');
     closeModal();
     window.resCoverData = '';
+    window.resImagesData = [];
     loadAllData();
   });
 }
@@ -1937,11 +2014,16 @@ function deleteResource(id) {
 
 function toggleResourceHidden(id) {
   var list = toArray(allData.resources || []);
+  var isHidden = false;
   for (var i = 0; i < list.length; i++) {
-    if ((list[i].id || list[i]._key) === id) { list[i].hidden = !list[i].hidden; break; }
+    if ((list[i].id || list[i]._key) === id) {
+      list[i].hidden = !list[i].hidden;
+      isHidden = !!list[i].hidden;
+      break;
+    }
   }
   saveData('resources', rebuildArray(list), function() {
-    showToast('状态已更新', 'success');
+    showToast(isHidden ? '商品已下架' : '商品已上架', 'success');
     loadAllData();
   });
 }
