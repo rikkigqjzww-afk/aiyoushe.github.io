@@ -545,36 +545,7 @@ table img{width:60px;height:40px;object-fit:cover;border-radius:4px;}
             <div id="contactListContainer"></div>
           </div>
         </div>
-        <div class="card">
-          <div class="card-header">
-            <h4>文章分类（业内资讯用）</h4>
-            <input type="button" class="btn-primary" value="&#43; 添加分类" onclick="openCategoryModal()">
-          </div>
-          <div class="card-body" style="padding:24px;">
-            <p style="font-size:12px;color:#999;margin:0 0 12px;">用于业内资讯文章的分类筛选，如：业界资讯、女神动态、技术干货</p>
-            <div id="categoriesList" class="tags-display"></div>
-          </div>
-        </div>
-        <div class="card">
-          <div class="card-header">
-            <h4>资源标签（商品用）</h4>
-            <input type="button" class="btn-primary" value="&#43; 添加标签" onclick="openTagModal()">
-          </div>
-          <div class="card-body" style="padding:24px;">
-            <p style="font-size:12px;color:#999;margin:0 0 12px;">用于资源商品的标签，如：PS教程、PPT模板、Excel模板</p>
-            <div id="tagsList" class="tags-display"></div>
-          </div>
-        </div>
-        <div class="card">
-          <div class="card-header">
-            <h4>精选分类（主页精选区用）</h4>
-            <input type="button" class="btn-primary" value="&#43; 添加精选分类" onclick="openFeaturedCatModal()">
-          </div>
-          <div class="card-body" style="padding:24px;">
-            <p style="font-size:12px;color:#999;margin:0 0 12px;">用于主页"精选文章"区域的分类筛选按钮，如：全部精选、本周推荐、编辑精选</p>
-            <div id="featuredCatsList" class="tags-display"></div>
-          </div>
-        </div>
+
       </div>
 
       <!-- Messages -->
@@ -1448,7 +1419,7 @@ function loadArticles() {
     html += '<tr data-key="' + aKey + '">' +
       '<td>' + (a.cover ? '<img src="' + a.cover + '">' : '-') + '</td>' +
       '<td>' + escapeHtml(a.title || '') + hidden + ' <span style="font-size:11px;color:#999;">[' + accessLabel + ']</span></td>' +
-      '<td>' + escapeHtml(a.articleCat || a.category || '-') + '</td>' +
+      '<td>' + escapeHtml(a.category || a.articleCat || '-') + '</td>' +
       '<td>' + formatDate(a.date) + '</td>' +
       '<td>' + (a.views || 0) + '</td>' +
       '<td>' + (a.likes || 0) + '</td>' +
@@ -1463,10 +1434,7 @@ function loadArticles() {
 
 function openArticleModal(articleId) {
   var cats = toArray(allData.categories || []);
-  var tags = allData.tags || [];
-  var fCats = toArray(allData.featuredCats || []);
   var article = null;
-  var selTags = [];
   var isEdit = false;
 
   if (articleId) {
@@ -1480,42 +1448,26 @@ function openArticleModal(articleId) {
     if (article) {
       isEdit = true;
       editingItemId = articleId;
-      selTags = article.infoTags || [];
     }
   }
 
-  var catOpts = '<option value="">请选择分类</option>';
+  var catOpts = '<option value="">请选择合集</option>';
   for (var i = 0; i < cats.length; i++) {
-    var sel = (article && article.articleCat === cats[i].val) ? ' selected' : '';
-    catOpts += '<option value="' + escapeHtml(cats[i].val) + '"' + sel + '>' + escapeHtml(cats[i].label || cats[i].val) + '</option>';
+    var catLabel = cats[i].label || cats[i].val || '';
+    var sel = (article && (article.category === catLabel || article.articleCat === catLabel || article.category === cats[i].val)) ? ' selected' : '';
+    catOpts += '<option value="' + escapeHtml(catLabel) + '"' + sel + '>' + escapeHtml(catLabel) + '</option>';
   }
 
-  var fCatOpts = '<option value="">无</option>';
-  for (var i = 0; i < fCats.length; i++) {
-    var sel = (article && article.featuredCat === fCats[i].val) ? ' selected' : '';
-    fCatOpts += '<option value="' + escapeHtml(fCats[i].val) + '"' + sel + '>' + escapeHtml(fCats[i].label || fCats[i].val) + '</option>';
-  }
-
-  var tagChips = '';
-  for (var i = 0; i < selTags.length; i++) {
-    tagChips += '<span class="tag-chip">' + escapeHtml(selTags[i]) + '<span class="tag-remove" onclick="this.parentNode.remove()">&times;</span></span>';
-  }
-
-  var allTagOpts = '';
-  for (var i = 0; i < tags.length; i++) {
-    allTagOpts += '<option value="' + escapeHtml(tags[i]) + '">' + escapeHtml(tags[i]) + '</option>';
-  }
+  var existingTags = article ? (article.tags || article.infoTags || []) : [];
+  var tagsStr = existingTags.length ? existingTags.join(', ') : '';
 
   var bodyHtml =
     '<div class="form-row"><label>标题<span class="req">*</span></label><input type="text" id="artTitle" value="' + escapeHtml(article ? article.title : '') + '"></div>' +
     '<div class="form-row"><label>封面图</label><div class="img-upload-area"><p>点击上传封面图</p><input type="file" accept="image/*" onchange="handleImageUpload(this,\'artCoverPreview\',\'artCoverData\',16/9)"></div><div class="img-preview" id="artCoverPreview">' + (article && article.cover ? '<img src="' + article.cover + '"><span class="remove-img" onclick="clearImage(\'artCoverPreview\',\'artCoverData\')">移除</span>' : '') + '</div></div>' +
     '<div class="form-row"><label>摘要</label><textarea id="artDesc">' + escapeHtml(article ? article.desc || '' : '') + '</textarea></div>' +
     '<div class="form-row"><label>正文</label>' + createRichEditorHtml('artContent', article ? article.content || '' : '') + '</div>' +
-    '<div class="form-row-half">' +
-      '<div class="form-row"><label>分类</label><select id="artCat">' + catOpts + '</select></div>' +
-      '<div class="form-row"><label>精选分类</label><select id="artFCat">' + fCatOpts + '</select></div>' +
-    '</div>' +
-    '<div class="form-row"><label>标签</label><div style="display:flex;gap:8px;margin-bottom:8px;"><select id="artTagSelect"><option value="">选择标签添加</option>' + allTagOpts + '</select><input type="button" class="btn-sm btn-primary" value="添加" onclick="addArticleTag()"></div><div class="tags-display" id="artTagChips">' + tagChips + '</div></div>' +
+    '<div class="form-row"><label>合集分类</label><div style="display:flex;gap:8px;"><select id="artCat" style="flex:1;padding:8px;border:1px solid #ddd;border-radius:6px;">' + catOpts + '</select><input type="button" value="&#43; 新建" onclick="addNewCategory(\'article\')" style="padding:8px 12px;border:1px solid #E63946;color:#E63946;border-radius:6px;background:#fff;cursor:pointer;white-space:nowrap;"></div></div>' +
+    '<div class="form-row"><label>标签 (逗号分隔)</label><input type="text" id="artTags" value="' + escapeHtml(tagsStr) + '" placeholder="标签1, 标签2, 标签3" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:6px;"></div>' +
     '<div class="form-row-half">' +
       '<div class="form-row"><label>日期</label><input type="date" id="artDate" value="' + (article ? formatDate(article.date) : new Date().toISOString().slice(0,10)) + '"></div>' +
       '<div class="form-row"><label>阅读量</label><input type="number" id="artViews" value="' + (article ? article.views || 0 : 0) + '"></div>' +
@@ -1545,18 +1497,6 @@ function openArticleModal(articleId) {
   if (isEdit && article.cover) { window.artCoverData = article.cover; }
 }
 
-function addArticleTag() {
-  var sel = document.getElementById('artTagSelect');
-  var val = sel.value;
-  if (!val) return;
-  var container = document.getElementById('artTagChips');
-  var chips = container.querySelectorAll('.tag-chip');
-  for (var i = 0; i < chips.length; i++) {
-    if (chips[i].textContent.replace('\u00d7','').trim() === val) { showToast('标签已添加', 'error'); return; }
-  }
-  container.innerHTML += '<span class="tag-chip">' + escapeHtml(val) + '<span class="tag-remove" onclick="this.parentNode.remove()">&times;</span></span>';
-  sel.value = '';
-}
 
 function saveArticle(editId) {
   var title = document.getElementById('artTitle').value.trim();
@@ -1564,13 +1504,15 @@ function saveArticle(editId) {
   var cover = window.artCoverData || '';
   var desc = document.getElementById('artDesc').value.trim();
   var content = getEditorContent('artContent');
-  var articleCat = document.getElementById('artCat').value;
-  var featuredCat = document.getElementById('artFCat').value;
-  var chips = document.getElementById('artTagChips').querySelectorAll('.tag-chip');
+  var category = document.getElementById('artCat').value;
+  var tagsStr = document.getElementById('artTags').value.trim();
   var tags = [];
-  for (var i = 0; i < chips.length; i++) {
-    var t = chips[i].textContent.replace('\u00d7','').trim();
-    if (t) tags.push(t);
+  if (tagsStr) {
+    var parts = tagsStr.split(',');
+    for (var i = 0; i < parts.length; i++) {
+      var t = parts[i].trim();
+      if (t) tags.push(t);
+    }
   }
   var date = document.getElementById('artDate').value || new Date().toISOString().slice(0,10);
   var views = parseInt(document.getElementById('artViews').value) || 0;
@@ -1590,9 +1532,8 @@ function saveArticle(editId) {
         list[i].cover = cover;
         list[i].desc = desc;
         list[i].content = content;
-        list[i].articleCat = articleCat;
-        list[i].featuredCat = featuredCat;
-        list[i].infoTags = tags;
+        list[i].category = category;
+        list[i].tags = tags;
         list[i].date = date;
         list[i].views = views;
         list[i].likes = likes;
@@ -1604,7 +1545,7 @@ function saveArticle(editId) {
   } else {
     list.push({
       id: genId(), title: title, cover: cover, desc: desc, content: content,
-      articleCat: articleCat, featuredCat: featuredCat, infoTags: tags,
+      category: category, tags: tags,
       date: date, views: views, likes: likes, featured: featured, hidden: false,
       accessLevel: accessLevel
     });
@@ -1713,7 +1654,6 @@ function loadResources() {
 
 function openResourceModal(resId) {
   var cats = toArray(allData.categories || []);
-  var tags = allData.tags || [];
   var res = null;
   var isEdit = false;
 
@@ -1725,21 +1665,14 @@ function openResourceModal(resId) {
     if (res) { isEdit = true; editingItemId = resId; }
   }
 
-  var catOpts = '<option value="">请选择分类</option>';
+  var catOpts = '<option value="">请选择合集</option>';
   for (var i = 0; i < cats.length; i++) {
-    var sel = (res && res.category === cats[i].val) ? ' selected' : '';
-    catOpts += '<option value="' + escapeHtml(cats[i].val) + '"' + sel + '>' + escapeHtml(cats[i].label || cats[i].val) + '</option>';
+    var catLabel = cats[i].label || cats[i].val || '';
+    var sel = (res && (res.category === catLabel || res.category === cats[i].val)) ? ' selected' : '';
+    catOpts += '<option value="' + escapeHtml(catLabel) + '"' + sel + '>' + escapeHtml(catLabel) + '</option>';
   }
 
   var selTags = res ? (res.tags || []) : [];
-  var tagChips = '';
-  for (var i = 0; i < selTags.length; i++) {
-    tagChips += '<span class="tag-chip">' + escapeHtml(selTags[i]) + '<span class="tag-remove" onclick="this.parentNode.remove()">&times;</span></span>';
-  }
-  var allTagOpts = '';
-  for (var i = 0; i < tags.length; i++) {
-    allTagOpts += '<option value="' + escapeHtml(tags[i]) + '">' + escapeHtml(tags[i]) + '</option>';
-  }
 
   var accessLevel = (res && res.accessLevel !== undefined) ? res.accessLevel : 0;
   var featured = (res && res.featured) ? ' checked' : '';
@@ -1760,7 +1693,7 @@ function openResourceModal(resId) {
       '</div>' +
       '<div class="form-row-half">' +
         '<div class="form-row"><label>库存数量</label><input type="number" id="resStock" value="' + (res && res.stock !== undefined ? res.stock : 0) + '"></div>' +
-        '<div class="form-row"><label>分类</label><select id="resCat">' + catOpts + '</select></div>' +
+        '<div class="form-row"><label>合集分类</label><div style="display:flex;gap:8px;"><select id="resCat" style="flex:1;padding:8px;border:1px solid #ddd;border-radius:6px;">' + catOpts + '</select><input type="button" value="&#43; 新建" onclick="addNewCategory(\'resource\')" style="padding:8px 12px;border:1px solid #E63946;color:#E63946;border-radius:6px;background:#fff;cursor:pointer;white-space:nowrap;"></div></div>' +
       '</div>' +
     '</div>' +
     '<div class="res-form-page" id="resPage1">' +
@@ -1807,14 +1740,6 @@ function switchResPage(idx) {
   if (pages[idx]) pages[idx].classList.add('active');
 }
 
-function addResTag() {
-  var sel = document.getElementById('resTagSelect');
-  var val = sel.value;
-  if (!val) return;
-  var container = document.getElementById('resTagChips');
-  container.innerHTML += '<span class="tag-chip">' + escapeHtml(val) + '<span class="tag-remove" onclick="this.parentNode.remove()">&times;</span></span>';
-  sel.value = '';
-}
 
 function saveResource(editId) {
   var title = document.getElementById('resTitle').value.trim();
@@ -1956,7 +1881,8 @@ function openAlbumGroupModal(groupId) {
         '<label class="form-switch"><input type="radio" name="grpAccess" value="2"' + (group && group.accessLevel === 2 ? ' checked' : '') + ' id="grpAccess2"><label for="grpAccess2">普通会员 V2</label></label>' +
         '<label class="form-switch"><input type="radio" name="grpAccess" value="3"' + (group && group.accessLevel === 3 ? ' checked' : '') + ' id="grpAccess3"><label for="grpAccess3">高级会员 V3</label></label>' +
       '</div>' +
-    '</div>';
+    '</div>' +
+    '<div class="form-row"><label>标签 (逗号分隔)</label><input type="text" id="grpTags" value="' + escapeHtml(group && group.tags ? group.tags.join(', ') : '') + '" placeholder="标签1, 标签2, 标签3" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:6px;"></div>';
 
   if (isEdit) { window.grpCoverData = group.cover || ''; }
 
@@ -1976,15 +1902,24 @@ function saveAlbumGroup(editId) {
   for (var i = 0; i < grpRadios.length; i++) {
     if (grpRadios[i].checked) { accessLevel = parseInt(grpRadios[i].value); break; }
   }
+  var tagsStr = document.getElementById('grpTags').value.trim();
+  var tags = [];
+  if (tagsStr) {
+    var parts = tagsStr.split(',');
+    for (var i = 0; i < parts.length; i++) {
+      var t = parts[i].trim();
+      if (t) tags.push(t);
+    }
+  }
   var list = toArray(allData.albums || []);
   if (editId) {
     for (var i = 0; i < list.length; i++) {
       if ((list[i].id || list[i]._key) === editId) {
-        list[i].name = name; list[i].cover = cover; list[i].accessLevel = accessLevel; break;
+        list[i].name = name; list[i].cover = cover; list[i].accessLevel = accessLevel; list[i].tags = tags; break;
       }
     }
   } else {
-    list.push({ id: genId(), name: name, cover: cover, subAlbums: [], accessLevel: accessLevel });
+    list.push({ id: genId(), name: name, cover: cover, subAlbums: [], accessLevel: accessLevel, tags: tags });
   }
   saveData('albums', rebuildArray(list), function() {
     showToast(editId ? '分组已更新' : '分组已添加', 'success');
@@ -2082,7 +2017,8 @@ function openSubAlbumModal(subId) {
         '<label class="form-switch"><input type="radio" name="subAccess" value="2"' + (sub && sub.accessLevel === 2 ? ' checked' : '') + ' id="subAccess2"><label for="subAccess2">普通会员 V2</label></label>' +
         '<label class="form-switch"><input type="radio" name="subAccess" value="3"' + (sub && sub.accessLevel === 3 ? ' checked' : '') + ' id="subAccess3"><label for="subAccess3">高级会员 V3</label></label>' +
       '</div>' +
-    '</div>';
+    '</div>' +
+    '<div class="form-row"><label>标签 (逗号分隔)</label><input type="text" id="subTags" value="' + escapeHtml(sub && sub.tags ? sub.tags.join(', ') : '') + '" placeholder="标签1, 标签2, 标签3" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:6px;"></div>';
 
   if (isEdit) { window.subCoverData = sub.cover || ''; }
 
@@ -2102,6 +2038,15 @@ function saveSubAlbum(editId) {
   for (var i = 0; i < subRadios.length; i++) {
     if (subRadios[i].checked) { accessLevel = parseInt(subRadios[i].value); break; }
   }
+  var tagsStr = document.getElementById('subTags').value.trim();
+  var tags = [];
+  if (tagsStr) {
+    var parts = tagsStr.split(',');
+    for (var i = 0; i < parts.length; i++) {
+      var t = parts[i].trim();
+      if (t) tags.push(t);
+    }
+  }
   var list = toArray(allData.albums || []);
   for (var i = 0; i < list.length; i++) {
     if ((list[i].id || list[i]._key) === currentAlbumGroup) {
@@ -2112,11 +2057,12 @@ function saveSubAlbum(editId) {
             list[i].subAlbums[j].name = name;
             list[i].subAlbums[j].cover = cover;
             list[i].subAlbums[j].accessLevel = accessLevel;
+            list[i].subAlbums[j].tags = tags;
             break;
           }
         }
       } else {
-        list[i].subAlbums.push({ id: genId(), name: name, cover: cover, photos: [], accessLevel: accessLevel });
+        list[i].subAlbums.push({ id: genId(), name: name, cover: cover, photos: [], accessLevel: accessLevel, tags: tags });
       }
       break;
     }
@@ -2673,29 +2619,6 @@ function loadSettings() {
   // Contact
   renderContactList(allData.contact_list || []);
 
-  // Categories
-  var cats = toArray(allData.categories || []);
-  var catHtml = '';
-  for (var i = 0; i < cats.length; i++) {
-    catHtml += '<span class="tag-chip">' + escapeHtml(cats[i].label || cats[i].val) + ' <span class="tag-remove" onclick="deleteCategory(\'' + escapeHtml(cats[i].val) + '\')">&times;</span></span>';
-  }
-  document.getElementById('categoriesList').innerHTML = catHtml || '<span style="color:#999;">暂无分类</span>';
-
-  // Tags
-  var tags = allData.tags || [];
-  var tagHtml = '';
-  for (var i = 0; i < tags.length; i++) {
-    tagHtml += '<span class="tag-chip">' + escapeHtml(tags[i]) + ' <span class="tag-remove" onclick="deleteTag(\'' + escapeHtml(tags[i]) + '\')">&times;</span></span>';
-  }
-  document.getElementById('tagsList').innerHTML = tagHtml || '<span style="color:#999;">暂无标签</span>';
-
-  // Featured Cats
-  var fCats = toArray(allData.featuredCats || []);
-  var fCatHtml = '';
-  for (var i = 0; i < fCats.length; i++) {
-    fCatHtml += '<span class="tag-chip">' + escapeHtml(fCats[i].label || fCats[i].val) + ' <span class="tag-remove" onclick="deleteFeaturedCat(\'' + escapeHtml(fCats[i].val) + '\')">&times;</span></span>';
-  }
-  document.getElementById('featuredCatsList').innerHTML = fCatHtml || '<span style="color:#999;">暂无精选分类</span>';
 }
 
 function saveSiteSettings() {
@@ -2800,113 +2723,49 @@ function deleteContact(index) {
   });
 }
 
-// Category Management
-function openCategoryModal() {
-  var bodyHtml =
-    '<div class="form-row"><label>分类值 (英文)<span class="req">*</span></label><input type="text" id="catVal" placeholder="如: technology"></div>' +
-    '<div class="form-row"><label>分类标签 (中文)<span class="req">*</span></label><input type="text" id="catLabel" placeholder="如: 科技">';
-  var footerHtml =
-    '<input type="button" class="btn-default" value="取消" onclick="closeModal()">' +
-    '<input type="button" class="btn-primary" value="添加" onclick="addCategory()">';
-  openModal('添加分类', bodyHtml, footerHtml);
-}
-
-function addCategory() {
-  var val = document.getElementById('catVal').value.trim();
-  var label = document.getElementById('catLabel').value.trim();
-  if (!val || !label) { showToast('请填写完整', 'error'); return; }
-  var list = toArray(allData.categories || []);
-  list.push({ val: val, label: label });
-  saveData('categories', rebuildArray(list), function() {
-    showToast('分类已添加', 'success');
-    closeModal();
+// Category Management - inline add/refresh for article & resource modals
+function addNewCategory(type) {
+  var name = prompt('请输入新合集名称');
+  if (!name || !name.trim()) return;
+  name = name.trim();
+  db.ref('/site/categories').once('value').then(function(snap) {
+    var cats = toArray(snap.val());
+    for (var i = 0; i < cats.length; i++) {
+      if (cats[i].val === name || cats[i].label === name) {
+        showToast('该合集已存在');
+        return;
+      }
+    }
+    cats.push({val: name, label: name});
+    return db.ref('/site/categories').set(cats);
+  }).then(function() {
+    showToast('合集"' + name + '"已添加', 'success');
+    refreshCategoryDropdown(type);
     loadAllData();
+  }).catch(function(e) {
+    showToast('添加失败');
   });
 }
 
-function deleteCategory(val) {
-  var list = toArray(allData.categories || []);
-  var filtered = [];
-  for (var i = 0; i < list.length; i++) {
-    if (list[i].val !== val) filtered.push(list[i]);
-  }
-  saveData('categories', rebuildArray(filtered), function() {
-    showToast('分类已删除', 'success');
-    loadAllData();
+function refreshCategoryDropdown(type) {
+  db.ref('/site/categories').once('value').then(function(snap) {
+    var cats = toArray(snap.val());
+    var selectId = type === 'article' ? 'artCat' : 'resCat';
+    var sel = document.getElementById(selectId);
+    if (!sel) return;
+    var currentVal = sel.value;
+    sel.innerHTML = '<option value="">请选择合集</option>';
+    cats.forEach(function(c) {
+      var label = c.label || c.val || '';
+      var opt = document.createElement('option');
+      opt.value = label;
+      opt.textContent = label;
+      sel.appendChild(opt);
+    });
+    sel.value = currentVal;
   });
 }
 
-// Tag Management
-function openTagModal() {
-  var bodyHtml = '<div class="form-row"><label>标签名称<span class="req">*</span></label><input type="text" id="tagName" placeholder="如: AI">';
-  var footerHtml =
-    '<input type="button" class="btn-default" value="取消" onclick="closeModal()">' +
-    '<input type="button" class="btn-primary" value="添加" onclick="addTag()">';
-  openModal('添加标签', bodyHtml, footerHtml);
-}
-
-function addTag() {
-  var name = document.getElementById('tagName').value.trim();
-  if (!name) { showToast('请输入标签名称', 'error'); return; }
-  var tags = allData.tags || [];
-  for (var i = 0; i < tags.length; i++) {
-    if (tags[i] === name) { showToast('标签已存在', 'error'); return; }
-  }
-  tags.push(name);
-  saveData('tags', tags, function() {
-    showToast('标签已添加', 'success');
-    closeModal();
-    loadAllData();
-  });
-}
-
-function deleteTag(name) {
-  var tags = allData.tags || [];
-  var filtered = [];
-  for (var i = 0; i < tags.length; i++) {
-    if (tags[i] !== name) filtered.push(tags[i]);
-  }
-  saveData('tags', filtered, function() {
-    showToast('标签已删除', 'success');
-    loadAllData();
-  });
-}
-
-// Featured Cat Management
-function openFeaturedCatModal() {
-  var bodyHtml =
-    '<div class="form-row"><label>分类值<span class="req">*</span></label><input type="text" id="fCatVal" placeholder="如: hot"></div>' +
-    '<div class="form-row"><label>分类标签<span class="req">*</span></label><input type="text" id="fCatLabel" placeholder="如: 热门">';
-  var footerHtml =
-    '<input type="button" class="btn-default" value="取消" onclick="closeModal()">' +
-    '<input type="button" class="btn-primary" value="添加" onclick="addFeaturedCat()">';
-  openModal('添加精选分类', bodyHtml, footerHtml);
-}
-
-function addFeaturedCat() {
-  var val = document.getElementById('fCatVal').value.trim();
-  var label = document.getElementById('fCatLabel').value.trim();
-  if (!val || !label) { showToast('请填写完整', 'error'); return; }
-  var list = toArray(allData.featuredCats || []);
-  list.push({ val: val, label: label });
-  saveData('featuredCats', rebuildArray(list), function() {
-    showToast('精选分类已添加', 'success');
-    closeModal();
-    loadAllData();
-  });
-}
-
-function deleteFeaturedCat(val) {
-  var list = toArray(allData.featuredCats || []);
-  var filtered = [];
-  for (var i = 0; i < list.length; i++) {
-    if (list[i].val !== val) filtered.push(list[i]);
-  }
-  saveData('featuredCats', rebuildArray(filtered), function() {
-    showToast('精选分类已删除', 'success');
-    loadAllData();
-  });
-}
 
 // ==================== Messages ====================
 function loadMessages() {
