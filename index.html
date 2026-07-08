@@ -1006,6 +1006,8 @@ function listenFirebase() {
             DEFAULT_DATA[path] = val;
           } else if (path === 'messages') {
             DEFAULT_DATA[path] = val;
+          } else {
+            DEFAULT_DATA[path] = val;
           }
           if (!appState.firebaseReady) {
             appState.firebaseReady = true;
