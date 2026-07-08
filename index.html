@@ -403,15 +403,15 @@ input,textarea,select{font-family:inherit}
 /* ===== Contact Grid (3 cols) ===== */
 .contact-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
 .contact-card{text-align:center;padding:20px;background:#f8f9fa;border-radius:12px}
-.contact-card .icon{width:40px;height:40px;border-radius:50%;margin:0 auto 8px;object-fit:cover}
+.contact-card .icon{width:48px;height:48px;margin:0 auto 8px;object-fit:contain;display:block}
 .contact-card .platform{font-size:12px;color:#999}
 .contact-card .account{font-size:14px;font-weight:600;color:#333;margin-top:4px}
-/* ===== Album Grid (6 cols, 9:16) ===== */
-.album-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:12px}
-.album-card{cursor:pointer;transition:var(--transition)}
+/* ===== Album Grid (4 cols, 3:4) ===== */
+.album-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:20px}
+.album-card{cursor:pointer;transition:var(--transition);position:relative}
 .album-card:hover{transform:translateY(-4px)}
-.album-card .album-cover{aspect-ratio:9/16;object-fit:cover;border-radius:8px;width:100%}
-.album-card .album-name{font-size:12px;text-align:center;margin-top:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.album-card .album-cover{aspect-ratio:3/4;object-fit:cover;border-radius:8px;width:100%}
+.album-card .album-name{font-size:14px;text-align:center;margin-top:8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#333;font-weight:500}
 
 /* ===== Comment Section ===== */
 .comment-section{margin-top:40px;padding-top:24px;border-top:1px solid var(--border)}
@@ -445,7 +445,7 @@ input,textarea,select{font-family:inherit}
   .benefits-grid{grid-template-columns:repeat(2,1fr)}
   .photo-grid{columns:2}
   .values-grid{grid-template-columns:repeat(2,1fr)}
-  .album-grid{grid-template-columns:repeat(4,1fr)}
+  .album-grid{grid-template-columns:repeat(3,1fr);gap:16px}
 }
 @media(max-width:768px){
   #sidebar{transform:translateX(-100%)}
@@ -472,10 +472,10 @@ input,textarea,select{font-family:inherit}
   .photo-item{margin-bottom:10px}
   .about-hero{padding:32px 24px}
   .about-hero h1{font-size:22px}
-  .album-grid{grid-template-columns:repeat(3,1fr);gap:12px}
+  .album-grid{grid-template-columns:repeat(2,1fr);gap:12px}
   .contact-grid{grid-template-columns:repeat(3,1fr);gap:8px}
   .contact-card{padding:14px 8px}
-  .contact-card .icon{width:32px;height:32px}
+  .contact-card .icon{width:36px;height:36px}
   .contact-card .account{font-size:12px}
   .qr-modal-content{max-width:300px;padding:24px 16px}
 }
@@ -520,11 +520,7 @@ input,textarea,select{font-family:inherit}
         <span class="nav-icon">&#8505;</span>关于我们
       </a>
     </nav>
-    <div class="sidebar-footer">
-      <span>微信: aiyoushe_vip</span>
-      <span>邮箱: hello@aiyoushe.com</span>
-      <span>QQ: 123456789</span>
-    </div>
+    <div class="sidebar-footer" id="sidebarContacts"></div>
   </div>
   <div id="sidebar-overlay" onclick="closeSidebar()"></div>
 
@@ -930,6 +926,7 @@ function listenFirebase() {
           renderCurrentPage();
           if (path === 'announcements') loadAnnouncements();
           if (path === 'profile_data') loadProfile();
+          if (path === 'contact_list') loadSidebarContacts();
         }
       }, function(err) {
         console.log('Firebase 监听 ' + path + ' 失败:', err.message);
@@ -1859,18 +1856,26 @@ function toggleFAQ(el) {
 /* ---------- 关于我们 ---------- */
 function renderAbout() {
   var about = getData('about_data') || {};
-  var contact = about.contact || {};
   var html = '';
 
-  /* 品牌介绍 */
+  /* 品牌介绍 - 使用about.brand字段（匹配后台保存的字段名） */
   html += '<div class="about-hero">';
-  html += '<h1>关于艾优社</h1>';
+  html += '<h1>' + (about.brand || '关于艾优社') + '</h1>';
   html += '<p>' + (about.intro || '艾优社资源馆是一个专注于创意资源共享的平台，致力于为设计师、运营人员和内容创作者提供高质量的素材资源和行业资讯。') + '</p>';
   html += '</div>';
 
-  /* 团队故事 */
-  var stories = about.stories || DEFAULT_DATA.about_data.stories;
-  if (stories.length) {
+  /* 团队故事 - 使用硬编码回退（避免Firebase覆盖DEFAULT_DATA导致丢失） */
+  var defaultStories = [
+    { title: '从一个小群到万人社区', content: '艾优社最初只是一个由几位设计师组成的小型微信群，大家分享设计资源和行业心得。随着越来越多的朋友加入，我们逐渐发展成为一个拥有数万成员的创意社区。在这个过程中，我们始终保持着分享和互助的初心。' },
+    { title: '资源馆的诞生', content: '为了更好地组织和管理海量的设计资源，我们决定创建艾优社资源馆。这个平台汇聚了团队成员多年积累的优质资源，经过精心分类和筛选，为用户提供一站式的资源获取体验。' }
+  ];
+  var defaultValues = [
+    { title: '品质至上', desc: '每一份资源都经过严格筛选，确保质量和实用性' },
+    { title: '持续更新', desc: '每周更新资源库，紧跟行业发展趋势' },
+    { title: '社区互助', desc: '倡导分享精神，建立互助共赢的创意社区' }
+  ];
+  var stories = about.stories || defaultStories;
+  if (stories && stories.length) {
     html += '<div class="section-title"><span>团队故事</span></div>';
     for (var i = 0; i < stories.length; i++) {
       html += '<div class="story-card"><h3>' + stories[i].title + '</h3><p>' + stories[i].content + '</p></div>';
@@ -1878,8 +1883,8 @@ function renderAbout() {
   }
 
   /* 核心价值观 */
-  var values = about.values || DEFAULT_DATA.about_data.values;
-  if (values.length) {
+  var values = about.values || defaultValues;
+  if (values && values.length) {
     html += '<div class="section-title"><span>核心价值观</span></div>';
     html += '<div class="values-grid">';
     for (var j = 0; j < values.length; j++) {
@@ -1900,9 +1905,9 @@ function renderAbout() {
       html += '<div class="contact-card">' + iconHtml + '<div class="platform">' + cc.platform + '</div><div class="account">' + cc.account + '</div></div>';
     }
   } else {
-    html += '<div class="contact-card"><div class="icon" style="width:40px;height:40px;border-radius:50%;background:var(--bg);display:flex;align-items:center;justify-content:center;margin:0 auto 8px;font-size:20px;color:var(--text-light)">&#128172;</div><div class="platform">微信</div><div class="account">' + (contact.wechat || 'aiyoushe_vip') + '</div></div>';
-    html += '<div class="contact-card"><div class="icon" style="width:40px;height:40px;border-radius:50%;background:var(--bg);display:flex;align-items:center;justify-content:center;margin:0 auto 8px;font-size:20px;color:var(--text-light)">&#9993;</div><div class="platform">邮箱</div><div class="account">' + (contact.email || 'hello@aiyoushe.com') + '</div></div>';
-    html += '<div class="contact-card"><div class="icon" style="width:40px;height:40px;border-radius:50%;background:var(--bg);display:flex;align-items:center;justify-content:center;margin:0 auto 8px;font-size:20px;color:var(--text-light)">&#128101;</div><div class="platform">QQ</div><div class="account">' + (contact.qq || '123456789') + '</div></div>';
+    html += '<div class="contact-card"><div class="icon" style="width:40px;height:40px;border-radius:50%;background:var(--bg);display:flex;align-items:center;justify-content:center;margin:0 auto 8px;font-size:20px;color:var(--text-light)">&#128172;</div><div class="platform">微信</div><div class="account">aiyoushe_vip</div></div>';
+    html += '<div class="contact-card"><div class="icon" style="width:40px;height:40px;border-radius:50%;background:var(--bg);display:flex;align-items:center;justify-content:center;margin:0 auto 8px;font-size:20px;color:var(--text-light)">&#9993;</div><div class="platform">邮箱</div><div class="account">hello@aiyoushe.com</div></div>';
+    html += '<div class="contact-card"><div class="icon" style="width:40px;height:40px;border-radius:50%;background:var(--bg);display:flex;align-items:center;justify-content:center;margin:0 auto 8px;font-size:20px;color:var(--text-light)">&#128101;</div><div class="platform">QQ</div><div class="account">123456789</div></div>';
   }
   html += '</div></div>';
 
@@ -2395,6 +2400,22 @@ function loadProfile() {
     }
   }
 }
+
+function loadSidebarContacts() {
+  var contactList = getData('contact_list') || [];
+  var container = document.getElementById('sidebarContacts');
+  if (!container) return;
+  if (contactList.length) {
+    var html = '';
+    for (var i = 0; i < contactList.length; i++) {
+      var c = contactList[i];
+      html += '<span>' + (c.platform || '') + ': ' + (c.account || '') + '</span>';
+    }
+    container.innerHTML = html;
+  } else {
+    container.innerHTML = '<span>微信: aiyoushe_vip</span><span>邮箱: hello@aiyoushe.com</span><span>QQ: 123456789</span>';
+  }
+}
 /* ========================================
    全局事件
    ======================================== */
@@ -2429,6 +2450,7 @@ function initApp() {
   renderCurrentPage();
   loadAnnouncements();
   loadProfile();
+  loadSidebarContacts();
   showUserLevel();
 }
 

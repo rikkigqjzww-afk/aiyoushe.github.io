@@ -508,16 +508,6 @@ table img{width:60px;height:40px;object-fit:cover;border-radius:4px;}
       <!-- Settings -->
       <div class="page-section" id="page-settings">
         <div class="card">
-          <div class="card-header"><h4>基本设置</h4></div>
-          <div class="card-body" style="padding:24px;">
-            <div class="form-row"><label>网站标题</label><input type="text" id="siteTitleInput" placeholder="网站标题"></div>
-            <div class="form-row"><label>网站副标题</label><input type="text" id="siteSubtitleInput" placeholder="网站副标题"></div>
-            <div class="form-row"><label>网站描述</label><textarea id="siteDescInput" placeholder="网站描述"></textarea></div>
-            <div class="form-row"><label>头像URL</label><input type="text" id="siteAvatarInput" placeholder="头像URL"></div>
-            <input type="button" class="btn-primary" value="保存基本设置" onclick="saveSiteSettings()">
-          </div>
-        </div>
-        <div class="card">
           <div class="card-header"><h4>关于我们</h4></div>
           <div class="card-body" style="padding:24px;">
             <div class="form-row"><label>品牌名称</label><input type="text" id="aboutBrand" placeholder="品牌名称"></div>
@@ -1916,7 +1906,7 @@ function openAlbumGroupModal(groupId) {
 
   var bodyHtml =
     '<div class="form-row"><label>分组名称<span class="req">*</span></label><input type="text" id="grpName" value="' + escapeHtml(group ? group.name : '') + '"></div>' +
-    '<div class="form-row"><label>封面图</label><div class="img-upload-area"><p>点击上传封面图</p><input type="file" accept="image/*" onchange="handleImageUpload(this,\'grpCoverPreview\',\'grpCoverData\',9/16)"></div><div class="img-preview" id="grpCoverPreview">' + (group && group.cover ? '<img src="' + group.cover + '"><span class="remove-img" onclick="clearImage(\'grpCoverPreview\',\'grpCoverData\')">移除</span>' : '') + '</div></div>' +
+    '<div class="form-row"><label>封面图</label><div class="img-upload-area"><p>点击上传封面图</p><input type="file" accept="image/*" onchange="handleImageUpload(this,\'grpCoverPreview\',\'grpCoverData\',3/4)"></div><div class="img-preview" id="grpCoverPreview">' + (group && group.cover ? '<img src="' + group.cover + '"><span class="remove-img" onclick="clearImage(\'grpCoverPreview\',\'grpCoverData\')">移除</span>' : '') + '</div></div>' +
     '<div class="form-row"><label>相册权限</label>' +
       '<div style="display:flex;gap:12px;margin-top:6px;">' +
         '<label class="form-switch"><input type="radio" name="grpAccess" value="0"' + (group && group.accessLevel === 1 ? '' : (group && group.accessLevel === 2 ? '' : (group && group.accessLevel === 3 ? '' : ' checked'))) + ' id="grpAccess0"><label for="grpAccess0">免费浏览 V0</label></label>' +
@@ -2045,7 +2035,7 @@ function openSubAlbumModal(subId) {
 
   var bodyHtml =
     '<div class="form-row"><label>子相册名称<span class="req">*</span></label><input type="text" id="subName" value="' + escapeHtml(sub ? sub.name : '') + '"></div>' +
-    '<div class="form-row"><label>封面图</label><div class="img-upload-area"><p>点击上传封面图</p><input type="file" accept="image/*" onchange="handleImageUpload(this,\'subCoverPreview\',\'subCoverData\',9/16)"></div><div class="img-preview" id="subCoverPreview">' + (sub && sub.cover ? '<img src="' + sub.cover + '"><span class="remove-img" onclick="clearImage(\'subCoverPreview\',\'subCoverData\')">移除</span>' : '') + '</div></div>' +
+    '<div class="form-row"><label>封面图</label><div class="img-upload-area"><p>点击上传封面图</p><input type="file" accept="image/*" onchange="handleImageUpload(this,\'subCoverPreview\',\'subCoverData\',3/4)"></div><div class="img-preview" id="subCoverPreview">' + (sub && sub.cover ? '<img src="' + sub.cover + '"><span class="remove-img" onclick="clearImage(\'subCoverPreview\',\'subCoverData\')">移除</span>' : '') + '</div></div>' +
     '<div class="form-row"><label>子相册权限</label>' +
       '<div style="display:flex;gap:12px;margin-top:6px;">' +
         '<label class="form-switch"><input type="radio" name="subAccess" value="0"' + (sub && sub.accessLevel === 1 ? '' : (sub && sub.accessLevel === 2 ? '' : (sub && sub.accessLevel === 3 ? '' : ' checked'))) + ' id="subAccess0"><label for="subAccess0">免费浏览 V0</label></label>' +
@@ -2631,13 +2621,6 @@ function handleMiniUpload(input) {
 
 // ==================== Settings ====================
 function loadSettings() {
-  var siteTitle = allData.site_title || '';
-  var profile = allData.profile_data || {};
-  document.getElementById('siteTitleInput').value = siteTitle;
-  document.getElementById('siteSubtitleInput').value = profile.desc || '';
-  document.getElementById('siteDescInput').value = profile.desc || '';
-  document.getElementById('siteAvatarInput').value = profile.avatar || '';
-
   // About - visual editors
   var about = allData.about_data || {};
   document.getElementById('aboutBrand').value = about.brand || '';
@@ -2648,19 +2631,6 @@ function loadSettings() {
   // Contact
   renderContactList(allData.contact_list || []);
 
-}
-
-function saveSiteSettings() {
-  var title = document.getElementById('siteTitleInput').value.trim();
-  var desc = document.getElementById('siteSubtitleInput').value.trim();
-  var avatar = document.getElementById('siteAvatarInput').value.trim();
-
-  saveData('site_title', title, function() {
-    saveData('profile_data', { title: title, desc: desc, avatar: avatar }, function() {
-      showToast('基本设置已保存', 'success');
-      loadAllData();
-    });
-  });
 }
 
 function saveAboutData() {
