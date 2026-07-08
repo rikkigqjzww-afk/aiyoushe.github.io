@@ -39,10 +39,14 @@ input,textarea,select{font-family:inherit}
 /* ===== Top Bar ===== */
 #top-bar{position:fixed;top:0;right:0;left:var(--sidebar-width);height:var(--topbar-height);background:var(--card-bg);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 24px;z-index:900;box-shadow:0 1px 4px rgba(0,0,0,.04)}
 #hamburger-btn{display:none;font-size:22px;color:var(--secondary);padding:8px}
-.top-bar-search{display:flex;align-items:center;background:var(--bg);border-radius:20px;padding:8px 16px;width:320px;max-width:50%}
+.top-bar-search{display:flex;align-items:center;background:var(--bg);border-radius:20px;padding:8px 16px;width:280px;max-width:40%;flex-shrink:0}
 .top-bar-search input{border:none;background:none;outline:none;width:100%;font-size:13px;color:var(--text)}
 .top-bar-search input::placeholder{color:var(--text-lighter)}
-.top-bar-right{display:flex;align-items:center;gap:16px}
+.top-bar-announce{flex:1;overflow:hidden;white-space:nowrap;margin-left:20px;height:32px;display:flex;align-items:center;background:#FEF2F2;border-radius:16px;padding:0 16px}
+.top-bar-announce .scroll-wrap{display:inline-block;animation:scroll-left 20s linear infinite}
+.top-bar-announce .scroll-wrap span{margin-right:60px;font-size:13px;color:#E63946}
+.top-bar-announce .ann-icon{margin-right:8px;font-size:14px;color:#E63946;flex-shrink:0}
+.top-bar-right{display:flex;align-items:center;gap:16px;flex-shrink:0}
 #mobile-search-btn{display:none;font-size:20px;color:var(--text-light)}
 
 /* ===== Page Container ===== */
@@ -406,12 +410,22 @@ input,textarea,select{font-family:inherit}
 .contact-card .icon{width:48px;height:48px;margin:0 auto 8px;object-fit:contain;display:block}
 .contact-card .platform{font-size:12px;color:#999}
 .contact-card .account{font-size:14px;font-weight:600;color:#333;margin-top:4px}
+/* ===== Album Header ===== */
+.album-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.album-header-left h2{font-size:18px;font-weight:700;color:var(--secondary)}
+.album-header-center{font-size:13px;color:var(--text-lighter)}
+.album-header-right{display:flex;align-items:center}
+.album-select{appearance:none;-webkit-appearance:none;padding:6px 28px 6px 12px;border:1px solid var(--border);border-radius:6px;font-size:13px;color:var(--text);background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") no-repeat right 8px center;background-size:12px;cursor:pointer;outline:none}
+.album-select:focus{border-color:var(--primary)}
 /* ===== Album Grid (4 cols, 3:4) ===== */
 .album-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:20px}
-.album-card{cursor:pointer;transition:var(--transition);position:relative}
+.album-card{cursor:pointer;transition:var(--transition);position:relative;border-radius:8px;overflow:hidden}
 .album-card:hover{transform:translateY(-4px)}
-.album-card .album-cover{aspect-ratio:3/4;object-fit:cover;border-radius:8px;width:100%}
-.album-card .album-name{font-size:14px;text-align:center;margin-top:8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#333;font-weight:500}
+.album-card .album-cover{aspect-ratio:3/4;object-fit:cover;width:100%;display:block}
+.album-card .album-overlay{position:absolute;bottom:0;left:0;right:0;padding:12px 14px;background:linear-gradient(to top,rgba(0,0,0,.65) 0%,rgba(0,0,0,.3) 60%,transparent 100%);z-index:1}
+.album-card .album-overlay .album-name{font-size:15px;font-weight:600;color:#fff;line-height:1.3}
+.album-card .album-overlay .album-count{font-size:12px;color:rgba(255,255,255,.75);margin-top:2px}
+.album-card .access-badge{position:absolute;top:8px;right:8px;background:rgba(0,0,0,.7);color:#fff;padding:3px 8px;border-radius:4px;font-size:11px;z-index:2}
 
 /* ===== Comment Section ===== */
 .comment-section{margin-top:40px;padding-top:24px;border-top:1px solid var(--border)}
@@ -431,9 +445,7 @@ input,textarea,select{font-family:inherit}
 .comment-pinned{font-size:11px;background:var(--primary);color:#fff;padding:1px 6px;border-radius:4px}
 .comment-text{font-size:14px;color:var(--text);line-height:1.6}
 /* ===== Announcement Bar ===== */
-.announcement-bar{background:#FFF1F0;overflow:hidden;white-space:nowrap;padding:8px 0;border-bottom:1px solid #FFE8E5}
-.announcement-bar .scroll-wrap{display:inline-block;animation:scroll-left 20s linear infinite}
-.announcement-bar .scroll-wrap span{margin-right:60px;font-size:13px;color:#E63946}
+/* ===== Announcement Bar (merged into top-bar) ===== */
 @keyframes scroll-left{0%{transform:translateX(100%)}100%{transform:translateX(-100%)}}
 
 /* ===== Responsive ===== */
@@ -456,6 +468,7 @@ input,textarea,select{font-family:inherit}
   #hamburger-btn{display:block}
   #mobile-search-btn{display:block}
   .top-bar-search{display:none}
+  .top-bar-announce{display:none !important}
   #bottom-nav{display:flex}
   .card-grid,.pricing-grid,.benefits-grid,.values-grid{grid-template-columns:1fr}
   .pricing-grid .pricing-card:last-child{grid-column:auto;max-width:none}
@@ -473,6 +486,8 @@ input,textarea,select{font-family:inherit}
   .about-hero{padding:32px 24px}
   .about-hero h1{font-size:22px}
   .album-grid{grid-template-columns:repeat(2,1fr);gap:12px}
+  .album-header{flex-wrap:wrap;gap:8px}
+  .album-header-center{width:100%;order:3;text-align:center}
   .contact-grid{grid-template-columns:repeat(3,1fr);gap:8px}
   .contact-card{padding:14px 8px}
   .contact-card .icon{width:36px;height:36px}
@@ -531,12 +546,13 @@ input,textarea,select{font-family:inherit}
       <div class="top-bar-search">
         <input type="text" id="top-search-input" placeholder="搜索文章、资源..." onkeydown="if(event.keyCode===13)doTopSearch()">
       </div>
+      <div class="top-bar-announce" id="announcementBar" style="display:none;">
+        <span class="ann-icon">&#128227;</span>
+        <div class="scroll-wrap" id="announcementScroll"></div>
+      </div>
       <div class="top-bar-right">
         <span id="mobile-search-btn" onclick="navigateTo('search')">&#128269;</span>
       </div>
-    </div>
-    <div id="announcementBar" class="announcement-bar" style="display:none;">
-      <div class="scroll-wrap" id="announcementScroll"></div>
     </div>
     <div id="page-container"></div>
   </div>
@@ -788,6 +804,7 @@ var appState = {
   selectedResCategory: '',
   selectedResTag: '',
   resourceSort: 'latest',
+  selectedAlbumGroup: '全部',
   likedArticles: {},
   firebaseReady: false,
   carouselIndex: 0
@@ -1656,24 +1673,49 @@ function renderResourceDetail() {
 /* ---------- 相册中心 ---------- */
 function renderAlbums() {
   var albums = getData('albums');
-  var html = '<div class="section-title"><span>相册分组</span></div>';
-  html += '<div class="album-grid">';
-
-  var accessLabels = {0: '免费', 1: 'V1体验', 2: 'V2普通', 3: 'V3高级'};
+  var selected = appState.selectedAlbumGroup || '全部';
+  var filtered = [];
+  var allNames = [];
   for (var i = 0; i < albums.length; i++) {
-    var g = albums[i];
+    allNames.push(albums[i].name);
+    if (selected === '全部' || albums[i].name === selected) {
+      filtered.push(albums[i]);
+    }
+  }
+
+  var html = '<div class="album-header">';
+  html += '<div class="album-header-left"><h2>相册中心</h2></div>';
+  html += '<div class="album-header-center">共 ' + albums.length + ' 个分类</div>';
+  html += '<div class="album-header-right">';
+  html += '<select class="album-select" onchange="appState.selectedAlbumGroup=this.value;renderCurrentPage();">';
+  html += '<option value="全部"' + (selected === '全部' ? ' selected' : '') + '>全部分类</option>';
+  for (var j = 0; j < allNames.length; j++) {
+    html += '<option value="' + escapeHtml(allNames[j]) + '"' + (selected === allNames[j] ? ' selected' : '') + '>' + escapeHtml(allNames[j]) + '</option>';
+  }
+  html += '</select>';
+  html += '</div></div>';
+
+  if (filtered.length === 0) {
+    html += '<div class="empty-state"><p>暂无相册</p></div>';
+    return html;
+  }
+
+  html += '<div class="album-grid">';
+  var accessLabels = {0: '免费', 1: 'V1体验', 2: 'V2普通', 3: 'V3高级'};
+  for (var k = 0; k < filtered.length; k++) {
+    var g = filtered[k];
     var count = (g.subAlbums || []).length;
     var photoCount = 0;
-    for (var j = 0; j < (g.subAlbums || []).length; j++) {
-      photoCount += (g.subAlbums[j].photos || []).length;
+    for (var m = 0; m < (g.subAlbums || []).length; m++) {
+      photoCount += (g.subAlbums[m].photos || []).length;
     }
     var accessBadge = '';
     if (g.accessLevel !== undefined && g.accessLevel !== null && g.accessLevel > 0) {
-      accessBadge = '<span style="position:absolute;bottom:8px;right:8px;background:rgba(0,0,0,0.7);color:#fff;padding:3px 8px;border-radius:4px;font-size:11px;z-index:1">' + (accessLabels[g.accessLevel] || '免费') + '</span>';
+      accessBadge = '<span class="access-badge">' + (accessLabels[g.accessLevel] || '免费') + '</span>';
     }
-    html += '<div class="album-card" style="position:relative" onclick="navigateTo(\'album-detail\',{currentAlbumGroupId:\'' + g.id + '\'})">' +
+    html += '<div class="album-card" onclick="navigateTo(\'album-detail\',{currentAlbumGroupId:\'' + g.id + '\'})">' +
       '<img class="album-cover" src="' + g.cover + '" alt="' + g.name + '" loading="lazy">' +
-      '<div class="album-name">' + g.name + '</div>' +
+      '<div class="album-overlay"><div class="album-name">' + g.name + '</div><div class="album-count">' + count + '个子相册</div></div>' +
       accessBadge +
       '</div>';
   }
@@ -1704,7 +1746,7 @@ function renderAlbumDetail() {
     var photoCount = (sa.photos || []).length;
     html += '<div class="album-card" onclick="navigateTo(\'sub-album\',{currentAlbumGroupId:\'' + group.id + '\',currentSubAlbumId:\'' + sa.id + '\'})">' +
       '<img class="album-cover" src="' + sa.cover + '" alt="' + sa.name + '" loading="lazy">' +
-      '<div class="album-name">' + sa.name + '</div>' +
+      '<div class="album-overlay"><div class="album-name">' + sa.name + '</div><div class="album-count">' + photoCount + '张照片</div></div>' +
       '</div>';
   }
   html += '</div>';
