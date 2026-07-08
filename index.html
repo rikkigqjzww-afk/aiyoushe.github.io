@@ -407,7 +407,7 @@ input,textarea,select{font-family:inherit}
 /* ===== Contact Grid (3 cols) ===== */
 .contact-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
 .contact-card{text-align:center;padding:20px;background:#f8f9fa;border-radius:12px}
-.contact-card .icon{width:48px;height:48px;margin:0 auto 8px;object-fit:contain;display:block}
+.contact-card .icon{width:48px;height:48px;margin:0 auto 8px;object-fit:contain;display:block;background:#fff;border-radius:6px}
 .contact-card .platform{font-size:12px;color:#999}
 .contact-card .account{font-size:14px;font-weight:600;color:#333;margin-top:4px}
 /* ===== Album Header ===== */
@@ -860,7 +860,13 @@ function formatNumber(n) {
 }
 
 function getData(key) {
-  return DEFAULT_DATA[key] || [];
+  var val = DEFAULT_DATA[key];
+  if (val === undefined || val === null) {
+    if (key === 'qr_code' || key === 'site_title') return '';
+    if (key === 'about_data' || key === 'profile_data' || key === 'vip_banner') return {};
+    return [];
+  }
+  return val;
 }
 
 function findArticle(id) {
@@ -1864,24 +1870,20 @@ function renderMember() {
   }
   html += '</div>';
 
-  /* FAQ */
-  var faqs = [
-    { q: '会员资源可以商用吗？', a: '体验会员和普通会员的资源仅限个人学习和非商业用途。高级会员可获得商业授权许可，用于商业项目。具体授权范围请咨询客服。' },
-    { q: '开通会员后多久可以使用？', a: '付款完成后立即生效，您可以马上开始下载和使用全站资源。会员有效期从开通之日起计算。' },
-    { q: '可以退款吗？', a: '体验会员（月付）不支持退款。普通会员和高级会员在开通后7天内，如未下载超过5个资源，可申请全额退款。' },
-    { q: '支持哪些支付方式？', a: '目前支持微信支付和支付宝。请联系客服获取付款链接。' },
-    { q: '团队成员可以共享会员吗？', a: '高级会员支持最多5人团队共享权限。普通会员仅限个人使用，不可共享账号。' }
-  ];
-
-  html += '<div class="section-title"><span>常见问题</span></div>';
-  html += '<div class="faq-list">';
-  for (var f = 0; f < faqs.length; f++) {
-    html += '<div class="faq-item">' +
-      '<div class="faq-question" onclick="toggleFAQ(this)">' + faqs[f].q + '<span class="faq-arrow">&#9660;</span></div>' +
-      '<div class="faq-answer">' + faqs[f].a + '</div>' +
-      '</div>';
+  /* FAQ - 从后台读取 */
+  var memberFaqs = getData('member_faq') || [];
+  if (memberFaqs && memberFaqs.length) {
+    html += '<div class="section-title"><span>常见问题</span></div>';
+    html += '<div class="faq-list">';
+    for (var f = 0; f < memberFaqs.length; f++) {
+      var fq = memberFaqs[f];
+      html += '<div class="faq-item">' +
+        '<div class="faq-question" onclick="toggleFAQ(this)">' + (fq.q || fq.question || '') + '<span class="faq-arrow">&#9660;</span></div>' +
+        '<div class="faq-answer">' + (fq.a || fq.answer || '') + '</div>' +
+        '</div>';
+    }
+    html += '</div>';
   }
-  html += '</div>';
 
   return html;
 }
@@ -1918,9 +1920,9 @@ function renderAbout() {
   ];
   var stories = about.stories || defaultStories;
   if (stories && stories.length) {
-    html += '<div class="section-title"><span>团队故事</span></div>';
+    html += '<div class="section-title"><span>平台特色</span></div>';
     for (var i = 0; i < stories.length; i++) {
-      html += '<div class="story-card"><h3>' + stories[i].title + '</h3><p>' + stories[i].content + '</p></div>';
+      html += '<div class="story-card"><h3>' + stories[i].title + '</h3><p>' + (stories[i].desc || stories[i].content || '') + '</p></div>';
     }
   }
 

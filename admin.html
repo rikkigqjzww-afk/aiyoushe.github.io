@@ -213,7 +213,7 @@ table img{width:60px;height:40px;object-fit:cover;border-radius:4px;}
 .card-list-editor .mini-form-row{margin-bottom:10px;}
 .card-list-editor .mini-form-row label{display:block;margin-bottom:4px;color:#666;font-size:12px;}
 .card-list-editor .mini-form-row input[type="text"],.card-list-editor .mini-form-row textarea{width:100%;padding:8px 10px;border:1px solid #d9d9d9;border-radius:4px;font-size:13px;}
-.card-list-editor .mini-img-upload{width:60px;height:60px;border:1px dashed #d9d9d9;border-radius:6px;display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:hidden;position:relative;}
+.card-list-editor .mini-img-upload{width:60px;height:60px;border:1px dashed #d9d9d9;border-radius:6px;display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:hidden;position:relative;background:#fff;}
 .card-list-editor .mini-img-upload img{width:100%;height:100%;object-fit:cover;}
 .card-list-editor .mini-img-upload input[type="file"]{position:absolute;top:0;left:0;width:100%;height:100%;opacity:0;cursor:pointer;}
 .add-card-btn{padding:8px 16px;background:#f6ffed;color:#52c41a;border:1px solid #b7eb8f;border-radius:6px;cursor:pointer;font-size:13px;}
@@ -503,6 +503,16 @@ table img{width:60px;height:40px;object-fit:cover;border-radius:4px;}
             <input type="button" class="btn-primary" value="保存权益展示" onclick="saveBenefits()">
           </div>
         </div>
+        <div class="card">
+          <div class="card-header"><h4>常见问题 (FAQ)</h4></div>
+          <div class="card-body" style="padding:24px;">
+            <div class="form-row"><label>会员常见问题</label>
+              <div class="accordion-editor" id="memberFaqList"></div>
+              <input type="button" class="add-card-btn" value="&#43; 添加问题" onclick="addMemberFaqItem()" style="margin-top:12px;">
+            </div>
+            <input type="button" class="btn-primary" value="保存常见问题" onclick="saveMemberFaq()">
+          </div>
+        </div>
       </div>
 
       <!-- Settings -->
@@ -511,17 +521,14 @@ table img{width:60px;height:40px;object-fit:cover;border-radius:4px;}
           <div class="card-header"><h4>关于我们</h4></div>
           <div class="card-body" style="padding:24px;">
             <div class="form-row"><label>品牌名称</label><input type="text" id="aboutBrand" placeholder="品牌名称"></div>
-            <div class="form-row"><label>品牌故事</label>
+            <div class="form-row"><label>品牌描述</label><textarea id="aboutDesc" placeholder="品牌描述，显示在深色banner区域..."></textarea></div>
+            <div class="form-row"><label>平台特色</label>
               <div class="card-list-editor" id="storiesCardsList"></div>
-              <input type="button" class="add-card-btn" value="&#43; 添加故事" onclick="addStoryCard()">
+              <input type="button" class="add-card-btn" value="&#43; 添加特色" onclick="addStoryCard()">
             </div>
             <div class="form-row"><label>品牌价值观</label>
               <div class="card-list-editor" id="valuesCardsList"></div>
               <input type="button" class="add-card-btn" value="&#43; 添加价值观" onclick="addValueCard()">
-            </div>
-            <div class="form-row"><label>常见问题 (FAQ)</label>
-              <div class="accordion-editor" id="faqAccordionList"></div>
-              <input type="button" class="add-card-btn" value="&#43; 添加问题" onclick="addFaqItem()" style="margin-top:12px;">
             </div>
             <input type="button" class="btn-primary" value="保存关于我们" onclick="saveAboutData()">
           </div>
@@ -1154,8 +1161,13 @@ function compressAndRead(file, callback) {
       canvas.width = w;
       canvas.height = h;
       var ctx = canvas.getContext('2d');
+      // Fill white background to prevent transparent PNGs from turning black in JPEG
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, w, h);
       ctx.drawImage(img, 0, 0, w, h);
-      callback(canvas.toDataURL('image/jpeg', 0.8));
+      // Use PNG for PNG files to preserve transparency, JPEG for others
+      var isPng = file.type === 'image/png';
+      callback(canvas.toDataURL(isPng ? 'image/png' : 'image/jpeg', isPng ? undefined : 0.8));
     };
     img.onerror = function() {
       showToast('图片读取失败', 'error');
@@ -2479,6 +2491,9 @@ function loadPricing() {
   }
   document.getElementById('benefitsTitle').value = benefitTitle;
   renderBenefitCards(benefitItems);
+
+  // Member FAQ
+  renderMemberFaq(allData.member_faq || []);
 }
 
 function addPlanFeature(containerId) {
@@ -2624,9 +2639,9 @@ function loadSettings() {
   // About - visual editors
   var about = allData.about_data || {};
   document.getElementById('aboutBrand').value = about.brand || '';
+  document.getElementById('aboutDesc').value = about.intro || about.desc || '';
   renderStoryCards(about.stories || []);
   renderValueCards(about.values || []);
-  renderFaqAccordion(about.faq || []);
 
   // Contact
   renderContactList(allData.contact_list || []);
@@ -2635,10 +2650,10 @@ function loadSettings() {
 
 function saveAboutData() {
   var brand = document.getElementById('aboutBrand').value.trim();
+  var intro = document.getElementById('aboutDesc').value.trim();
   var stories = collectStoryCards();
   var values = collectValueCards();
-  var faq = collectFaqItems();
-  saveData('about_data', { brand: brand, stories: stories, values: values, faq: faq }, function() {
+  saveData('about_data', { brand: brand, intro: intro, stories: stories, values: values }, function() {
     showToast('关于我们已保存', 'success');
     loadAllData();
   });
@@ -3215,6 +3230,73 @@ function collectFaqItems() {
     });
   }
   return result;
+}
+
+// ==================== Member FAQ ====================
+function renderMemberFaq(items) {
+  var container = document.getElementById('memberFaqList');
+  if (!items.length) { container.innerHTML = '<div style="color:#999;text-align:center;padding:20px;">暂无常见问题，点击下方按钮添加</div>'; return; }
+  var html = '';
+  for (var i = 0; i < items.length; i++) {
+    var item = items[i];
+    html += '<div class="accordion-item" data-idx="' + i + '">' +
+      '<div class="acc-header" onclick="toggleFaqAccordion(this)">' +
+        '<span>' + escapeHtml(item.q || '未填写问题') + '</span>' +
+        '<div class="acc-actions">' +
+          '<input type="button" class="btn-sm btn-del" value="删除" onclick="event.stopPropagation();this.closest(\'.accordion-item\').remove()">' +
+          '<span class="acc-toggle">&#9660;</span>' +
+        '</div>' +
+      '</div>' +
+      '<div class="acc-body">' +
+        '<div class="mini-form-row"><label>问题</label><input type="text" class="faq-q" value="' + escapeHtml(item.q || '') + '" oninput="this.closest(\'.accordion-item\').querySelector(\'.acc-header span\').textContent=this.value||\'未填写问题\'"></div>' +
+        '<div class="mini-form-row"><label>答案</label><textarea class="faq-a" style="width:100%;padding:8px 10px;border:1px solid #d9d9d9;border-radius:4px;font-size:13px;min-height:60px;">' + escapeHtml(item.a || '') + '</textarea></div>' +
+      '</div>' +
+    '</div>';
+  }
+  container.innerHTML = html;
+}
+
+function addMemberFaqItem() {
+  var container = document.getElementById('memberFaqList');
+  if (container.querySelector('div[style*="color:#999"]')) container.innerHTML = '';
+  var div = document.createElement('div');
+  div.className = 'accordion-item';
+  div.innerHTML =
+    '<div class="acc-header" onclick="toggleFaqAccordion(this)">' +
+      '<span>未填写问题</span>' +
+      '<div class="acc-actions">' +
+        '<input type="button" class="btn-sm btn-del" value="删除" onclick="event.stopPropagation();this.closest(\'.accordion-item\').remove()">' +
+        '<span class="acc-toggle">&#9660;</span>' +
+      '</div>' +
+    '</div>' +
+    '<div class="acc-body">' +
+      '<div class="mini-form-row"><label>问题</label><input type="text" class="faq-q" value="" oninput="this.closest(\'.accordion-item\').querySelector(\'.acc-header span\').textContent=this.value||\'未填写问题\'"></div>' +
+      '<div class="mini-form-row"><label>答案</label><textarea class="faq-a" style="width:100%;padding:8px 10px;border:1px solid #d9d9d9;border-radius:4px;font-size:13px;min-height:60px;"></textarea></div>' +
+    '</div>';
+  container.appendChild(div);
+}
+
+function collectMemberFaqItems() {
+  var container = document.getElementById('memberFaqList');
+  var items = container.querySelectorAll('.accordion-item');
+  var result = [];
+  for (var i = 0; i < items.length; i++) {
+    var q = items[i].querySelector('.faq-q');
+    var a = items[i].querySelector('.faq-a');
+    result.push({
+      q: q ? q.value.trim() : '',
+      a: a ? a.value.trim() : ''
+    });
+  }
+  return result;
+}
+
+function saveMemberFaq() {
+  var faq = collectMemberFaqItems();
+  saveData('member_faq', faq, function() {
+    showToast('常见问题已保存', 'success');
+    loadAllData();
+  });
 }
 
 // ==================== Article Comments Management ====================
