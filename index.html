@@ -174,7 +174,7 @@ input,textarea,select{font-family:inherit}
 
 /* ===== Article Detail ===== */
 .article-detail-header{margin-bottom:24px}
-.article-detail-header h1{font-size:28px;font-weight:700;color:var(--secondary);line-height:1.4;margin-bottom:12px}
+.article-detail-header h1{font-size:18px;font-weight:700;color:var(--secondary);line-height:1.5;margin-bottom:12px}
 .article-detail-meta{display:flex;align-items:center;gap:20px;font-size:13px;color:var(--text-light);flex-wrap:wrap}
 .article-detail-meta .like-btn{display:flex;align-items:center;gap:4px;cursor:pointer;color:var(--text-light);transition:var(--transition)}
 .article-detail-meta .like-btn:hover,.article-detail-meta .like-btn.liked{color:var(--primary)}
@@ -922,6 +922,15 @@ function getQRCodeData() {
   return '';
 }
 
+function extractQRCodeValue(item) {
+  if (!item) return '';
+  if (typeof item === 'string') return item;
+  if (typeof item === 'object') {
+    return item.url || item.image || item.img || item.src || item.data || item.base64 || item.qr || item.qrcode || '';
+  }
+  return '';
+}
+
 function renderQRCodeBox(size) {
   var qrData = getQRCodeData();
   var boxSize = size || 180;
@@ -929,6 +938,19 @@ function renderQRCodeBox(size) {
     return '<img src="' + qrData + '" alt="客服二维码" style="width:100%;height:100%;object-fit:contain;background:transparent">';
   }
   return '<div style="width:' + boxSize + 'px;height:' + boxSize + 'px;background:linear-gradient(135deg,#f0f0f0,#ddd);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-direction:column;color:var(--text-lighter)"><div style="font-size:48px;margin-bottom:8px">&#9638;</div><div style="font-size:12px">二维码加载中</div></div>';
+}
+
+function loadLatestQRCodeInto(container) {
+  if (!container || !db) return;
+  db.ref('site/qr_code').once('value').then(function(snapshot) {
+    var latest = extractQRCodeValue(snapshot.val());
+    if (latest) {
+      DEFAULT_DATA.qr_code = latest;
+      container.innerHTML = '<img src="' + latest + '" alt="客服二维码" style="width:100%;height:100%;object-fit:contain;background:transparent">';
+    }
+  }).catch(function(err) {
+    console.log('读取客服二维码失败:', err && err.message ? err.message : err);
+  });
 }
 
 function findArticle(id) {
@@ -1518,7 +1540,6 @@ function renderArticleDetail() {
     html += '<span class="category-tag">' + (_detailCatMap[article.category] || article.category) + '</span>';
   }
   html += '</div>';
-  if (tagsHtml) html += '<div style="margin-top:12px">' + tagsHtml + '</div>';
   html += '</div>';
 
   if (hasAccess) {
@@ -2188,6 +2209,7 @@ function showVIPQRModal() {
   var modal = $('qr-modal');
   var imgContainer = $('qr-modal-img');
   imgContainer.innerHTML = renderQRCodeBox(180);
+  loadLatestQRCodeInto(imgContainer);
 
   // Update modal title to "立即开通"
   var titleEl = modal.querySelector('.qr-modal-content h3');
@@ -2206,6 +2228,7 @@ function showQRModal() {
   var modal = $('qr-modal');
   var imgContainer = $('qr-modal-img');
   imgContainer.innerHTML = renderQRCodeBox(180);
+  loadLatestQRCodeInto(imgContainer);
 
   var titleEl = modal.querySelector('.qr-modal-content h3');
   if (titleEl) titleEl.textContent = '扫码联系客服购买';
@@ -2250,12 +2273,10 @@ function handleGetResource(resource) {
   var userLevel = getUserAccessLevel();
   var accessLevel = resource.accessLevel !== undefined ? resource.accessLevel : 0;
 
-  if (accessLevel === 0) {
-    showDeliveryModal(resource);
-  } else if (userLevel >= accessLevel) {
+  if (accessLevel === 0 && resource.deliveryLink) {
     showDeliveryModal(resource);
   } else {
-    showVIPQRModal();
+    showQRModal();
   }
 }
 
@@ -2277,12 +2298,18 @@ function showDeliveryModal(resource) {
     if (subtitle) subtitle.textContent = '请联系人工客服';
     if (desc) desc.textContent = '该资源暂未配置交付链接，请扫描下方二维码联系客服获取';
     linkBox.innerHTML = '<div style="width:180px;height:180px;margin:0 auto;background:transparent">' + renderQRCodeBox(180) + '</div>';
+    loadLatestQRCodeInto(linkBox.querySelector('div'));
   }
 
   if (resource.deliveryPassword) {
     passwordBox.innerHTML = '链接密码：<span>' + resource.deliveryPassword + '</span>';
   } else {
     passwordBox.innerHTML = '';
+  }
+
+  if (resource.deliveryLink) {
+    passwordBox.innerHTML += '<div style="width:180px;height:180px;margin:14px auto 0;background:transparent" class="delivery-qr-box">' + renderQRCodeBox(180) + '</div>';
+    loadLatestQRCodeInto(passwordBox.querySelector('.delivery-qr-box'));
   }
 
   modal.className = 'delivery-modal show';
