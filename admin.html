@@ -526,9 +526,9 @@ table img{width:60px;height:40px;object-fit:cover;border-radius:4px;}
               <div class="card-list-editor" id="storiesCardsList"></div>
               <input type="button" class="add-card-btn" value="&#43; 添加特色" onclick="addStoryCard()">
             </div>
-            <div class="form-row"><label>品牌价值观</label>
+            <div class="form-row"><label>平台亮点</label>
               <div class="card-list-editor" id="valuesCardsList"></div>
-              <input type="button" class="add-card-btn" value="&#43; 添加价值观" onclick="addValueCard()">
+              <input type="button" class="add-card-btn" value="&#43; 添加亮点" onclick="addValueCard()">
             </div>
             <input type="button" class="btn-primary" value="保存关于我们" onclick="saveAboutData()">
           </div>
@@ -1161,12 +1161,15 @@ function compressAndRead(file, callback) {
       canvas.width = w;
       canvas.height = h;
       var ctx = canvas.getContext('2d');
-      // Fill white background to prevent transparent PNGs from turning black in JPEG
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(0, 0, w, h);
-      ctx.drawImage(img, 0, 0, w, h);
       // Use PNG for PNG files to preserve transparency, JPEG for others
       var isPng = file.type === 'image/png';
+      if (!isPng) {
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, w, h);
+      } else {
+        ctx.clearRect(0, 0, w, h);
+      }
+      ctx.drawImage(img, 0, 0, w, h);
       callback(canvas.toDataURL(isPng ? 'image/png' : 'image/jpeg', isPng ? undefined : 0.8));
     };
     img.onerror = function() {
@@ -2493,7 +2496,7 @@ function loadPricing() {
   renderBenefitCards(benefitItems);
 
   // Member FAQ
-  renderMemberFaq(allData.member_faq || []);
+  renderMemberFaq(allData.member_faq || allData.vip_faq || allData.memberFaq || allData.faq || allData.faqs || []);
 }
 
 function addPlanFeature(containerId) {
@@ -3107,17 +3110,18 @@ function collectStoryCards() {
 // ==================== Value Cards ====================
 function renderValueCards(items) {
   var container = document.getElementById('valuesCardsList');
-  if (!items.length) { container.innerHTML = '<div style="color:#999;text-align:center;padding:20px;">暂无品牌价值观，点击下方按钮添加</div>'; return; }
+  if (!items.length) { container.innerHTML = '<div style="color:#999;text-align:center;padding:20px;">暂无平台亮点，点击下方按钮添加</div>'; return; }
   var html = '';
   for (var i = 0; i < items.length; i++) {
     var item = items[i];
+    var icon = item.icon || item.img || item.logo || item.image || '';
     html += '<div class="card-item">' +
-      '<div class="card-item-header"><h5>价值观 #' + (i + 1) + '</h5><input type="button" class="remove-card-item" value="删除" onclick="this.closest(\'.card-item\').remove()"></div>' +
+      '<div class="card-item-header"><h5>亮点 #' + (i + 1) + '</h5><input type="button" class="remove-card-item" value="删除" onclick="this.closest(\'.card-item\').remove()"></div>' +
       '<div style="display:flex;gap:12px;align-items:flex-start;">' +
         '<div class="mini-img-upload">' +
-          (item.icon ? '<img src="' + item.icon + '">' : '<span style="color:#999;font-size:11px;">图标</span>') +
+          (icon ? '<img src="' + icon + '">' : '<span style="color:#999;font-size:11px;">LOGO</span>') +
           '<input type="file" accept="image/*" onchange="handleMiniUpload(this)">' +
-          '<input type="hidden" class="card-icon-data" value="' + (item.icon || '') + '">' +
+          '<input type="hidden" class="card-icon-data" value="' + icon + '">' +
         '</div>' +
         '<div style="flex:1;">' +
           '<div class="mini-form-row"><label>标题</label><input type="text" class="card-title" value="' + escapeHtml(item.title || '') + '"></div>' +
@@ -3136,9 +3140,9 @@ function addValueCard() {
   var div = document.createElement('div');
   div.className = 'card-item';
   div.innerHTML =
-    '<div class="card-item-header"><h5>价值观 #' + idx + '</h5><input type="button" class="remove-card-item" value="删除" onclick="this.closest(\'.card-item\').remove()"></div>' +
+    '<div class="card-item-header"><h5>亮点 #' + idx + '</h5><input type="button" class="remove-card-item" value="删除" onclick="this.closest(\'.card-item\').remove()"></div>' +
     '<div style="display:flex;gap:12px;align-items:flex-start;">' +
-      '<div class="mini-img-upload"><span style="color:#999;font-size:11px;">图标</span><input type="file" accept="image/*" onchange="handleMiniUpload(this)"><input type="hidden" class="card-icon-data" value=""></div>' +
+      '<div class="mini-img-upload"><span style="color:#999;font-size:11px;">LOGO</span><input type="file" accept="image/*" onchange="handleMiniUpload(this)"><input type="hidden" class="card-icon-data" value=""></div>' +
       '<div style="flex:1;"><div class="mini-form-row"><label>标题</label><input type="text" class="card-title" value=""></div><div class="mini-form-row"><label>描述</label><input type="text" class="card-desc" value=""></div></div>' +
     '</div>';
   container.appendChild(div);
@@ -3168,17 +3172,19 @@ function renderFaqAccordion(items) {
   var html = '';
   for (var i = 0; i < items.length; i++) {
     var item = items[i];
+    var qText = item.q || item.question || item.title || '';
+    var aText = item.a || item.answer || item.content || item.desc || '';
     html += '<div class="accordion-item" data-idx="' + i + '">' +
       '<div class="acc-header" onclick="toggleFaqAccordion(this)">' +
-        '<span>' + escapeHtml(item.q || '未填写问题') + '</span>' +
+        '<span>' + escapeHtml(qText || '未填写问题') + '</span>' +
         '<div class="acc-actions">' +
           '<input type="button" class="btn-sm btn-del" value="删除" onclick="event.stopPropagation();this.closest(\'.accordion-item\').remove()">' +
           '<span class="acc-toggle">&#9660;</span>' +
         '</div>' +
       '</div>' +
       '<div class="acc-body">' +
-        '<div class="mini-form-row"><label>问题</label><input type="text" class="faq-q" value="' + escapeHtml(item.q || '') + '" oninput="this.closest(\'.accordion-item\').querySelector(\'.acc-header span\').textContent=this.value||\'未填写问题\'"></div>' +
-        '<div class="mini-form-row"><label>答案</label><textarea class="faq-a" style="width:100%;padding:8px 10px;border:1px solid #d9d9d9;border-radius:4px;font-size:13px;min-height:60px;">' + escapeHtml(item.a || '') + '</textarea></div>' +
+        '<div class="mini-form-row"><label>问题</label><input type="text" class="faq-q" value="' + escapeHtml(qText) + '" oninput="this.closest(\'.accordion-item\').querySelector(\'.acc-header span\').textContent=this.value||\'未填写问题\'"></div>' +
+        '<div class="mini-form-row"><label>答案</label><textarea class="faq-a" style="width:100%;padding:8px 10px;border:1px solid #d9d9d9;border-radius:4px;font-size:13px;min-height:60px;">' + escapeHtml(aText) + '</textarea></div>' +
       '</div>' +
     '</div>';
   }

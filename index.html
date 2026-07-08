@@ -321,6 +321,7 @@ input,textarea,select{font-family:inherit}
 .story-card p{font-size:13px;color:var(--text-light);line-height:1.8}
 .values-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-bottom:32px}
 .value-card{background:var(--card-bg);border-radius:var(--radius);padding:24px;text-align:center;box-shadow:var(--shadow)}
+.value-card .value-logo{width:52px;height:52px;margin:0 auto 12px;object-fit:contain;display:block;background:transparent;border-radius:0}
 .value-card h4{font-size:16px;font-weight:600;color:var(--primary);margin-bottom:8px}
 .value-card p{font-size:13px;color:var(--text-light);line-height:1.6}
 .contact-info-box{background:var(--card-bg);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow);margin-bottom:32px}
@@ -348,7 +349,7 @@ input,textarea,select{font-family:inherit}
 .qr-modal-content{background:var(--card-bg);border-radius:var(--radius);padding:32px;text-align:center;max-width:340px;width:90%;position:relative;animation:modalIn .3s ease}
 @keyframes modalIn{from{transform:scale(.9);opacity:0}to{transform:scale(1);opacity:1}}
 .qr-modal-content h3{font-size:18px;font-weight:600;color:var(--secondary);margin-bottom:16px}
-.qr-modal-img{width:200px;height:200px;margin:0 auto 16px;background:var(--bg);border-radius:var(--radius);display:flex;align-items:center;justify-content:center;overflow:hidden}
+.qr-modal-img{width:200px;height:200px;margin:0 auto 16px;background:transparent;border-radius:var(--radius);display:flex;align-items:center;justify-content:center;overflow:hidden}
 .qr-modal-img img{width:100%;height:100%;object-fit:contain}
 .qr-modal-img .qr-placeholder{color:var(--text-lighter);font-size:14px}
 .qr-modal-desc{font-size:13px;color:var(--text-light);margin-bottom:20px;line-height:1.6}
@@ -407,7 +408,7 @@ input,textarea,select{font-family:inherit}
 /* ===== Contact Grid (3 cols) ===== */
 .contact-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
 .contact-card{text-align:center;padding:20px;background:#f8f9fa;border-radius:12px}
-.contact-card .icon{width:48px;height:48px;margin:0 auto 8px;object-fit:contain;display:block;background:#fff;border-radius:6px}
+.contact-card .icon{width:48px;height:48px;margin:0 auto 8px;object-fit:contain;display:block;background:transparent;border-radius:0}
 .contact-card .platform{font-size:12px;color:#999}
 .contact-card .account{font-size:14px;font-weight:600;color:#333;margin-top:4px}
 /* ===== Album Header ===== */
@@ -783,7 +784,12 @@ var DEFAULT_DATA = {
     ],
     contact: { wechat: 'aiyoushe_vip', email: 'hello@aiyoushe.com', qq: '123456789' }
   },
-  qr_code: ''
+  qr_code: '',
+  member_faq: [
+    { q: '会员开通后如何获取资源？', a: '开通会员后，可在资源列表点击“获取资源”查看下载方式；如需人工协助，请扫描客服二维码联系处理。' },
+    { q: '会员套餐可以升级吗？', a: '可以升级，具体补差价和权益生效方式请联系客服确认。' },
+    { q: '资源无法下载怎么办？', a: '请先检查网络和链接有效性，如仍无法下载，请截图并联系客服处理。' }
+  ]
 };
 
 /* ========================================
@@ -869,6 +875,62 @@ function getData(key) {
   return val;
 }
 
+function toSafeArray(val) {
+  if (!val) return [];
+  if (Array.isArray(val)) return val;
+  if (typeof val === 'object') {
+    var arr = [];
+    for (var k in val) {
+      if (Object.prototype.hasOwnProperty.call(val, k)) arr.push(val[k]);
+    }
+    return arr;
+  }
+  return [];
+}
+
+function normalizeFaqList(val) {
+  var raw = toSafeArray(val);
+  var list = [];
+  for (var i = 0; i < raw.length; i++) {
+    var item = raw[i] || {};
+    var q = item.q || item.question || item.title || '';
+    var a = item.a || item.answer || item.content || item.desc || '';
+    if (q || a) list.push({ q: q, a: a });
+  }
+  return list;
+}
+
+function getQRCodeData() {
+  var candidates = [
+    getData('qr_code'),
+    DEFAULT_DATA.qrcode,
+    DEFAULT_DATA.qrCode,
+    DEFAULT_DATA.customer_qr,
+    DEFAULT_DATA.customer_qrcode,
+    DEFAULT_DATA.service_qr,
+    DEFAULT_DATA.service_qrcode
+  ];
+  for (var i = 0; i < candidates.length; i++) {
+    var item = candidates[i];
+    if (!item) continue;
+    if (typeof item === 'string') return item;
+    if (typeof item === 'object') {
+      var url = item.url || item.image || item.img || item.src || item.data || item.base64 || item.qr || item.qrcode;
+      if (url) return url;
+    }
+  }
+  return '';
+}
+
+function renderQRCodeBox(size) {
+  var qrData = getQRCodeData();
+  var boxSize = size || 180;
+  if (qrData) {
+    return '<img src="' + qrData + '" alt="客服二维码" style="width:100%;height:100%;object-fit:contain;background:transparent">';
+  }
+  return '<div style="width:' + boxSize + 'px;height:' + boxSize + 'px;background:linear-gradient(135deg,#f0f0f0,#ddd);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-direction:column;color:var(--text-lighter)"><div style="font-size:48px;margin-bottom:8px">&#9638;</div><div style="font-size:12px">二维码加载中</div></div>';
+}
+
 function findArticle(id) {
   var articles = getData('articles');
   for (var i = 0; i < articles.length; i++) {
@@ -926,7 +988,9 @@ function listenFirebase() {
     'articles', 'resources', 'albums', 'announcements',
     'categories', 'tags', 'featuredCats', 'messages',
     'contact_html', 'contact_list', 'pricing_html', 'benefits_html',
-    'profile_data', 'vip_banner', 'about_data', 'qr_code',
+    'profile_data', 'vip_banner', 'about_data',
+    'qr_code', 'qrcode', 'qrCode', 'customer_qr', 'customer_qrcode', 'service_qr', 'service_qrcode',
+    'member_faq', 'vip_faq', 'memberFaq', 'faq', 'faqs',
     'carousel'
   ];
 
@@ -1823,7 +1887,8 @@ function renderMember() {
   var html = '';
 
   /* VIP Banner */
-  html += '<div class="vip-banner">';
+  var bannerStyle = vipData.bgImage ? ' style="background-image:linear-gradient(135deg,rgba(230,57,70,.82),rgba(26,39,68,.82)),url(\'' + vipData.bgImage + '\');background-size:cover;background-position:center"' : '';
+  html += '<div class="vip-banner"' + bannerStyle + '>';
   html += '<h2>' + (vipData.title || '开通会员，畅享全站资源') + '</h2>';
   html += '<p>' + (vipData.desc || '海量设计素材、模板资源、课程教程，VIP会员无限下载') + '</p>';
   html += '<div style="margin-top:16px"><input type="button" class="btn btn-primary" style="padding:12px 40px;font-size:16px;border-radius:28px;background:rgba(255,255,255,.2);border:2px solid #fff;color:#fff" value="立即开通" onclick="showVIPQRModal()"></div>';
@@ -1835,21 +1900,29 @@ function renderMember() {
     { icon: '&#9829;', name: '普通会员', price: '¥199', period: '/年', label: '超值推荐', featured: true, features: ['无限下载全部资源', '高级素材库访问', '专属设计模板', '优先客服响应', '每月新品抢先看'] },
     { icon: '&#9830;', name: '高级会员', price: '¥999', period: '/年', label: '尊享旗舰', features: ['全部普通会员权益', '一对一专属顾问', '定制资源需求', '线下活动优先报名', '商业授权许可', '团队共享权限'] }
   ];
+  var pricingSaved = getData('pricing_html');
+  if (pricingSaved) {
+    try {
+      var savedPlans = typeof pricingSaved === 'string' ? JSON.parse(pricingSaved) : pricingSaved;
+      if (savedPlans && savedPlans.length) plans = savedPlans;
+    } catch(e) {}
+  }
 
   html += '<div class="section-title"><span>会员套餐</span></div>';
   html += '<div class="pricing-grid">';
   for (var i = 0; i < plans.length; i++) {
     var p = plans[i];
-    var featured = p.featured ? ' featured' : '';
+    var featured = p.featured || i === 1 ? ' featured' : '';
     var featList = '';
-    for (var j = 0; j < p.features.length; j++) {
-      featList += '<li>' + p.features[j] + '</li>';
+    var features = p.features || [];
+    for (var j = 0; j < features.length; j++) {
+      featList += '<li>' + features[j] + '</li>';
     }
     html += '<div class="pricing-card' + featured + '">' +
-      '<div class="pricing-icon">' + p.icon + '</div>' +
+      '<div class="pricing-icon">' + (p.icon || '&#9733;') + '</div>' +
       '<h3>' + p.name + '</h3>' +
-      '<span class="pricing-label">' + p.label + '</span>' +
-      '<div class="price">' + p.price + '<span>' + p.period + '</span></div>' +
+      '<span class="pricing-label">' + (p.label || p.desc || '会员套餐') + '</span>' +
+      '<div class="price">' + (p.price || '') + '<span>' + (p.period || '') + '</span></div>' +
       '<ul class="pricing-features">' + featList + '</ul>' +
       '<input type="button" class="btn btn-primary" style="width:100%;padding:10px;margin-top:8px" value="立即开通" onclick="showQRModal()">' +
       '</div>';
@@ -1865,13 +1938,24 @@ function renderMember() {
     { icon: '&#128172;', title: '专属客服', desc: '一对一优先服务' },
     { icon: '&#128197;', title: '持续更新', desc: '每周新增精选内容' }
   ];
+  var benefitsSaved = getData('benefits_html');
+  if (benefitsSaved) {
+    try {
+      var benefitObj = typeof benefitsSaved === 'string' ? JSON.parse(benefitsSaved) : benefitsSaved;
+      if (benefitObj && benefitObj.items && benefitObj.items.length) benefits = benefitObj.items;
+      else if (benefitObj && benefitObj.length) benefits = benefitObj;
+    } catch(e) {}
+  }
   for (var b = 0; b < benefits.length; b++) {
-    html += '<div class="benefit-item"><div class="benefit-icon">' + benefits[b].icon + '</div><h4>' + benefits[b].title + '</h4><p>' + benefits[b].desc + '</p></div>';
+    var benefitIcon = benefits[b].icon && String(benefits[b].icon).indexOf('data:image') === 0 ? '<img src="' + benefits[b].icon + '" alt="" style="width:42px;height:42px;object-fit:contain;background:transparent">' : (benefits[b].icon || '&#10003;');
+    html += '<div class="benefit-item"><div class="benefit-icon">' + benefitIcon + '</div><h4>' + (benefits[b].title || '') + '</h4><p>' + (benefits[b].desc || '') + '</p></div>';
   }
   html += '</div>';
 
   /* FAQ - 从后台读取 */
-  var memberFaqs = getData('member_faq') || [];
+  var memberFaqs = normalizeFaqList(getData('member_faq'));
+  if (!memberFaqs.length) memberFaqs = normalizeFaqList(DEFAULT_DATA.faq || DEFAULT_DATA.faqs || DEFAULT_DATA.vip_faq || DEFAULT_DATA.memberFaq);
+  if (!memberFaqs.length) memberFaqs = normalizeFaqList(DEFAULT_DATA.member_faq);
   if (memberFaqs && memberFaqs.length) {
     html += '<div class="section-title"><span>常见问题</span></div>';
     html += '<div class="faq-list">';
@@ -1926,13 +2010,15 @@ function renderAbout() {
     }
   }
 
-  /* 核心价值观 */
+  /* 平台亮点 */
   var values = about.values || defaultValues;
   if (values && values.length) {
-    html += '<div class="section-title"><span>核心价值观</span></div>';
+    html += '<div class="section-title"><span>平台亮点</span></div>';
     html += '<div class="values-grid">';
     for (var j = 0; j < values.length; j++) {
-      html += '<div class="value-card"><h4>' + values[j].title + '</h4><p>' + values[j].desc + '</p></div>';
+      var valueLogo = values[j].icon || values[j].img || values[j].logo || values[j].image || '';
+      var valueLogoHtml = valueLogo ? '<img class="value-logo" src="' + valueLogo + '" alt="' + (values[j].title || '平台亮点') + '">' : '';
+      html += '<div class="value-card">' + valueLogoHtml + '<h4>' + (values[j].title || '') + '</h4><p>' + (values[j].desc || '') + '</p></div>';
     }
     html += '</div>';
   }
@@ -1945,7 +2031,8 @@ function renderAbout() {
   if (contactList.length) {
     for (var ci = 0; ci < contactList.length; ci++) {
       var cc = contactList[ci];
-      var iconHtml = cc.icon ? '<img class="icon" src="' + cc.icon + '" alt="' + cc.platform + '">' : '<div class="icon" style="width:40px;height:40px;border-radius:50%;background:var(--bg);display:flex;align-items:center;justify-content:center;margin:0 auto 8px;font-size:20px;color:var(--text-light)">&#128172;</div>';
+      var contactIcon = cc.icon || cc.logo || cc.img || cc.image || '';
+      var iconHtml = contactIcon ? '<img class="icon" src="' + contactIcon + '" alt="' + cc.platform + '">' : '<div class="icon" style="width:40px;height:40px;border-radius:50%;background:var(--bg);display:flex;align-items:center;justify-content:center;margin:0 auto 8px;font-size:20px;color:var(--text-light)">&#128172;</div>';
       html += '<div class="contact-card">' + iconHtml + '<div class="platform">' + cc.platform + '</div><div class="account">' + cc.account + '</div></div>';
     }
   } else {
@@ -2098,13 +2185,7 @@ function doTopSearch() {
 function showVIPQRModal() {
   var modal = $('qr-modal');
   var imgContainer = $('qr-modal-img');
-  var qrData = getData('qr_code');
-
-  if (qrData) {
-    imgContainer.innerHTML = '<img src="' + qrData + '" alt="客服二维码">';
-  } else {
-    imgContainer.innerHTML = '<div style="width:180px;height:180px;background:linear-gradient(135deg,#f0f0f0,#ddd);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-direction:column;color:var(--text-lighter)"><div style="font-size:48px;margin-bottom:8px">&#9638;</div><div style="font-size:12px">二维码加载中</div></div>';
-  }
+  imgContainer.innerHTML = renderQRCodeBox(180);
 
   // Update modal title to "立即开通"
   var titleEl = modal.querySelector('.qr-modal-content h3');
@@ -2122,13 +2203,13 @@ function showVIPQRModal() {
 function showQRModal() {
   var modal = $('qr-modal');
   var imgContainer = $('qr-modal-img');
-  var qrData = getData('qr_code');
+  imgContainer.innerHTML = renderQRCodeBox(180);
 
-  if (qrData) {
-    imgContainer.innerHTML = '<img src="' + qrData + '" alt="客服二维码">';
-  } else {
-    imgContainer.innerHTML = '<div style="width:180px;height:180px;background:linear-gradient(135deg,#f0f0f0,#ddd);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-direction:column;color:var(--text-lighter)"><div style="font-size:48px;margin-bottom:8px">&#9638;</div><div style="font-size:12px">二维码加载中</div></div>';
-  }
+  var titleEl = modal.querySelector('.qr-modal-content h3');
+  if (titleEl) titleEl.textContent = '扫码联系客服购买';
+
+  var descEl = modal.querySelector('.qr-modal-desc');
+  if (descEl) descEl.textContent = '微信扫描上方二维码，联系客服了解详情并完成购买';
 
   modal.className = 'qr-modal show';
   document.body.style.overflow = 'hidden';
@@ -2180,11 +2261,20 @@ function showDeliveryModal(resource) {
   var modal = $('delivery-modal');
   var linkBox = $('delivery-link-box');
   var passwordBox = $('delivery-password-box');
+  var title = $('delivery-title');
+  var subtitle = $('delivery-subtitle');
+  var desc = $('delivery-desc');
 
   if (resource.deliveryLink) {
+    if (title) title.textContent = '获取资源成功';
+    if (subtitle) subtitle.textContent = '获取链接成功';
+    if (desc) desc.textContent = '资源链接已准备就绪，点击下方按钮获取';
     linkBox.innerHTML = '<a href="' + resource.deliveryLink + '" target="_blank" rel="noopener">' + resource.deliveryLink + '</a>';
   } else {
-    linkBox.innerHTML = '<span style="color:var(--text-lighter)">暂无交付链接</span>';
+    if (title) title.textContent = '扫码联系客服获取资源';
+    if (subtitle) subtitle.textContent = '请联系人工客服';
+    if (desc) desc.textContent = '该资源暂未配置交付链接，请扫描下方二维码联系客服获取';
+    linkBox.innerHTML = '<div style="width:180px;height:180px;margin:0 auto;background:transparent">' + renderQRCodeBox(180) + '</div>';
   }
 
   if (resource.deliveryPassword) {
