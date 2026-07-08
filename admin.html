@@ -2017,10 +2017,11 @@ function loadAlbumGroups() {
   var html = '<div class="album-grid">';
   for (var i = 0; i < list.length; i++) {
     var g = list[i];
+    var groupKey = g.id || g._key || String(i);
     var grpUpBtn = (i > 0) ? '<input type="button" class="btn-sm btn-move" value="\u2191" title="\u4e0a\u79fb" onclick="moveItem(\'albums\',' + i + ',-1)">' : '';
     var grpDownBtn = (i < list.length - 1) ? '<input type="button" class="btn-sm btn-move" value="\u2193" title="\u4e0b\u79fb" onclick="moveItem(\'albums\',' + i + ',1)">' : '';
-    html += '<div class="album-group-item" data-key="' + (g.id || g._key || '') + '">' +
-      '<div class="album-card-cover" onclick="viewSubAlbums(\'' + (g.id || g._key || '') + '\')">' +
+    html += '<div class="album-group-item" data-key="' + groupKey + '">' +
+      '<div class="album-card-cover" onclick="viewSubAlbums(\'' + groupKey + '\')">' +
         (g.cover ? '<img src="' + g.cover + '">' : '<div class="album-empty-cover">&#9788;</div>') +
       '</div>' +
       '<div class="album-card-info">' +
@@ -2028,9 +2029,9 @@ function loadAlbumGroups() {
         '<div class="album-card-count">' + (g.subAlbums ? g.subAlbums.length : 0) + ' 个子相册</div>' +
       '</div>' +
       '<div class="album-card-actions">' + grpUpBtn + grpDownBtn +
-        '<input type="button" class="btn-sm btn-edit" value="编辑" onclick="editAlbumGroup(\'' + (g.id || g._key || '') + '\')">' +
-        '<input type="button" class="btn-sm btn-primary" value="查看" onclick="viewSubAlbums(\'' + (g.id || g._key || '') + '\')">' +
-        '<input type="button" class="btn-sm btn-del" value="删除" onclick="deleteAlbumGroup(\'' + (g.id || g._key || '') + '\')">' +
+        '<input type="button" class="btn-sm btn-edit" value="编辑" onclick="editAlbumGroup(\'' + groupKey + '\')">' +
+        '<input type="button" class="btn-sm btn-primary" value="查看子相册" onclick="viewSubAlbums(\'' + groupKey + '\')">' +
+        '<input type="button" class="btn-sm btn-del" value="删除" onclick="deleteAlbumGroup(\'' + groupKey + '\')">' +
       '</div></div>';
   }
   html += '</div>';
@@ -2043,7 +2044,8 @@ function openAlbumGroupModal(groupId) {
   if (groupId) {
     var list = toArray(allData.albums || []);
     for (var i = 0; i < list.length; i++) {
-      if ((list[i].id || list[i]._key) === groupId) { group = list[i]; break; }
+      var key = list[i].id || list[i]._key || String(i);
+      if (String(key) === String(groupId)) { group = list[i]; break; }
     }
     if (group) { isEdit = true; editingItemId = groupId; }
   }
@@ -2106,7 +2108,8 @@ function deleteAlbumGroup(id) {
     var list = toArray(allData.albums || []);
     var filtered = [];
     for (var i = 0; i < list.length; i++) {
-      if ((list[i].id || list[i]._key) !== id) filtered.push(list[i]);
+      var key = list[i].id || list[i]._key || String(i);
+      if (String(key) !== String(id)) filtered.push(list[i]);
     }
     saveData('albums', rebuildArray(filtered), function() {
       showToast('分组已删除', 'success');
@@ -2119,7 +2122,6 @@ function deleteAlbumGroup(id) {
 }
 
 function viewSubAlbums(groupId) {
-  currentAlbumGroup = groupId;
   currentSubAlbum = null;
   currentAlbumIndex = -1;
   currentSubAlbumIndex = -1;
@@ -2129,7 +2131,13 @@ function viewSubAlbums(groupId) {
   var list = toArray(allData.albums || []);
   var group = null;
   for (var i = 0; i < list.length; i++) {
-    if ((list[i].id || list[i]._key) === groupId) { group = list[i]; currentAlbumIndex = i; break; }
+    var key = list[i].id || list[i]._key || String(i);
+    if (String(key) === String(groupId)) {
+      group = list[i];
+      currentAlbumIndex = i;
+      currentAlbumGroup = key;
+      break;
+    }
   }
   if (!group) return;
 
@@ -2143,10 +2151,11 @@ function viewSubAlbums(groupId) {
   var html = '<div class="album-grid">';
   for (var i = 0; i < subs.length; i++) {
     var s = subs[i];
+    var subKey = s.id || String(i);
     var subUpBtn = (i > 0) ? '<input type="button" class="btn-sm btn-move" value="\u2191" title="\u4e0a\u79fb" onclick="moveItem(\'subAlbums\',' + i + ',-1)">' : '';
     var subDownBtn = (i < subs.length - 1) ? '<input type="button" class="btn-sm btn-move" value="\u2193" title="\u4e0b\u79fb" onclick="moveItem(\'subAlbums\',' + i + ',1)">' : '';
-    html += '<div class="album-group-item" data-key="' + (s.id || '') + '">' +
-      '<div class="album-card-cover" onclick="viewPhotos(\'' + (s.id || '') + '\')">' +
+    html += '<div class="album-group-item" data-key="' + subKey + '">' +
+      '<div class="album-card-cover" onclick="viewPhotos(\'' + subKey + '\')">' +
         (s.cover ? '<img src="' + s.cover + '">' : '<div class="album-empty-cover">&#9788;</div>') +
       '</div>' +
       '<div class="album-card-info">' +
@@ -2154,9 +2163,9 @@ function viewSubAlbums(groupId) {
         '<div class="album-card-count">' + (s.photos ? s.photos.length : 0) + ' 张照片</div>' +
       '</div>' +
       '<div class="album-card-actions">' + subUpBtn + subDownBtn +
-        '<input type="button" class="btn-sm btn-edit" value="编辑" onclick="editSubAlbum(\'' + (s.id || '') + '\')">' +
-        '<input type="button" class="btn-sm btn-primary" value="照片" onclick="viewPhotos(\'' + (s.id || '') + '\')">' +
-        '<input type="button" class="btn-sm btn-del" value="删除" onclick="deleteSubAlbum(\'' + (s.id || '') + '\')">' +
+        '<input type="button" class="btn-sm btn-edit" value="编辑" onclick="editSubAlbum(\'' + subKey + '\')">' +
+        '<input type="button" class="btn-sm btn-primary" value="照片" onclick="viewPhotos(\'' + subKey + '\')">' +
+        '<input type="button" class="btn-sm btn-del" value="删除" onclick="deleteSubAlbum(\'' + subKey + '\')">' +
       '</div></div>';
   }
   html += '</div>';
@@ -2169,10 +2178,12 @@ function openSubAlbumModal(subId) {
   if (subId && currentAlbumGroup) {
     var list = toArray(allData.albums || []);
     for (var i = 0; i < list.length; i++) {
-      if ((list[i].id || list[i]._key) === currentAlbumGroup) {
+      var groupKey = list[i].id || list[i]._key || String(i);
+      if (String(groupKey) === String(currentAlbumGroup)) {
         var subs = list[i].subAlbums || [];
         for (var j = 0; j < subs.length; j++) {
-          if (subs[j].id === subId) { sub = subs[j]; break; }
+          var subKey = subs[j].id || String(j);
+          if (String(subKey) === String(subId)) { sub = subs[j]; break; }
         }
         break;
       }
@@ -2215,11 +2226,13 @@ function saveSubAlbum(editId) {
   var tags = collectTagChips('subTagPreview');
   var list = toArray(allData.albums || []);
   for (var i = 0; i < list.length; i++) {
-    if ((list[i].id || list[i]._key) === currentAlbumGroup) {
+    var groupKey = list[i].id || list[i]._key || String(i);
+    if (String(groupKey) === String(currentAlbumGroup)) {
       if (!list[i].subAlbums) list[i].subAlbums = [];
       if (editId) {
         for (var j = 0; j < list[i].subAlbums.length; j++) {
-          if (list[i].subAlbums[j].id === editId) {
+          var subKey = list[i].subAlbums[j].id || String(j);
+          if (String(subKey) === String(editId)) {
             list[i].subAlbums[j].name = name;
             list[i].subAlbums[j].cover = cover;
             list[i].subAlbums[j].accessLevel = accessLevel;
@@ -2247,11 +2260,13 @@ function deleteSubAlbum(subId) {
   showConfirm('&#9888;', '删除子相册', '确定要删除该子相册及所有照片吗？', function() {
     var list = toArray(allData.albums || []);
     for (var i = 0; i < list.length; i++) {
-      if ((list[i].id || list[i]._key) === currentAlbumGroup) {
+      var groupKey = list[i].id || list[i]._key || String(i);
+      if (String(groupKey) === String(currentAlbumGroup)) {
         var subs = list[i].subAlbums || [];
         var filtered = [];
         for (var j = 0; j < subs.length; j++) {
-          if (subs[j].id !== subId) filtered.push(subs[j]);
+          var subKey = subs[j].id || String(j);
+          if (String(subKey) !== String(subId)) filtered.push(subs[j]);
         }
         list[i].subAlbums = filtered;
         break;
@@ -2273,10 +2288,12 @@ function viewPhotos(subId) {
   var list = toArray(allData.albums || []);
   var sub = null;
   for (var i = 0; i < list.length; i++) {
-    if ((list[i].id || list[i]._key) === currentAlbumGroup) {
+    var groupKey = list[i].id || list[i]._key || String(i);
+    if (String(groupKey) === String(currentAlbumGroup)) {
       var subs = list[i].subAlbums || [];
       for (var j = 0; j < subs.length; j++) {
-        if (subs[j].id === subId) { sub = subs[j]; currentSubAlbumIndex = j; break; }
+        var subKey = subs[j].id || String(j);
+        if (String(subKey) === String(subId)) { sub = subs[j]; currentSubAlbumIndex = j; currentSubAlbum = subKey; break; }
       }
       break;
     }
@@ -2352,10 +2369,12 @@ function deletePhoto(index) {
   showConfirm('&#9888;', '删除照片', '确定要删除这张照片吗？', function() {
     var list = toArray(allData.albums || []);
     for (var i = 0; i < list.length; i++) {
-      if ((list[i].id || list[i]._key) === currentAlbumGroup) {
+      var groupKey = list[i].id || list[i]._key || String(i);
+      if (String(groupKey) === String(currentAlbumGroup)) {
         var subs = list[i].subAlbums || [];
         for (var j = 0; j < subs.length; j++) {
-          if (subs[j].id === currentSubAlbum) {
+          var subKey = subs[j].id || String(j);
+          if (String(subKey) === String(currentSubAlbum)) {
             subs[j].photos.splice(index, 1);
             break;
           }
