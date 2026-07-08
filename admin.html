@@ -121,12 +121,18 @@ table img{width:60px;height:40px;object-fit:cover;border-radius:4px;}
 .img-preview .remove-img{color:#E63946;cursor:pointer;font-size:12px;text-decoration:underline;}
 
 /* Rich Text Editor */
-.rich-editor{border:1px solid #d9d9d9;border-radius:6px;overflow:hidden;}
-.rich-editor .toolbar{background:#fafafa;padding:6px 10px;display:flex;gap:4px;flex-wrap:wrap;border-bottom:1px solid #eee;}
+.rich-editor{border:1px solid #d9d9d9;border-radius:6px;overflow:visible;background:#fff;}
+.rich-editor .toolbar{background:#fafafa;padding:6px 10px;display:flex;gap:4px;flex-wrap:wrap;border-bottom:1px solid #eee;position:sticky;top:0;z-index:20;box-shadow:0 2px 6px rgba(0,0,0,0.04);}
 .rich-editor .toolbar input[type="button"]{padding:4px 10px;background:#fff;border:1px solid #d9d9d9;border-radius:4px;cursor:pointer;font-size:12px;transition:all 0.2s;}
 .rich-editor .toolbar input[type="button"]:hover{background:#E63946;color:#fff;border-color:#E63946;}
 .rich-editor .editor-content{min-height:300px;padding:16px;outline:none;font-size:14px;line-height:1.8;}
 .rich-editor .editor-content img{max-width:100%;}
+.color-tool{display:inline-flex;align-items:center;gap:4px;padding:3px 6px;background:#fff;border:1px solid #d9d9d9;border-radius:4px;font-size:12px;}
+.color-tool-label{font-weight:500;color:#555;margin-right:2px;}
+.color-swatch{width:18px;height:18px;border:1px solid #ccc;border-radius:3px;cursor:pointer;display:inline-block;padding:0;background:var(--swatch-color);}
+.color-swatch:hover{transform:scale(1.12);border-color:#E63946;}
+.color-hex-input{width:70px;height:24px;border:1px solid #d9d9d9;border-radius:4px;padding:2px 5px;font-size:12px;}
+.color-picker-input{width:24px;height:24px;border:1px solid #d9d9d9;border-radius:4px;padding:0;background:#fff;cursor:pointer;}
 
 /* Toast */
 .toast-container{position:fixed;top:24px;right:24px;z-index:9999;}
@@ -1181,6 +1187,21 @@ function compressAndRead(file, callback) {
 }
 
 // ==================== Rich Text Editor ====================
+var editorSavedRanges = {};
+
+function createColorToolHtml(editorId, cmd, label, defaultColor) {
+  var colors = ['#000000','#333333','#666666','#999999','#ffffff','#e60000','#ff9900','#ffff00','#00b050','#00b0f0','#0070c0','#7030a0','#f4cccc','#fce5cd','#fff2cc','#d9ead3','#d9eaf7','#eadcf8'];
+  var html = '<span class="color-tool" onmousedown="saveEditorSelection(\'' + editorId + '\')">';
+  html += '<span class="color-tool-label">' + label + '</span>';
+  for (var i = 0; i < colors.length; i++) {
+    html += '<button type="button" class="color-swatch" title="' + colors[i] + '" style="--swatch-color:' + colors[i] + '" onclick="applyEditorColor(\'' + editorId + '\',\'' + cmd + '\',\'' + colors[i] + '\')"></button>';
+  }
+  html += '<input type="text" class="color-hex-input" value="' + defaultColor + '" placeholder="#000000" onfocus="saveEditorSelection(\'' + editorId + '\')" onkeydown="if(event.keyCode===13){event.preventDefault();applyEditorColor(\'' + editorId + '\',\'' + cmd + '\',this.value)}">';
+  html += '<input type="color" class="color-picker-input" value="' + defaultColor + '" onfocus="saveEditorSelection(\'' + editorId + '\')" onchange="this.previousElementSibling.value=this.value;applyEditorColor(\'' + editorId + '\',\'' + cmd + '\',this.value)">';
+  html += '</span>';
+  return html;
+}
+
 function createRichEditorHtml(id, value) {
   var val = value || '';
   return '<div class="rich-editor">' +
@@ -1202,17 +1223,62 @@ function createRichEditorHtml(id, value) {
       '<input type="button" value="&#128247;" onclick="insertEditorImage(\'' + id + '\')">' +
       '<input type="button" value="上传图片" onclick="editorUploadImage(this)" style="margin-left:4px;padding:2px 6px;font-size:12px;">' +
       '<input type="file" accept="image/*" style="display:none" onchange="handleEditorImageUpload(this)">' +
-      '<label style="display:inline-flex;align-items:center;gap:2px;font-size:11px;padding:2px 6px;background:#fff;border:1px solid #d9d9d9;border-radius:4px;cursor:pointer;margin:0 1px" title="字体颜色">A<input type="color" value="#000000" onchange="execCmd(\'foreColor\',this.value)" style="width:0;height:0;padding:0;border:none;opacity:0;position:absolute"></label>' +
-      '<label style="display:inline-flex;align-items:center;gap:2px;font-size:11px;padding:2px 6px;background:#fff;border:1px solid #d9d9d9;border-radius:4px;cursor:pointer;margin:0 1px" title="背景颜色"><span style="background:#ffff00;width:12px;height:12px;display:inline-block;border:1px solid #ccc"></span><input type="color" value="#ffff00" onchange="execCmd(\'hiliteColor\',this.value)" style="width:0;height:0;padding:0;border:none;opacity:0;position:absolute"></label>' +
+      createColorToolHtml(id, 'foreColor', '字体颜色', '#000000') +
+      createColorToolHtml(id, 'hiliteColor', '背景颜色', '#ffff00') +
       '<input type="button" value="清除格式" onclick="execCmd(\'removeFormat\')">' +
     '</div>' +
-    '<div class="editor-content" contenteditable="true" id="' + id + '">' + val + '</div>' +
+    '<div class="editor-content" contenteditable="true" id="' + id + '" onmouseup="saveEditorSelection(\'' + id + '\')" onkeyup="saveEditorSelection(\'' + id + '\')" onfocus="saveEditorSelection(\'' + id + '\')" onclick="saveEditorSelection(\'' + id + '\')">' + val + '</div>' +
   '</div>';
   setTimeout(function() { setupEditorPaste(id); }, 100);
 }
 
 function execCmd(cmd, val) {
   document.execCommand(cmd, false, val || null);
+}
+
+function saveEditorSelection(editorId) {
+  var editor = document.getElementById(editorId);
+  var sel = window.getSelection ? window.getSelection() : null;
+  if (!editor || !sel || sel.rangeCount === 0) return;
+  var range = sel.getRangeAt(0);
+  if (editor.contains(range.commonAncestorContainer)) {
+    editorSavedRanges[editorId] = range.cloneRange();
+  }
+}
+
+function restoreEditorSelection(editorId) {
+  var editor = document.getElementById(editorId);
+  var range = editorSavedRanges[editorId];
+  if (!editor || !range) return false;
+  editor.focus();
+  var sel = window.getSelection ? window.getSelection() : null;
+  if (!sel) return false;
+  sel.removeAllRanges();
+  sel.addRange(range);
+  return true;
+}
+
+function normalizeHexColor(color) {
+  color = (color || '').trim();
+  if (!color) return '';
+  if (color.charAt(0) !== '#') color = '#' + color;
+  if (/^#[0-9a-fA-F]{3}$/.test(color)) {
+    color = '#' + color.charAt(1) + color.charAt(1) + color.charAt(2) + color.charAt(2) + color.charAt(3) + color.charAt(3);
+  }
+  return /^#[0-9a-fA-F]{6}$/.test(color) ? color : '';
+}
+
+function applyEditorColor(editorId, cmd, color) {
+  color = normalizeHexColor(color);
+  if (!color) { showToast('请输入正确的颜色值，例如 #E63946', 'error'); return; }
+  var editor = document.getElementById(editorId);
+  if (!editor) return;
+  restoreEditorSelection(editorId);
+  var ok = document.execCommand(cmd, false, color);
+  if (!ok && cmd === 'hiliteColor') {
+    document.execCommand('backColor', false, color);
+  }
+  saveEditorSelection(editorId);
 }
 
 function insertEditorLink(editorId) {
