@@ -2273,7 +2273,7 @@ function handleGetResource(resource) {
   var userLevel = getUserAccessLevel();
   var accessLevel = resource.accessLevel !== undefined ? resource.accessLevel : 0;
 
-  if (accessLevel === 0 && resource.deliveryLink) {
+  if (accessLevel === 0 || userLevel >= accessLevel) {
     showDeliveryModal(resource);
   } else {
     showQRModal();
