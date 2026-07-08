@@ -198,8 +198,17 @@ table img{width:60px;height:40px;object-fit:cover;border-radius:4px;}
 ::-webkit-scrollbar-thumb:hover{background:#bbb;}
 
 /* Album Group */
-.album-group-item{background:#fff;border:1px solid #e8e8e8;border-radius:8px;padding:16px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;}
-.album-group-item .group-name{font-weight:500;font-size:14px;}
+.album-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:16px;}
+.album-group-item{background:#fff;border:1px solid #e8e8e8;border-radius:10px;overflow:hidden;transition:all 0.2s;display:flex;flex-direction:column;}
+.album-group-item:hover{box-shadow:0 4px 16px rgba(0,0,0,0.1);transform:translateY(-2px);}
+.album-card-cover{width:100%;aspect-ratio:4/3;background:#f5f5f5;overflow:hidden;position:relative;cursor:pointer;}
+.album-card-cover img{width:100%;height:100%;object-fit:cover;display:block;}
+.album-card-cover .album-empty-cover{width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#bbb;font-size:34px;background:linear-gradient(135deg,#f7f7f7,#eee);}
+.album-card-info{padding:10px 12px;}
+.album-group-item .group-name{font-weight:600;font-size:14px;color:#333;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.album-card-count{color:#999;font-size:12px;margin-top:4px;}
+.album-card-actions{display:flex;gap:6px;flex-wrap:wrap;padding:0 12px 12px;margin-top:auto;}
+.album-card-actions .btn-sm{flex:1;min-width:46px;padding:5px 8px;}
 
 /* Feature list editor */
 .feature-list-editor{border:1px solid #d9d9d9;border-radius:6px;padding:12px;max-height:300px;overflow-y:auto;}
@@ -2005,23 +2014,26 @@ function loadAlbumGroups() {
     document.getElementById('photosArea').style.display = 'none';
     return;
   }
-  var html = '';
+  var html = '<div class="album-grid">';
   for (var i = 0; i < list.length; i++) {
     var g = list[i];
     var grpUpBtn = (i > 0) ? '<input type="button" class="btn-sm btn-move" value="\u2191" title="\u4e0a\u79fb" onclick="moveItem(\'albums\',' + i + ',-1)">' : '';
     var grpDownBtn = (i < list.length - 1) ? '<input type="button" class="btn-sm btn-move" value="\u2193" title="\u4e0b\u79fb" onclick="moveItem(\'albums\',' + i + ',1)">' : '';
     html += '<div class="album-group-item" data-key="' + (g.id || g._key || '') + '">' +
-      '<div style="display:flex;align-items:center;gap:12px;">' +
-        (g.cover ? '<img src="' + g.cover + '" style="width:48px;height:48px;object-fit:cover;border-radius:6px;">' : '') +
-        '<span class="group-name">' + escapeHtml(g.name || '未命名') + '</span>' +
-        '<span style="color:#999;font-size:12px;">(' + (g.subAlbums ? g.subAlbums.length : 0) + '个子相册)</span>' +
+      '<div class="album-card-cover" onclick="viewSubAlbums(\'' + (g.id || g._key || '') + '\')">' +
+        (g.cover ? '<img src="' + g.cover + '">' : '<div class="album-empty-cover">&#9788;</div>') +
       '</div>' +
-      '<div class="td-actions">' + grpUpBtn + grpDownBtn +
+      '<div class="album-card-info">' +
+        '<span class="group-name">' + escapeHtml(g.name || '未命名') + '</span>' +
+        '<div class="album-card-count">' + (g.subAlbums ? g.subAlbums.length : 0) + ' 个子相册</div>' +
+      '</div>' +
+      '<div class="album-card-actions">' + grpUpBtn + grpDownBtn +
         '<input type="button" class="btn-sm btn-edit" value="编辑" onclick="editAlbumGroup(\'' + (g.id || g._key || '') + '\')">' +
-        '<input type="button" class="btn-sm btn-primary" value="查看子相册" onclick="viewSubAlbums(\'' + (g.id || g._key || '') + '\')">' +
+        '<input type="button" class="btn-sm btn-primary" value="查看" onclick="viewSubAlbums(\'' + (g.id || g._key || '') + '\')">' +
         '<input type="button" class="btn-sm btn-del" value="删除" onclick="deleteAlbumGroup(\'' + (g.id || g._key || '') + '\')">' +
       '</div></div>';
   }
+  html += '</div>';
   container.innerHTML = html;
 }
 
@@ -2128,23 +2140,26 @@ function viewSubAlbums(groupId) {
     container.innerHTML = '<div class="empty-state"><p>暂无子相册</p></div>';
     return;
   }
-  var html = '';
+  var html = '<div class="album-grid">';
   for (var i = 0; i < subs.length; i++) {
     var s = subs[i];
     var subUpBtn = (i > 0) ? '<input type="button" class="btn-sm btn-move" value="\u2191" title="\u4e0a\u79fb" onclick="moveItem(\'subAlbums\',' + i + ',-1)">' : '';
     var subDownBtn = (i < subs.length - 1) ? '<input type="button" class="btn-sm btn-move" value="\u2193" title="\u4e0b\u79fb" onclick="moveItem(\'subAlbums\',' + i + ',1)">' : '';
     html += '<div class="album-group-item" data-key="' + (s.id || '') + '">' +
-      '<div style="display:flex;align-items:center;gap:12px;">' +
-        (s.cover ? '<img src="' + s.cover + '" style="width:48px;height:48px;object-fit:cover;border-radius:6px;">' : '') +
-        '<span class="group-name">' + escapeHtml(s.name || '未命名') + '</span>' +
-        '<span style="color:#999;font-size:12px;">(' + (s.photos ? s.photos.length : 0) + '张照片)</span>' +
+      '<div class="album-card-cover" onclick="viewPhotos(\'' + (s.id || '') + '\')">' +
+        (s.cover ? '<img src="' + s.cover + '">' : '<div class="album-empty-cover">&#9788;</div>') +
       '</div>' +
-      '<div class="td-actions">' + subUpBtn + subDownBtn +
+      '<div class="album-card-info">' +
+        '<span class="group-name">' + escapeHtml(s.name || '未命名') + '</span>' +
+        '<div class="album-card-count">' + (s.photos ? s.photos.length : 0) + ' 张照片</div>' +
+      '</div>' +
+      '<div class="album-card-actions">' + subUpBtn + subDownBtn +
         '<input type="button" class="btn-sm btn-edit" value="编辑" onclick="editSubAlbum(\'' + (s.id || '') + '\')">' +
-        '<input type="button" class="btn-sm btn-primary" value="查看照片" onclick="viewPhotos(\'' + (s.id || '') + '\')">' +
+        '<input type="button" class="btn-sm btn-primary" value="照片" onclick="viewPhotos(\'' + (s.id || '') + '\')">' +
         '<input type="button" class="btn-sm btn-del" value="删除" onclick="deleteSubAlbum(\'' + (s.id || '') + '\')">' +
       '</div></div>';
   }
+  html += '</div>';
   container.innerHTML = html;
 }
 
