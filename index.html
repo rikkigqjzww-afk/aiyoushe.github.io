@@ -838,6 +838,7 @@ var appState = {
   resourceSort: 'latest',
   selectedAlbumGroup: '全部',
   likedArticles: {},
+  lazyLoaded: {},
   firebaseReady: false,
   carouselIndex: 0
 };
@@ -998,7 +999,8 @@ function findResource(id) {
 function findAlbumGroup(id) {
   var albums = getData('albums');
   for (var i = 0; i < albums.length; i++) {
-    if (albums[i].id === id) return albums[i];
+    var key = albums[i].id || albums[i]._key || String(i);
+    if (String(key) === String(id)) return albums[i];
   }
   return null;
 }
@@ -1007,9 +1009,23 @@ function findSubAlbum(groupId, subId) {
   var group = findAlbumGroup(groupId);
   if (!group || !group.subAlbums) return null;
   for (var i = 0; i < group.subAlbums.length; i++) {
-    if (group.subAlbums[i].id === subId) return group.subAlbums[i];
+    var key = group.subAlbums[i].id || String(i);
+    if (String(key) === String(subId)) return group.subAlbums[i];
   }
   return null;
+}
+
+function loadPathOnce(path, callback) {
+  if (!db) { if (callback) callback(); return; }
+  db.ref('site/' + path).once('value').then(function(snapshot) {
+    var val = snapshot.val();
+    if (val !== null) DEFAULT_DATA[path] = (path === 'albums') ? toSafeArray(val) : val;
+    appState.lazyLoaded[path] = true;
+    if (callback) callback();
+  }).catch(function(err) {
+    console.log('按需读取 ' + path + ' 失败:', err && err.message ? err.message : err);
+    if (callback) callback();
+  });
 }
 
 /* ========================================
@@ -1033,7 +1049,7 @@ function initFirebase() {
 function listenFirebase() {
   if (!db) return;
   var paths = [
-    'articles', 'resources', 'albums', 'announcements',
+    'articles', 'resources', 'announcements',
     'categories', 'tags', 'featuredCats', 'messages',
     'contact_html', 'contact_list', 'pricing_html', 'benefits_html',
     'profile_data', 'vip_banner', 'about_data',
@@ -1082,6 +1098,9 @@ function navigateTo(page, params) {
     for (var key in params) {
       appState[key] = params[key];
     }
+  }
+  if ((page === 'albums' || page === 'album-detail' || page === 'sub-album') && db) {
+    loadPathOnce('albums', function() { renderCurrentPage(); });
   }
   renderCurrentPage();
   updateNavActive();
@@ -1823,12 +1842,12 @@ function renderResourceDetail() {
     accessBadge = '<span class="access-badge">' + (accessLabels[resource.accessLevel] || '免费') + '</span>';
   }
   html += discountBadge + featuredBadge;
-  html += '<img class="resource-detail-cover" id="resourceMainImage" src="' + mainImage + '" alt="' + resource.title + '">';
+  html += '<img class="resource-detail-cover" id="resourceMainImage" src="' + mainImage + '" alt="' + resource.title + '" loading="lazy">';
   html += accessBadge + '</div>';
   if (resourceImages.length > 1) {
     html += '<div class="resource-thumb-list">';
     for (var ri = 0; ri < resourceImages.length; ri++) {
-      html += '<img class="resource-thumb' + (ri === 0 ? ' active' : '') + '" src="' + resourceImages[ri] + '" alt="' + resource.title + '" onclick="setResourceMainImage(\'' + resourceImages[ri] + '\',this)">';
+      html += '<img class="resource-thumb' + (ri === 0 ? ' active' : '') + '" src="' + resourceImages[ri] + '" alt="' + resource.title + '" loading="lazy" onclick="setResourceMainImage(\'' + resourceImages[ri] + '\',this)">';
     }
     html += '</div>';
   }
@@ -1904,6 +1923,7 @@ function renderAlbums() {
   var filtered = [];
   var allNames = [];
   for (var i = 0; i < albums.length; i++) {
+    albums[i]._runtimeKey = albums[i].id || albums[i]._key || String(i);
     allNames.push(albums[i].name);
     if (selected === '全部' || albums[i].name === selected) {
       filtered.push(albums[i]);
@@ -1931,6 +1951,7 @@ function renderAlbums() {
   var accessLabels = {0: '免费', 1: 'V1体验', 2: 'V2普通', 3: 'V3高级'};
   for (var k = 0; k < filtered.length; k++) {
     var g = filtered[k];
+    var gKey = g._runtimeKey || g.id || g._key || String(k);
     var count = (g.subAlbums || []).length;
     var photoCount = 0;
     for (var m = 0; m < (g.subAlbums || []).length; m++) {
@@ -1940,7 +1961,7 @@ function renderAlbums() {
     if (g.accessLevel !== undefined && g.accessLevel !== null && g.accessLevel > 0) {
       accessBadge = '<span class="access-badge">' + (accessLabels[g.accessLevel] || '免费') + '</span>';
     }
-    html += '<div class="album-card" onclick="navigateTo(\'album-detail\',{currentAlbumGroupId:\'' + g.id + '\'})">' +
+    html += '<div class="album-card" onclick="navigateTo(\'album-detail\',{currentAlbumGroupId:\'' + gKey + '\'})">' +
       '<img class="album-cover" src="' + g.cover + '" alt="' + g.name + '" loading="lazy">' +
       '<div class="album-overlay"><div class="album-name">' + g.name + '</div><div class="album-count">' + count + '个子相册</div></div>' +
       accessBadge +
@@ -1970,8 +1991,10 @@ function renderAlbumDetail() {
 
   for (var i = 0; i < (group.subAlbums || []).length; i++) {
     var sa = group.subAlbums[i];
+    var groupKey = group.id || group._key || String(i);
+    var subKey = sa.id || String(i);
     var photoCount = (sa.photos || []).length;
-    html += '<div class="album-card" onclick="navigateTo(\'sub-album\',{currentAlbumGroupId:\'' + group.id + '\',currentSubAlbumId:\'' + sa.id + '\'})">' +
+    html += '<div class="album-card" onclick="navigateTo(\'sub-album\',{currentAlbumGroupId:\'' + appState.currentAlbumGroupId + '\',currentSubAlbumId:\'' + subKey + '\'})">' +
       '<img class="album-cover" src="' + sa.cover + '" alt="' + sa.name + '" loading="lazy">' +
       '<div class="album-overlay"><div class="album-name">' + sa.name + '</div><div class="album-count">' + photoCount + '张照片</div></div>' +
       '</div>';
@@ -1986,7 +2009,7 @@ function renderSubAlbum() {
   var subAlbum = findSubAlbum(appState.currentAlbumGroupId, appState.currentSubAlbumId);
   if (!subAlbum) return navigateTo('album-detail', { currentAlbumGroupId: appState.currentAlbumGroupId }), '';
 
-  var html = '<span class="back-btn" onclick="navigateTo(\'album-detail\',{currentAlbumGroupId:\'' + group.id + '\'})">&laquo; 返回' + group.name + '</span>';
+  var html = '<span class="back-btn" onclick="navigateTo(\'album-detail\',{currentAlbumGroupId:\'' + appState.currentAlbumGroupId + '\'})">&laquo; 返回' + group.name + '</span>';
   html += '<div class="section-title"><span>' + subAlbum.name + '</span><span style="font-size:13px;color:var(--text-light);font-weight:400">' + (subAlbum.photos || []).length + '张照片</span></div>';
   html += '<div class="photo-grid">';
 
@@ -2104,7 +2127,7 @@ function renderMember() {
     } catch(e) {}
   }
   for (var b = 0; b < benefits.length; b++) {
-    var benefitIcon = benefits[b].icon && String(benefits[b].icon).indexOf('data:image') === 0 ? '<img src="' + benefits[b].icon + '" alt="" style="width:42px;height:42px;object-fit:contain;background:transparent">' : (benefits[b].icon || '&#10003;');
+    var benefitIcon = benefits[b].icon && String(benefits[b].icon).indexOf('data:image') === 0 ? '<img src="' + benefits[b].icon + '" alt="" loading="lazy" style="width:42px;height:42px;object-fit:contain;background:transparent">' : (benefits[b].icon || '&#10003;');
     html += '<div class="benefit-item"><div class="benefit-icon">' + benefitIcon + '</div><h4>' + (benefits[b].title || '') + '</h4><p>' + (benefits[b].desc || '') + '</p></div>';
   }
   html += '</div>';
@@ -2174,7 +2197,7 @@ function renderAbout() {
     html += '<div class="values-grid">';
     for (var j = 0; j < values.length; j++) {
       var valueLogo = values[j].icon || values[j].img || values[j].logo || values[j].image || '';
-      var valueLogoHtml = valueLogo ? '<img class="value-logo" src="' + valueLogo + '" alt="' + (values[j].title || '平台亮点') + '">' : '';
+      var valueLogoHtml = valueLogo ? '<img class="value-logo" src="' + valueLogo + '" alt="' + (values[j].title || '平台亮点') + '" loading="lazy">' : '';
       html += '<div class="value-card">' + valueLogoHtml + '<h4>' + (values[j].title || '') + '</h4><p>' + (values[j].desc || '') + '</p></div>';
     }
     html += '</div>';
@@ -2189,7 +2212,7 @@ function renderAbout() {
     for (var ci = 0; ci < contactList.length; ci++) {
       var cc = contactList[ci];
       var contactIcon = cc.icon || cc.logo || cc.img || cc.image || '';
-      var iconHtml = contactIcon ? '<img class="icon" src="' + contactIcon + '" alt="' + cc.platform + '">' : '<div class="icon" style="width:40px;height:40px;border-radius:50%;background:var(--bg);display:flex;align-items:center;justify-content:center;margin:0 auto 8px;font-size:20px;color:var(--text-light)">&#128172;</div>';
+      var iconHtml = contactIcon ? '<img class="icon" src="' + contactIcon + '" alt="' + cc.platform + '" loading="lazy">' : '<div class="icon" style="width:40px;height:40px;border-radius:50%;background:var(--bg);display:flex;align-items:center;justify-content:center;margin:0 auto 8px;font-size:20px;color:var(--text-light)">&#128172;</div>';
       html += '<div class="contact-card">' + iconHtml + '<div class="platform">' + cc.platform + '</div><div class="account">' + cc.account + '</div></div>';
     }
   } else {

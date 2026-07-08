@@ -7,6 +7,7 @@
 <title>艾优社资源馆 - 管理后台</title>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
 body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;background:#f0f2f5;color:#333;font-size:14px;}
@@ -116,6 +117,10 @@ table img{width:60px;height:40px;object-fit:cover;border-radius:4px;}
 .img-upload-area:hover{border-color:#E63946;}
 .img-upload-area p{color:#999;font-size:13px;}
 .img-upload-area input[type="file"]{position:absolute;top:0;left:0;width:100%;height:100%;opacity:0;cursor:pointer;}
+.image-url-row{display:flex;gap:8px;margin-top:8px;}
+.image-url-row input[type="url"]{flex:1;padding:8px 10px;border:1px solid #d9d9d9;border-radius:6px;font-size:13px;}
+.image-url-row input[type="button"]{padding:8px 12px;background:#f6ffed;color:#52c41a;border:1px solid #b7eb8f;border-radius:6px;cursor:pointer;font-size:13px;}
+.image-url-row input[type="button"]:hover{background:#52c41a;color:#fff;}
 .img-preview{margin-top:12px;display:flex;align-items:center;gap:12px;}
 .img-preview img{max-width:200px;max-height:120px;border-radius:6px;border:1px solid #eee;}
 .img-preview .remove-img{color:#E63946;cursor:pointer;font-size:12px;text-decoration:underline;}
@@ -415,8 +420,11 @@ table img{width:60px;height:40px;object-fit:cover;border-radius:4px;}
             <div id="photosArea" style="margin-top:20px;display:none;">
               <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
                 <h4 id="photosTitle" style="color:#333;"></h4>
-                <input type="button" class="btn-primary" value="&#43; 上传照片" onclick="document.getElementById('photoUploadInput').click()">
-                <input type="file" id="photoUploadInput" multiple accept="image/*" style="display:none" onchange="uploadPhotos(this)">
+                <div style="display:flex;gap:8px;">
+                  <input type="button" class="btn-success" value="&#43; 添加外链图片" onclick="openPhotoUrlModal()">
+                  <input type="button" class="btn-primary" value="&#43; 上传照片" onclick="document.getElementById('photoUploadInput').click()">
+                  <input type="file" id="photoUploadInput" multiple accept="image/*" style="display:none" onchange="uploadPhotos(this)">
+                </div>
               </div>
               <div class="photo-grid" id="photosGrid"></div>
             </div>
@@ -656,6 +664,7 @@ table img{width:60px;height:40px;object-fit:cover;border-radius:4px;}
 <script>
 // ==================== Global State ====================
 var db = null;
+var storage = null;
 var app = null;
 var currentPage = 'dashboard';
 var allData = {};
@@ -664,21 +673,12 @@ var currentAlbumGroup = null;
 var currentSubAlbum = null;
 var currentAlbumIndex = -1;
 var currentSubAlbumIndex = -1;
+var currentPhotoPage = 1;
+var photosPerPage = 24;
 
 // ==================== Firebase Init ====================
-function initFirebase(callback) {
-  var savedConfig = localStorage.getItem('firebase_config');
-  if (savedConfig) {
-    try {
-      var config = JSON.parse(savedConfig);
-      if (config.databaseURL) {
-        connectFirebase(config, callback);
-        return;
-      }
-    } catch(e) {}
-  }
-  // Try built-in default config
-  var defaultConfig = {
+function getDefaultFirebaseConfig() {
+  return {
     apiKey: "AIzaSyCHsEjQ5bSvjBWsCU6JsKvzYSyr1Mz3JuM",
     authDomain: "aiyoushe2.firebaseapp.com",
     databaseURL: "https://aiyoushe2-default-rtdb.asia-southeast1.firebasedatabase.app",
@@ -687,6 +687,31 @@ function initFirebase(callback) {
     messagingSenderId: "1023331806331",
     appId: "1:1023331806331:web:839e730bc52e93b6bc46de"
   };
+}
+
+function mergeFirebaseConfig(config) {
+  var defaults = getDefaultFirebaseConfig();
+  config = config || {};
+  for (var k in defaults) {
+    if (!config[k]) config[k] = defaults[k];
+  }
+  return config;
+}
+
+function initFirebase(callback) {
+  var savedConfig = localStorage.getItem('firebase_config');
+  if (savedConfig) {
+    try {
+      var config = mergeFirebaseConfig(JSON.parse(savedConfig));
+      if (config.databaseURL) {
+        localStorage.setItem('firebase_config', JSON.stringify(config));
+        connectFirebase(config, callback);
+        return;
+      }
+    } catch(e) {}
+  }
+  // Try built-in default config
+  var defaultConfig = getDefaultFirebaseConfig();
   localStorage.setItem('firebase_config', JSON.stringify(defaultConfig));
   connectFirebase(defaultConfig, callback);
   return;
@@ -715,17 +740,57 @@ function doConnect(config, callback) {
     app = firebase.apps[0] || firebase.initializeApp(config);
   }
   db = firebase.database();
+  try {
+    storage = firebase.storage();
+  } catch(e) {
+    storage = null;
+    console.log('Firebase Storage 初始化失败:', e && e.message ? e.message : e);
+  }
   loadAllData(callback);
 }
 
 function loadAllData(callback) {
-  var ref = db.ref('site');
-  ref.once('value', function(snapshot) {
-    allData = snapshot.val() || {};
+  var paths = [
+    'articles', 'resources', 'announcements', 'categories', 'tags', 'featuredCats',
+    'messages', 'contact_html', 'contact_list', 'pricing_html', 'benefits_html',
+    'profile_data', 'vip_banner', 'about_data',
+    'qr_code', 'qrcode', 'qrCode', 'customer_qr', 'customer_qrcode', 'service_qr', 'service_qrcode',
+    'member_faq', 'vip_faq', 'memberFaq', 'faq', 'faqs',
+    'carousel', 'codes', 'admin_password'
+  ];
+  var pending = paths.length;
+  if (!pending) { if (callback) callback(); refreshCurrentPage(); return; }
+  paths.forEach(function(path) {
+    db.ref('site/' + path).once('value', function(snapshot) {
+      var val = snapshot.val();
+      if (val !== null) allData[path] = val;
+      pending--;
+      if (pending === 0) {
+        if (callback) callback();
+        refreshCurrentPage();
+      }
+    }, function(err) {
+      console.log('读取 ' + path + ' 失败:', err.message);
+      pending--;
+      if (pending === 0) {
+        if (callback) callback();
+        refreshCurrentPage();
+      }
+    });
+  });
+}
+
+function loadAlbumsData(callback, force) {
+  if (!force && allData._albumsLoaded) {
     if (callback) callback();
-    refreshCurrentPage();
+    return;
+  }
+  db.ref('site/albums').once('value', function(snapshot) {
+    allData.albums = snapshot.val() || [];
+    allData._albumsLoaded = true;
+    if (callback) callback();
   }, function(err) {
-    showToast('数据加载失败: ' + err.message, 'error');
+    showToast('相册数据加载失败: ' + err.message, 'error');
     if (callback) callback();
   });
 }
@@ -736,6 +801,8 @@ function saveData(path, value, callback) {
     if (err) {
       showToast('保存失败: ' + err.message, 'error');
     } else {
+      allData[path] = value;
+      if (path === 'albums') allData._albumsLoaded = true;
       if (callback) callback();
     }
   });
@@ -776,6 +843,7 @@ function openModal(title, bodyHtml, footerHtml, wide) {
   var box = document.getElementById('modalBox');
   if (wide) { box.className = 'modal wide'; } else { box.className = 'modal'; }
   document.getElementById('modalOverlay').classList.add('show');
+  setTimeout(function() { enhanceImageUrlInputs(document.getElementById('modalBody')); }, 0);
 }
 
 function closeModal() {
@@ -834,6 +902,7 @@ function refreshCurrentPage() {
     case 'messages': loadAllMessagesPage(); break;
     case 'datamgmt': loadDataMgmt(); break;
   }
+  setTimeout(function() { enhanceImageUrlInputs(document); }, 0);
 }
 
 // ==================== Login ====================
@@ -1106,21 +1175,105 @@ function cropImage(file, ratio, callback) {
   reader.readAsDataURL(file);
 }
 
+function getStorageFolder(dataField) {
+  if (/art/i.test(dataField)) return 'articles';
+  if (/res/i.test(dataField)) return 'resources';
+  if (/grp|sub|album/i.test(dataField)) return 'albums';
+  if (/carousel/i.test(dataField)) return 'carousel';
+  if (/qr/i.test(dataField)) return 'qrcode';
+  if (/profile|avatar/i.test(dataField)) return 'profile';
+  if (/vip/i.test(dataField)) return 'vip';
+  if (/contact/i.test(dataField)) return 'contact';
+  return 'uploads';
+}
+
+function safeFileName(name) {
+  var ext = 'jpg';
+  var m = String(name || '').match(/\.([a-zA-Z0-9]+)$/);
+  if (m) ext = m[1].toLowerCase();
+  return Date.now() + '_' + Math.random().toString(36).slice(2, 10) + '.' + ext;
+}
+
+function uploadDataUrlToStorage(dataUrl, fileName, folder, callback, failCallback) {
+  if (!storage) {
+    showToast('Firebase Storage 未初始化，请检查 storageBucket 配置和 Storage SDK', 'error');
+    if (failCallback) failCallback();
+    return;
+  }
+  var path = 'uploads/' + (folder || 'images') + '/' + safeFileName(fileName);
+  var ref = storage.ref().child(path);
+  ref.putString(dataUrl, 'data_url').then(function(snapshot) {
+    return snapshot.ref.getDownloadURL();
+  }).then(function(url) {
+    callback(url);
+  }).catch(function(err) {
+    showToast('上传到 Firebase Storage 失败：' + (err.message || err), 'error');
+    if (failCallback) failCallback(err);
+  });
+}
+
 function handleImageUpload(input, previewId, dataField, cropRatio) {
   if (!input.files || !input.files[0]) return;
   var file = input.files[0];
+  showToast('正在上传到 Firebase Storage...');
+  function done(dataUrl) {
+    uploadDataUrlToStorage(dataUrl, file.name, getStorageFolder(dataField), function(url) {
+      window[dataField] = url;
+      var preview = document.getElementById(previewId);
+      if (preview) preview.innerHTML = '<img src="' + url + '" alt="preview" loading="lazy"><span class="remove-img" onclick="clearImage(\'' + previewId + '\',\'' + dataField + '\')">移除</span>';
+      showToast('图片已上传并自动回填 URL', 'success');
+      input.value = '';
+    }, function() {
+      input.value = '';
+    });
+  }
   if (cropRatio) {
-    cropImage(file, cropRatio, function(base64) {
-      window[dataField] = base64;
-      var preview = document.getElementById(previewId);
-      preview.innerHTML = '<img src="' + base64 + '" alt="preview"><span class="remove-img" onclick="clearImage(\'' + previewId + '\',\'' + dataField + '\')">移除</span>';
-    });
+    cropImage(file, cropRatio, done);
   } else {
-    compressAndRead(file, function(base64) {
-      window[dataField] = base64;
-      var preview = document.getElementById(previewId);
-      preview.innerHTML = '<img src="' + base64 + '" alt="preview"><span class="remove-img" onclick="clearImage(\'' + previewId + '\',\'' + dataField + '\')">移除</span>';
-    });
+    compressAndRead(file, done);
+  }
+}
+
+function isExternalImageUrl(url) {
+  url = (url || '').trim();
+  return /^https?:\/\/.+/i.test(url) || /^\/\//.test(url);
+}
+
+function setImageUrl(previewId, dataField, inputId) {
+  var input = document.getElementById(inputId);
+  var url = input ? input.value.trim() : '';
+  if (!isExternalImageUrl(url)) {
+    showToast('请输入正确的图片外链 URL，必须以 http:// 或 https:// 开头', 'error');
+    return;
+  }
+  window[dataField] = url;
+  var preview = document.getElementById(previewId);
+  if (preview) {
+    preview.innerHTML = '<img src="' + url + '" alt="preview" loading="lazy"><span class="remove-img" onclick="clearImage(\'' + previewId + '\',\'' + dataField + '\')">移除</span>';
+  }
+  showToast('已使用图片外链，保存后数据库只记录 URL', 'success');
+}
+
+function enhanceImageUrlInputs(root) {
+  root = root || document;
+  var areas = root.querySelectorAll('.img-upload-area');
+  for (var i = 0; i < areas.length; i++) {
+    var area = areas[i];
+    if (area.getAttribute('data-url-enhanced') === '1') continue;
+    var fileInput = area.querySelector('input[type="file"]');
+    if (!fileInput) continue;
+    var onchange = fileInput.getAttribute('onchange') || '';
+    var match = onchange.match(/handleImageUpload\(this,\s*'([^']+)'\s*,\s*'([^']+)'/);
+    if (!match) continue;
+    var previewId = match[1];
+    var dataField = match[2];
+    var inputId = 'imgUrl_' + previewId + '_' + i;
+    var row = document.createElement('div');
+    row.className = 'image-url-row';
+    row.innerHTML = '<input type="url" id="' + inputId + '" placeholder="粘贴图片外链 URL，推荐使用图床/Storage/CDN">' +
+      '<input type="button" value="使用URL" onclick="setImageUrl(\'' + previewId + '\',\'' + dataField + '\',\'' + inputId + '\')">';
+    area.parentNode.insertBefore(row, area.nextSibling);
+    area.setAttribute('data-url-enhanced', '1');
   }
 }
 
@@ -1268,8 +1421,13 @@ function insertEditorImage(editorId) {
   input.accept = 'image/*';
   input.onchange = function() {
     if (input.files && input.files[0]) {
-      compressAndRead(input.files[0], function(base64) {
-        document.execCommand('insertHTML', false, '<img src="' + base64 + '" style="max-width:100%;height:auto;">');
+      var file = input.files[0];
+      showToast('正在上传编辑器图片...');
+      compressAndRead(file, function(dataUrl) {
+        uploadDataUrlToStorage(dataUrl, file.name, 'editor', function(url) {
+          document.execCommand('insertHTML', false, '<img src="' + url + '" loading="lazy" style="max-width:100%;height:auto;">');
+          showToast('图片已上传并插入正文', 'success');
+        });
       });
     }
   };
@@ -1284,7 +1442,8 @@ function editorUploadImage(btn) {
 function handleEditorImageUpload(input) {
   if (!input || !input.files || !input.files[0]) return;
   var file = input.files[0];
-  compressAndRead(file, function(base64) {
+  showToast('正在上传编辑器图片...');
+  compressAndRead(file, function(dataUrl) {
     var editor = input.closest('.modal-body') ?
       input.closest('.modal-body').querySelector('[contenteditable="true"]') : null;
     if (!editor) {
@@ -1294,10 +1453,12 @@ function handleEditorImageUpload(input) {
       }
     }
     if (editor) {
-      editor.focus();
-      document.execCommand('insertHTML', false,
-        '<img src="' + base64 + '" style="max-width:100%;height:auto;">');
-      showToast('图片已上传');
+      uploadDataUrlToStorage(dataUrl, file.name, 'editor', function(url) {
+        editor.focus();
+        document.execCommand('insertHTML', false,
+          '<img src="' + url + '" loading="lazy" style="max-width:100%;height:auto;">');
+        showToast('图片已上传并插入正文', 'success');
+      });
     }
   });
   input.value = '';
@@ -1321,11 +1482,14 @@ function setupEditorPaste(editorId) {
           if (file) {
             var reader = new FileReader();
             reader.onload = function(ev) {
-              var base64 = ev.target.result;
-              editor.focus();
-              document.execCommand('insertHTML', false,
-                '<img src="' + base64 + '" style="max-width:100%;height:auto;">');
-              showToast('图片已插入');
+              var dataUrl = ev.target.result;
+              showToast('正在上传粘贴图片...');
+              uploadDataUrlToStorage(dataUrl, file.name || 'pasted-image.png', 'editor/paste', function(url) {
+                editor.focus();
+                document.execCommand('insertHTML', false,
+                  '<img src="' + url + '" loading="lazy" style="max-width:100%;height:auto;">');
+                showToast('图片已上传并插入', 'success');
+              });
             };
             reader.readAsDataURL(file);
           }
@@ -1787,7 +1951,7 @@ function openResourceModal(resId) {
     '<div class="res-form-page active" id="resPage0">' +
       '<div class="form-row"><label>商品标题<span class="req">*</span></label><input type="text" id="resTitle" value="' + escapeHtml(res ? res.title : '') + '"></div>' +
       '<div class="form-row"><label>封面图片</label><div class="img-upload-area"><p>点击上传封面图 (16:9)</p><input type="file" accept="image/*" onchange="handleImageUpload(this,\'resCoverPreview\',\'resCoverData\',16/9)"></div><div class="img-preview" id="resCoverPreview">' + (res && res.cover ? '<img src="' + res.cover + '"><span class="remove-img" onclick="clearImage(\'resCoverPreview\',\'resCoverData\')">移除</span>' : '') + '</div></div>' +
-      '<div class="form-row"><label>商品多图</label><div class="img-upload-area"><p>点击上传商品图，可多选，第一张默认作为主图</p><input type="file" accept="image/*" multiple onchange="handleResourceImagesUpload(this)"></div><div class="photo-grid" id="resImagesPreview"></div></div>' +
+      '<div class="form-row"><label>商品多图</label><div class="img-upload-area"><p>点击上传商品图，可多选，第一张默认作为主图</p><input type="file" accept="image/*" multiple onchange="handleResourceImagesUpload(this)"></div><div style="display:flex;gap:8px;margin-top:8px;"><textarea id="resourceImageUrlList" placeholder="每行一个商品图片URL" style="flex:1;min-height:54px;"></textarea><input type="button" class="btn-success" value="添加URL" onclick="addResourceImageUrlsFromField()" style="width:90px;"></div><div class="photo-grid" id="resImagesPreview"></div></div>' +
       '<div class="form-row"><label>商品简介</label><textarea id="resDesc">' + escapeHtml(res ? res.desc || '' : '') + '</textarea></div>' +
       '<div class="form-row-half">' +
         '<div class="form-row"><label>现价</label><input type="number" id="resPrice" step="0.01" value="' + (res && res.price !== undefined ? res.price : 0) + '"></div>' +
@@ -1861,7 +2025,7 @@ function renderResourceImagesEditor() {
     var upBtn = i > 0 ? '<input type="button" class="photo-move-btn" value="↑" title="上移" onclick="moveResourceImage(' + i + ',-1)">' : '';
     var downBtn = i < imgs.length - 1 ? '<input type="button" class="photo-move-btn" value="↓" title="下移" onclick="moveResourceImage(' + i + ',1)">' : '';
     html += '<div class="photo-item">' +
-      '<img src="' + imgs[i] + '">' +
+      '<img src="' + imgs[i] + '" loading="lazy">' +
       '<input type="button" class="photo-del" value="×" onclick="removeResourceImage(' + i + ')">' +
       '<div class="photo-move-btns">' + upBtn + downBtn + '</div>' +
       (i === 0 ? '<div style="position:absolute;left:4px;top:4px;background:#E63946;color:#fff;font-size:11px;padding:2px 6px;border-radius:4px;">主图</div>' : '') +
@@ -1870,26 +2034,53 @@ function renderResourceImagesEditor() {
   grid.innerHTML = html;
 }
 
+function addResourceImageUrlsFromField() {
+  var textarea = document.getElementById('resourceImageUrlList');
+  var urls = (textarea ? textarea.value : '').split(/\n+/).map(function(u) { return u.trim(); }).filter(function(u) { return isExternalImageUrl(u); });
+  if (!urls.length) {
+    showToast('请至少输入一个正确的图片 URL', 'error');
+    return;
+  }
+  if (!window.resImagesData) window.resImagesData = [];
+  for (var i = 0; i < urls.length; i++) window.resImagesData.push(urls[i]);
+  if (!window.resCoverData && urls[0]) {
+    window.resCoverData = urls[0];
+    var preview = document.getElementById('resCoverPreview');
+    if (preview) preview.innerHTML = '<img src="' + urls[0] + '" loading="lazy"><span class="remove-img" onclick="clearImage(\'resCoverPreview\',\'resCoverData\')">移除</span>';
+  }
+  if (textarea) textarea.value = '';
+  renderResourceImagesEditor();
+  showToast('已添加 ' + urls.length + ' 张商品图片URL', 'success');
+}
+
 function handleResourceImagesUpload(input) {
   if (!input || !input.files || !input.files.length) return;
   if (!window.resImagesData) window.resImagesData = [];
   var files = Array.prototype.slice.call(input.files);
   var idx = 0;
+  showToast('正在上传商品图片到 Firebase Storage...');
   function next() {
     if (idx >= files.length) {
       renderResourceImagesEditor();
       input.value = '';
+      showToast('商品图片已上传并回填 URL', 'success');
       return;
     }
-    compressAndRead(files[idx], function(base64) {
-      window.resImagesData.push(base64);
-      if (!window.resCoverData) {
-        window.resCoverData = base64;
-        var preview = document.getElementById('resCoverPreview');
-        if (preview) preview.innerHTML = '<img src="' + base64 + '"><span class="remove-img" onclick="clearImage(\'resCoverPreview\',\'resCoverData\')">移除</span>';
-      }
-      idx++;
-      next();
+    var file = files[idx];
+    compressAndRead(file, function(dataUrl) {
+      uploadDataUrlToStorage(dataUrl, file.name, 'resources/gallery', function(url) {
+        window.resImagesData.push(url);
+        if (!window.resCoverData) {
+          window.resCoverData = url;
+          var preview = document.getElementById('resCoverPreview');
+          if (preview) preview.innerHTML = '<img src="' + url + '" loading="lazy"><span class="remove-img" onclick="clearImage(\'resCoverPreview\',\'resCoverData\')">移除</span>';
+        }
+        idx++;
+        next();
+      }, function() {
+        idx++;
+        next();
+      });
     });
   }
   next();
@@ -2006,6 +2197,10 @@ function toggleResourceHidden(id) {
 
 // ==================== Albums ====================
 function loadAlbumGroups() {
+  if (!allData._albumsLoaded) {
+    loadAlbumsData(function() { loadAlbumGroups(); }, true);
+    return;
+  }
   var list = toArray(allData.albums || []);
   var container = document.getElementById('albumGroupsList');
   if (!list.length) {
@@ -2282,6 +2477,7 @@ function deleteSubAlbum(subId) {
 }
 
 function viewPhotos(subId) {
+  if (String(currentSubAlbum) !== String(subId)) currentPhotoPage = 1;
   currentSubAlbum = subId;
   currentSubAlbumIndex = -1;
   document.getElementById('photosArea').style.display = 'block';
@@ -2306,17 +2502,67 @@ function viewPhotos(subId) {
     grid.innerHTML = '<div class="empty-state"><p>暂无照片，请上传</p></div>';
     return;
   }
+  var totalPages = Math.max(1, Math.ceil(photos.length / photosPerPage));
+  if (currentPhotoPage > totalPages) currentPhotoPage = totalPages;
+  if (currentPhotoPage < 1) currentPhotoPage = 1;
+  var start = (currentPhotoPage - 1) * photosPerPage;
+  var end = Math.min(start + photosPerPage, photos.length);
   var html = '';
-  for (var k = 0; k < photos.length; k++) {
+  html += '<div style="grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;color:#666;font-size:13px;">' +
+    '<span>共 ' + photos.length + ' 张，当前显示 ' + (start + 1) + '-' + end + ' 张</span>' +
+    '<span><input type="button" class="btn-sm" value="上一页" ' + (currentPhotoPage <= 1 ? 'disabled' : '') + ' onclick="changePhotoPage(-1)"> ' +
+    '<span style="margin:0 8px;">' + currentPhotoPage + ' / ' + totalPages + '</span>' +
+    '<input type="button" class="btn-sm" value="下一页" ' + (currentPhotoPage >= totalPages ? 'disabled' : '') + ' onclick="changePhotoPage(1)"></span></div>';
+  for (var k = start; k < end; k++) {
     var photoUpBtn = (k > 0) ? '<input type="button" class="photo-move-btn photo-up-btn" value="\u2191" title="\u4e0a\u79fb" onclick="moveItem(\'photos\',' + k + ',-1)">' : '';
     var photoDownBtn = (k < photos.length - 1) ? '<input type="button" class="photo-move-btn photo-down-btn" value="\u2193" title="\u4e0b\u79fb" onclick="moveItem(\'photos\',' + k + ',1)">' : '';
     html += '<div class="photo-item" data-index="' + k + '" data-photo-key="' + k + '">' +
-      '<img src="' + photos[k] + '">' +
+      '<img src="' + photos[k] + '" loading="lazy">' +
       '<input type="button" class="photo-del" value="&times;" onclick="deletePhoto(' + k + ')">' +
       '<div class="photo-move-btns">' + photoUpBtn + photoDownBtn + '</div>' +
     '</div>';
   }
   grid.innerHTML = html;
+}
+
+function changePhotoPage(delta) {
+  currentPhotoPage += delta;
+  if (currentSubAlbum) viewPhotos(currentSubAlbum);
+}
+
+function openPhotoUrlModal() {
+  if (currentAlbumIndex < 0 || currentSubAlbumIndex < 0) {
+    showToast('请先选择子相册', 'error');
+    return;
+  }
+  var bodyHtml =
+    '<div class="form-row"><label>图片外链 URL</label>' +
+    '<textarea id="photoUrlList" style="min-height:180px;" placeholder="每行一个图片 URL，例如：\nhttps://example.com/photo1.jpg\nhttps://example.com/photo2.jpg"></textarea>' +
+    '<p style="color:#999;font-size:12px;margin-top:8px;">推荐把图片上传到图床、Firebase Storage、Cloudinary 或 CDN，这里只保存 URL，不保存 base64。</p></div>';
+  var footerHtml =
+    '<input type="button" class="btn-default" value="取消" onclick="closeModal()">' +
+    '<input type="button" class="btn-primary" value="保存外链图片" onclick="savePhotoUrls()">';
+  openModal('添加外链图片', bodyHtml, footerHtml);
+}
+
+function savePhotoUrls() {
+  var textarea = document.getElementById('photoUrlList');
+  var urls = (textarea ? textarea.value : '').split(/\n+/).map(function(u) { return u.trim(); }).filter(function(u) { return isExternalImageUrl(u); });
+  if (!urls.length) {
+    showToast('请至少输入一个正确的图片 URL', 'error');
+    return;
+  }
+  var photosRef = db.ref('/site/albums/' + currentAlbumIndex + '/subAlbums/' + currentSubAlbumIndex + '/photos');
+  photosRef.once('value', function(snap) {
+    var arr = snap.val() || [];
+    for (var i = 0; i < urls.length; i++) arr.push(urls[i]);
+    photosRef.set(arr, function(err) {
+      if (err) { showToast('保存失败: ' + err.message, 'error'); return; }
+      showToast('已添加 ' + urls.length + ' 张外链图片', 'success');
+      closeModal();
+      loadAlbumPhotos();
+    });
+  });
 }
 
 function uploadPhotos(input) {
@@ -2342,16 +2588,21 @@ function uploadPhotos(input) {
       showToast('请先选择子相册', 'error');
       return;
     }
-    compressAndRead(files[idx], function(base64) {
-      var photosRef = db.ref('/site/albums/' + albumIdx + '/subAlbums/' + subIdx + '/photos');
-      photosRef.once('value', function(snap) {
-        var arr = snap.val() || [];
-        arr.push(base64);
-        photosRef.set(arr, function(err) {
-          if (!err) count++;
-          else showToast('第' + (idx + 1) + '张上传失败', 'error');
-          processOne(idx + 1);
+    var file = files[idx];
+    compressAndRead(file, function(dataUrl) {
+      uploadDataUrlToStorage(dataUrl, file.name, 'albums/photos', function(url) {
+        var photosRef = db.ref('/site/albums/' + albumIdx + '/subAlbums/' + subIdx + '/photos');
+        photosRef.once('value', function(snap) {
+          var arr = snap.val() || [];
+          arr.push(url);
+          photosRef.set(arr, function(err) {
+            if (!err) count++;
+            else showToast('第' + (idx + 1) + '张保存失败', 'error');
+            processOne(idx + 1);
+          });
         });
+      }, function() {
+        processOne(idx + 1);
       });
     });
   }
@@ -2359,10 +2610,11 @@ function uploadPhotos(input) {
 }
 
 function loadAlbumPhotos() {
-  if (currentAlbumGroup && currentSubAlbum) {
-    viewPhotos(currentSubAlbum);
-  }
-  loadAllData();
+  loadAlbumsData(function() {
+    if (currentAlbumGroup && currentSubAlbum) {
+      viewPhotos(currentSubAlbum);
+    }
+  }, true);
 }
 
 function deletePhoto(index) {
@@ -2786,18 +3038,23 @@ function collectBenefitCards() {
 function handleMiniUpload(input) {
   if (!input.files || !input.files[0]) return;
   var file = input.files[0];
-  compressAndRead(file, function(base64) {
+  showToast('正在上传图片...');
+  compressAndRead(file, function(dataUrl) {
     var container = input.parentElement;
     var hidden = container.querySelector('input[type="hidden"]');
     var img = container.querySelector('img');
-    if (hidden) hidden.value = base64;
-    if (img) { img.src = base64; } else {
-      var newImg = document.createElement('img');
-      newImg.src = base64;
-      container.insertBefore(newImg, input);
-      var span = container.querySelector('span');
-      if (span) span.style.display = 'none';
-    }
+    uploadDataUrlToStorage(dataUrl, file.name, 'mini', function(url) {
+      if (hidden) hidden.value = url;
+      if (img) { img.src = url; } else {
+        var newImg = document.createElement('img');
+        newImg.src = url;
+        newImg.loading = 'lazy';
+        container.insertBefore(newImg, input);
+        var span = container.querySelector('span');
+        if (span) span.style.display = 'none';
+      }
+      showToast('图片已上传并回填 URL', 'success');
+    });
   });
 }
 
@@ -3026,7 +3283,7 @@ function loadDataMgmt() {
 function saveFirebaseConfig() {
   var dbUrl = document.getElementById('cfgDbUrl').value.trim();
   if (!dbUrl) { showToast('请输入 Database URL', 'error'); return; }
-  var config = { databaseURL: dbUrl };
+  var config = mergeFirebaseConfig({ databaseURL: dbUrl });
   localStorage.setItem('firebase_config', JSON.stringify(config));
   showToast('配置已保存，正在连接...', 'info');
 
